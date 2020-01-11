@@ -9,7 +9,7 @@ import sys
 import enum
 import json
 import tiled_exporter
-import img_exporter
+import db_exporter
 
 
 class Commands(enum.Enum):
@@ -18,7 +18,7 @@ class Commands(enum.Enum):
     EXPORT_MAP_META = enum.auto()
     EXPORT_TILESETS = enum.auto()
     EXPORT_ALL_TILED = enum.auto()
-    EXPORT_IMG_META = enum.auto()
+    EXPORT_DATABASES = enum.auto()
     EXPORT_ALL = enum.auto()
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
@@ -51,11 +51,11 @@ elif not argv[1] in commands:
 
 command = Commands[argv[1]]
 
-data_paths = {"img":"", "tiled":""}
+data_paths = {"db":"", "tiled":""}
 with open(master_data_path, "r") as f:
     data_paths = json.load(f)
 
-img = img_exporter.ImageExporter(data_paths["img"])
+db = db_exporter.DBExporter(data_paths["db"])
 tiled = tiled_exporter.TiledExporter(data_paths["tiled"])
 
 if command == Commands.EXPORT_MAP:
@@ -78,14 +78,10 @@ elif command == Commands.EXPORT_ALL:
     tiled.export_tilesets()
     tiled.export_map()
     tiled.export_meta()
-    img.export_meta()
+    db.export_databases()
 
-elif command == Commands.EXPORT_MAP_META:
-    tiled.export_map()
-    tiled.export_meta()
-
-elif command == Commands.EXPORT_IMG_META:
-    img.export_meta()
+elif command == Commands.EXPORT_DATABASES:
+    db.export_databases()
 
 elif command == Commands.EXPORT_ALL_TILED:
     if tiled.is_debugging():

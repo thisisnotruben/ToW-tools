@@ -1,4 +1,4 @@
 {
-    "csv_file":"imgDB.csv",
+    "csv_dir":"/home/rubsz/tiled/Tides_of_War/scripts/csvDB",
     "export_path":"/home/rubsz/godot/my_games/Tides_of_War/data"
 }
