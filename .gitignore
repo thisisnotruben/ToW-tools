@@ -1,6 +1,4 @@
 *.pyc
 *.ods
-*.csv
 __pycache__/
 DB/
-csvDB/
