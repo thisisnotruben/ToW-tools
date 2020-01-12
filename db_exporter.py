@@ -7,53 +7,84 @@ Ruben Alvarez Reyes
 import os
 import csv
 import json
+import pyexcel_ods
 import xml.etree.ElementTree as ET
 
 
 class DBExporter:
 
-    # key must match csv filename
-    name_tag = {"ImageDB":"img", "ItemDB":"item", "SpellDB":"spell"}
-    csv_ext = ".csv"
+    defined_text_tags = ["description", "start", "active", "completed", "delivered", "receiver_completed", "receiver_delivered"]
+    db_ext = "ods"
     
     def __init__(self, file_path_data):
-        self.paths = {"csv_dir":"", "export_path":""}
+        self.paths = {"export_path":"", "db_dir":""}
         with open(file_path_data, "r") as f:
             self.paths = json.load(f)
         self.data = {}
-        self.load_csv()
-        
-    def load_csv(self):
-        os.chdir(self.paths["csv_dir"])
-        for csv_file in os.listdir():
-            if csv_file.endswith(DBExporter.csv_ext):
-                with open(csv_file, "r") as f:
-                    csv_data = csv.reader(f, delimiter=",")
-                    file_name = os.path.splitext(csv_file)[0]
-                    self.data[file_name] = []
-                    for row in csv_data:
-                        self.data[file_name].append(row)
+        self.load_db()
+
+    def load_db(self):
+        for db in os.listdir(self.paths["db_dir"]):
+            if db.endswith(DBExporter.db_ext):
+                # load db
+                workbook = pyexcel_ods.get_data(os.path.join(self.paths["db_dir"], db))
+                sheets = json.loads(json.dumps(workbook))
+                # clean data
+                for sheet_name in sheets:
+                    sheet = sheets[sheet_name]
+                    rows_to_delete = []
+                    max_row_size = max([len(r) for r in sheet])
+                    for row in range(len(sheet)):
+                        row_size = len(sheet[row])
+                        for column in range(row_size):
+                            sheet[row][column] = str(sheet[row][column])
+                        if row_size == 0:
+                            rows_to_delete.append(sheet[row])
+                        elif row_size < max_row_size:
+                            for i in range(row_size, max_row_size):
+                                sheet[row].append("")
+                    for row in rows_to_delete:
+                        sheet.remove(row)
+                    # set data
+                    self.data[sheet_name] = {"data":sheet, "tag":os.path.splitext(db)[0]}
 
     def export_databases(self):
-        for name, tag in DBExporter.name_tag.items():
+        for sheet_name in self.data:
+            # get data
+            data = self.data[sheet_name]["data"]
             # make xml
-            matrix = self.data[name]
-            root = ET.Element(name)
-            attributes = {}
-            description = ""
-            for i in range(1, len(matrix)):
-                for j in range(len(matrix[0])):
-                    if matrix[0][j].strip() == "description":
-                        description = matrix[i][j].strip()
+            root = ET.Element(sheet_name)
+            for row in range(1, len(data)):
+                defined_sub_tags = {}
+                attributes = {}
+                objectives = {}
+                objective_key = ""
+                for column in range(len(data[0])):
+                    header = data[0][column].strip()
+                    value = data[row][column].strip()
+                    if header in DBExporter.defined_text_tags:
+                        defined_sub_tags[header] = value
+                    elif header == "":
+                        if value != "":
+                            if objective_key == "":
+                                objective_key = value
+                            elif not value.isnumeric():
+                                print("--> ERROR PARSING DATABASE: (%s)" % sheet_name, \
+                                    "\n--> OBJECTIVE NOT SET RIGHT IN [ROW][COLUMN]: [%s][%s]" % (row, column))
+                                exit(1)
+                            else:
+                                objectives[objective_key] = value
+                                objective_key = ""
                     else:
-                        attributes[matrix[0][j].strip()] = matrix[i][j].strip()
-                element = ET.SubElement(root, tag, attributes)
-                if description != "":
-                    ET.SubElement(element, "description").text = description
-                    description = ""
+                        attributes[header] = value
+                element = ET.SubElement(root, self.data[sheet_name]["tag"], attributes)
+                for sub_tag in defined_sub_tags:
+                    ET.SubElement(element, sub_tag).text = defined_sub_tags[sub_tag]
+                for objective in objectives:
+                    ET.SubElement(element, "objective", {"name":objective, "amount":objectives[objective]})
             # make path
-            dest = os.path.join(self.paths["export_path"], name + ".xml")
+            dest = os.path.join(self.paths["export_path"], sheet_name + ".xml")
             # write xml
             tree = ET.ElementTree(root)
             tree.write(dest, encoding="UTF-8", xml_declaration=True)
-            print("--> DATABASE: (%s) EXPORTED" % name)
+            print("--> DATABASE: (%s) EXPORTED" % sheet_name)
