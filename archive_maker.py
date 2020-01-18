@@ -31,7 +31,8 @@ class Archiver:
         tar_name = os.path.join(self.backup_dir, tar_name)
         # archive files
         with tarfile.open(tar_name, "w:gz") as tar:
+            print("--> MAKING BACKUP:")
             for f in self.files_to_archive:
-                print("--> ADDING: (%s)" % f)
+                print(" |-> ADDING: (%s)" % f)
                 tar.add(f)
         print("--> BACKUP MADE: (%s)" % tar_name)
