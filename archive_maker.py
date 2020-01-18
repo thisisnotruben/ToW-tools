@@ -12,7 +12,7 @@ from datetime import datetime
 
 class Archiver:
     
-    # %s is for the data/time
+    # %s is for the date/time
     archive_name_format = "%s_Tides_of_War"
     archive_ext = ".tar.gz"
 
