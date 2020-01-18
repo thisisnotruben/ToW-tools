@@ -48,8 +48,7 @@ class DBExporter:
                     self.data[sheet_name] = {"data":sheet, "tag":os.path.splitext(db)[0]}
 
     def export_databases(self):
-        if not bool(self.data):
-            self.load_db()
+        self.load_db()
         for sheet_name in self.data:
             # get data
             data = self.data[sheet_name]["data"]
