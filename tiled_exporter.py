@@ -201,7 +201,7 @@ class TiledExporter:
                 if not self.debug[tileset] in defined_color_names:
                     print("--> COLOR: (%s) NOT DEFINED FOR TILESET: (%s)\n--> DEFINED COLORS:" % (self.debug[tileset], tileset))
                     for color in defined_color_names:
-                        print("\t--> ", color)
+                        print(" |-> ", color)
                     print("--> ABORTING")
                     exit(1)
                 # make paths

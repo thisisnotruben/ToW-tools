@@ -30,10 +30,10 @@ class Commands(enum.Enum):
 def show_commands():
     print("--> COMMANDS:")
     for c in Commands:
-        print("\t--> ", c.name)
+        print(" |-> ", c.name)
     print("--> COLORS:")
     for c in tiled_exporter.Color:
-        print("\t--> ", c.name)
+        print(" |-> ", c.name)
 
 
 os.chdir("/home/rubsz/tiled/Tides_of_War/scripts")
