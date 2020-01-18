@@ -10,6 +10,7 @@ import enum
 import json
 import tiled_exporter
 import db_exporter
+import archive_maker
 
 
 class Commands(enum.Enum):
@@ -22,6 +23,7 @@ class Commands(enum.Enum):
     EXPORT_ALL = enum.auto()
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
+    BACKUP = enum.auto()
     HELP = enum.auto()
 
 
@@ -51,12 +53,13 @@ elif not argv[1] in commands:
 
 command = Commands[argv[1]]
 
-data_paths = {"db":"", "tiled":""}
+data_paths = {"db":"", "tiled":"", "archive":""}
 with open(master_data_path, "r") as f:
     data_paths = json.load(f)
 
 db = db_exporter.DBExporter(data_paths["db"])
 tiled = tiled_exporter.TiledExporter(data_paths["tiled"])
+archive = archive_maker.Archiver(data_paths["archive"])
 
 if command == Commands.EXPORT_MAP:
     tiled.export_map()
@@ -97,3 +100,6 @@ elif command == Commands.MAKE_DEBUG_TILESETS:
 
 elif command == Commands.HELP:
     show_commands()
+
+elif command == Commands.BACKUP:
+    archive.backup()

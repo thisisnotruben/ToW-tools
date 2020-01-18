@@ -1,4 +1,5 @@
 {
     "db":"/home/rubsz/tiled/Tides_of_War/scripts/data_db.json",
-    "tiled":"/home/rubsz/tiled/Tides_of_War/scripts/data_tiled.json"
+    "tiled":"/home/rubsz/tiled/Tides_of_War/scripts/data_tiled.json",
+    "archive":"/home/rubsz/tiled/Tides_of_War/scripts/data_archiver.json"
 }

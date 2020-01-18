@@ -21,7 +21,6 @@ class DBExporter:
         with open(file_path_data, "r") as f:
             self.paths = json.load(f)
         self.data = {}
-        self.load_db()
 
     def load_db(self):
         for db in os.listdir(self.paths["db_dir"]):
@@ -49,6 +48,8 @@ class DBExporter:
                     self.data[sheet_name] = {"data":sheet, "tag":os.path.splitext(db)[0]}
 
     def export_databases(self):
+        if not bool(self.data):
+            self.load_db()
         for sheet_name in self.data:
             # get data
             data = self.data[sheet_name]["data"]
