@@ -5,7 +5,6 @@ Ruben Alvarez Reyes
 """
 
 import os
-import csv
 import json
 import pyexcel_ods
 import xml.etree.ElementTree as ET
