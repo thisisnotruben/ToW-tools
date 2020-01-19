@@ -63,17 +63,28 @@ archive = archive_maker.Archiver(data_paths["archive"])
 
 if command == Commands.EXPORT_MAP:
     tiled.export_map()
+
+elif command == Commands.EXPORT_META:
+    tiled.export_meta()
+
+elif command == Commands.EXPORT_MAP_META:
+    tiled.export_map()
+    tiled.export_meta()
     
 elif command == Commands.EXPORT_TILESETS:
     if tiled.is_debugging():
         tiled.debug_map()
     tiled.export_tilesets()
 
-elif command == Commands.DEBUG_MAP:
-    tiled.debug_map()
-    
-elif command == Commands.EXPORT_META:
+elif command == Commands.EXPORT_ALL_TILED:
+    if tiled.is_debugging():
+        tiled.debug_map()
+    tiled.export_tilesets()
+    tiled.export_map()
     tiled.export_meta()
+
+elif command == Commands.EXPORT_DATABASES:
+    db.export_databases()
 
 elif command == Commands.EXPORT_ALL:
     if tiled.is_debugging():
@@ -83,23 +94,16 @@ elif command == Commands.EXPORT_ALL:
     tiled.export_meta()
     db.export_databases()
 
-elif command == Commands.EXPORT_DATABASES:
-    db.export_databases()
-
-elif command == Commands.EXPORT_ALL_TILED:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.export_tilesets()
-    tiled.export_map()
-    tiled.export_meta()
+elif command == Commands.DEBUG_MAP:
+    tiled.debug_map()
 
 elif command == Commands.MAKE_DEBUG_TILESETS:
     if tiled.is_debugging():
         tiled.debug_map()
     tiled.make_debug_tilesets()
 
-elif command == Commands.HELP:
-    show_commands()
-
 elif command == Commands.BACKUP:
     archive.backup()
+
+elif command == Commands.HELP:
+    show_commands()
