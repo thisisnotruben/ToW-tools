@@ -1,0 +1,6 @@
+{
+    "root":"/home/rubsz/tiled/Tides_of_War/scripts/paths",
+    "db":"data_db.json",
+    "tiled":"data_tiled.json",
+    "archive":"data_archiver.json"
+}

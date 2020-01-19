@@ -36,26 +36,25 @@ def show_commands():
         print(" |-> ", c.name)
 
 
-os.chdir("/home/rubsz/tiled/Tides_of_War/scripts")
-master_data_path = "paths.json"
-
-commands = [c.name for c in Commands]
 argv = sys.argv
-if len(argv) != 2:
-    print("--> NEED ARGS TO RUN $ (COMMAND)")
+if len(argv) != 3:
+    print("--> NEED ARGS TO RUN $ (PATHS) (COMMAND)")
     show_commands()
     exit(1)
     
-elif not argv[1] in commands:
-    print("--> UNKNOWN COMMAND: ", argv[1])
+elif not argv[2] in [c.name for c in Commands]:
+    print("--> UNKNOWN COMMAND: (%s)" % argv[2])
     show_commands()
     exit(1)
 
-command = Commands[argv[1]]
+command = Commands[argv[2]]
 
 data_paths = {"db":"", "tiled":"", "archive":""}
-with open(master_data_path, "r") as f:
+with open(argv[1], "r") as f:
     data_paths = json.load(f)
+    for file_path in data_paths:
+        if file_path != "root":
+            data_paths[file_path] = os.path.join(data_paths["root"], data_paths[file_path])
 
 db = db_exporter.DBExporter(data_paths["db"])
 tiled = tiled_exporter.TiledExporter(data_paths["tiled"])

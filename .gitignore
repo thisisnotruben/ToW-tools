@@ -1,4 +1,7 @@
 *.pyc
 *.ods
+ImageManipulation.py
 __pycache__/
-DB/
+game_DB/
+meta_DB/
+fonts/

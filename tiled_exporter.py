@@ -27,9 +27,9 @@ class TiledExporter:
     cell_size = 16
 
     def __init__(self, file_path_data):
-        self.tiled = {"map_dir":"", "tileset_dir":"", "character_dir":"", \
+        self.tiled = {"root":"","map_dir":"", "tileset_dir":"", "character_dir":"", \
             "debug_dir":"", "map_file":"", "template_dir":""}
-        self.game  = {"map_dir":"", "tileset_dir":"", "character_dir":""}
+        self.game  = {"root":"","map_dir":"", "tileset_dir":"", "character_dir":""}
         self.debug = {}
         # load file_paths
         with open(file_path_data, "r") as f:
@@ -37,7 +37,14 @@ class TiledExporter:
             self.tiled = data["tiled"]
             self.game = data["game"]
             self.debug = data["debug"]
+        # make rel paths abs paths
+        for asset_dir in [self.tiled, self.game]:
+            for file_name in asset_dir:
+                if file_name != "root":
+                    asset_dir[file_name] = os.path.join(asset_dir["root"], asset_dir[file_name])
+        # parse file name
         self.file_name = os.path.split(self.tiled["map_file"])[-1]
+        # add all tags
         TiledExporter.all_tags = TiledExporter.tags_single + TiledExporter.tags_multiple
 
     @staticmethod
