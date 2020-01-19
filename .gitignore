@@ -1,6 +1,5 @@
 *.pyc
 *.ods
-ImageManipulation.py
 __pycache__/
 game_DB/
 meta_DB/

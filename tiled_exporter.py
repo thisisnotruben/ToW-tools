@@ -8,9 +8,9 @@ Tiled version tested on: 1.3.1
 import os
 import json
 import shutil
+import image_editor
 import xml.etree.ElementTree as ET
-from PIL import Image, ImageChops
-from enum import Enum, unique
+
 
 class TiledExporter:
 
@@ -201,7 +201,7 @@ class TiledExporter:
         print("--> MAP DEBUG OVERLAY: %s\n--> PRESS (CTRL-T) TO REFRESH IF HASN'T SHOWN" % debug)
 
     def make_debug_tilesets(self):
-        defined_color_names = [c.name for c in Color]
+        defined_color_names = [c.name for c in image_editor.Color]
         for tileset in os.listdir(self.tiled["tileset_dir"]):
             if tileset.endswith(TiledExporter.img_ext):
                 # check if color is defined
@@ -215,11 +215,7 @@ class TiledExporter:
                 src = os.path.join(self.tiled["tileset_dir"], tileset)
                 dest = os.path.join(self.tiled["debug_dir"], tileset)
                 # create overlay
-                image = Image.open(src, "r")
-                overlay = Image.new("RGBA", image.size, Color[self.debug[tileset]].value)
-                out = ImageChops.multiply(image, overlay)
-                # write image
-                out.save(dest)
+                image_editor.ImageEditor.create_overlay(src, dest, image_editor.Color[self.debug[tileset]].value)
         print("--> DEBUG TILESETS MADE")
 
     def export_tilesets(self):
@@ -346,13 +342,3 @@ class TiledExporter:
         dest = os.path.join(self.game["meta_dir"], file_name + "DB.xml")
         TiledExporter._write_xml(tree, dest)
         print("--> META: (%s) EXPORTED" % self.file_name)
-
-
-@unique
-class Color(Enum):
-    RED = (255, 0, 0, 255)
-    GREEN = (0, 255, 0, 255)
-    BLUE = (0, 0, 255, 255)
-    MAGENTA = (255, 0, 255, 255)
-    YELLOW = (255, 255, 0, 255)
-    CYAN = (0, 255, 255, 255)

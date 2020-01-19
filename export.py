@@ -11,6 +11,7 @@ import json
 import tiled_exporter
 import db_exporter
 import archive_maker
+import image_editor
 
 
 class Commands(enum.Enum):
@@ -32,8 +33,11 @@ def show_commands():
     for c in Commands:
         print(" |-> ", c.name)
     print("--> COLORS:")
-    for c in tiled_exporter.Color:
+    for c in image_editor.Color:
         print(" |-> ", c.name)
+    print("--> FONTS:")
+    for f in image_editor.Font:
+        print(" |-> ", f.name)
 
 
 argv = sys.argv
