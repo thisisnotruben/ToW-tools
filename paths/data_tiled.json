@@ -28,5 +28,6 @@
                 "terrain.png":"BLUE",
                 "tiles.png":"BLUE",
                 "ui.png":"RED"
-        }
+        },
+        "32": ["misc.png", "tiles.png"]
 }

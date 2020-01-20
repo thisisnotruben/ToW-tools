@@ -31,12 +31,14 @@ class TiledExporter:
             "debug_dir":"", "map_file":"", "template_dir":""}
         self.game  = {"root":"","map_dir":"", "tileset_dir":"", "character_dir":""}
         self.debug = {}
+        self.tilesets_32 = []
         # load file_paths
         with open(file_path_data, "r") as f:
             data = json.load(f)
             self.tiled = data["tiled"]
             self.game = data["game"]
             self.debug = data["debug"]
+            self.tilesets_32 = data["32"]
         # make rel paths abs paths
         for asset_dir in [self.tiled, self.game]:
             for file_name in asset_dir:
@@ -202,6 +204,7 @@ class TiledExporter:
 
     def make_debug_tilesets(self):
         defined_color_names = [c.name for c in image_editor.Color]
+        print("--> MAKING DEBUG TILESETS:")
         for tileset in os.listdir(self.tiled["tileset_dir"]):
             if tileset.endswith(TiledExporter.img_ext):
                 # check if color is defined
@@ -216,9 +219,24 @@ class TiledExporter:
                 dest = os.path.join(self.tiled["debug_dir"], tileset)
                 # create overlay
                 image_editor.ImageEditor.create_overlay(src, dest, image_editor.Color[self.debug[tileset]].value)
-        print("--> DEBUG TILESETS MADE")
+                print(" |-> TILESET MADE: (%s)" % dest)
+        print("--> ALL DEBUG TILESETS MADE")
+
+    def make_32_tilesets(self):
+        print("--> MAKING 32px TILESETS:")
+        for tileset in os.listdir(self.tiled["tileset_dir"]):
+            if tileset in self.tilesets_32:
+                # make paths
+                src = os.path.join(self.tiled["tileset_dir"], tileset)
+                new_file_name = "%s_32%s" % (os.path.splitext(tileset)[0], TiledExporter.img_ext)
+                dest = os.path.join(self.tiled["tileset_dir"], new_file_name)
+                # make 32 image
+                image_editor.ImageEditor.pad_height(src, dest, 16, 16)
+                print(" |-> TILESET MADE: (%s)" % dest)
+        print("--> ALL 32px TILESETS MADE")
 
     def export_tilesets(self):
+        print("--> EXPORTING TILESETS")
         if os.path.exists(self.game["tileset_dir"]):
             shutil.rmtree(self.game["tileset_dir"])
         shutil.copytree(self.tiled["tileset_dir"], self.game["tileset_dir"])
@@ -228,6 +246,7 @@ class TiledExporter:
                     src = os.path.join(dirpath, filename)
                     dest = os.path.join(self.game["character_dir"], os.path.split(dirpath)[-1])
                     shutil.copy(src, dest)
+                    print(" |-> TILESET EXPORTED: (%s)" % dest)
         print("--> ALL TILESETS EXPORTED")
 
     def export_map(self):

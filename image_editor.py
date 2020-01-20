@@ -89,8 +89,20 @@ class ImageEditor:
 
     @staticmethod
     def create_overlay(input_path, output_path, overlay_color):
-        image = Image.open(input_path, "r")
-        overlay = Image.new("RGBA", image.size, overlay_color)
-        out = ImageChops.multiply(image, overlay)
-        out.save(output_path)
+        with Image.open(input_path, "r") as img:
+            overlay = Image.new("RGBA", img.size, overlay_color)
+            out = ImageChops.multiply(img, overlay)
+            out.save(output_path)
+            out.close()
 
+    @staticmethod
+    def pad_height(input_path, output_path, frame_height, spacing):
+        with Image.open(input_path, "r") as img:
+            out = Image.new("RGBA", (img.size[0], img.size[1] * 2))
+            for row in range(0, img.height, frame_height):
+                sprite = img.crop((0, row, img.width, row + frame_height))
+                out.paste(sprite, (0, spacing))
+                spacing += frame_height * 2
+            out.save(output_path)
+            out.close()
+            

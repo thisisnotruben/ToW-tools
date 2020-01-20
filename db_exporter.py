@@ -48,6 +48,7 @@ class DBExporter:
 
     def export_databases(self):
         self.load_db()
+        print("--> EXPORTING DATABASES")
         for sheet_name in self.data:
             # get data
             data = self.data[sheet_name]["data"]
@@ -86,4 +87,5 @@ class DBExporter:
             # write xml
             tree = ET.ElementTree(root)
             tree.write(dest, encoding="UTF-8", xml_declaration=True)
-            print("--> DATABASE: (%s) EXPORTED" % sheet_name)
+            print(" |-> DATABASE EXPORTED: (%s)" % sheet_name)
+        print("--> ALL DATABASES EXPORTED")
