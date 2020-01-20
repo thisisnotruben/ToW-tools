@@ -26,6 +26,7 @@ class Commands(enum.Enum):
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
     MAKE_32_TILESETS = enum.auto()
+    MAKE_32_DEBUG_TILESETS = enum.auto()
     MAKE_ICON_ATLAS = enum.auto()
     BACKUP = enum.auto()
     HELP = enum.auto()
@@ -113,6 +114,12 @@ elif command == Commands.MAKE_32_TILESETS:
     if tiled.is_debugging():
         tiled.debug_map()
     tiled.make_32_tilesets()
+
+elif command == Commands.MAKE_32_DEBUG_TILESETS:
+    if tiled.is_debugging():
+        tiled.debug_map()
+    tiled.make_32_tilesets()
+    tiled.make_debug_tilesets()
 
 elif command == Commands.MAKE_ICON_ATLAS:
     asset.make_icon_atlas()
