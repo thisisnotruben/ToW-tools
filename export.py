@@ -12,6 +12,7 @@ import tiled_exporter
 import db_exporter
 import archive_maker
 import image_editor
+import asset_manager
 
 
 class Commands(enum.Enum):
@@ -25,6 +26,7 @@ class Commands(enum.Enum):
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
     MAKE_32_TILESETS = enum.auto()
+    MAKE_ICON_ATLAS = enum.auto()
     BACKUP = enum.auto()
     HELP = enum.auto()
 
@@ -54,7 +56,7 @@ elif not argv[2] in [c.name for c in Commands]:
 
 command = Commands[argv[2]]
 
-data_paths = {"db":"", "tiled":"", "archive":""}
+data_paths = {"db":"", "tiled":"", "archive":"", "asset":""}
 with open(argv[1], "r") as f:
     data_paths = json.load(f)
     for file_path in data_paths:
@@ -64,6 +66,7 @@ with open(argv[1], "r") as f:
 db = db_exporter.DBExporter(data_paths["db"])
 tiled = tiled_exporter.TiledExporter(data_paths["tiled"])
 archive = archive_maker.Archiver(data_paths["archive"])
+asset = asset_manager.AssetManager(data_paths["asset"])
 
 if command == Commands.EXPORT_MAP:
     tiled.export_map()
@@ -110,6 +113,9 @@ elif command == Commands.MAKE_32_TILESETS:
     if tiled.is_debugging():
         tiled.debug_map()
     tiled.make_32_tilesets()
+
+elif command == Commands.MAKE_ICON_ATLAS:
+    asset.make_icon_atlas()
 
 elif command == Commands.BACKUP:
     archive.backup()

@@ -52,7 +52,7 @@ class ImageEditor:
         """Enumerates image in a grid like fashion per frame"""
         with Image.open(input_path) as img:
             draw = ImageDraw.Draw(img)
-            width, height = get_frame_size(img.width, img.height, hvframes)
+            width, height = ImageEditor.get_frame_size(img.width, img.height, hvframes)
             count = start_count
             for y in range(0, img.height, height):
                 for x in range(0, img.width, width):
@@ -65,7 +65,7 @@ class ImageEditor:
         """Draws a grid on the image."""
         with Image.open(input_path) as img:
             draw = ImageDraw.Draw(img)
-            width, height = get_frame_size(img.width, img.height, hvframes)
+            width, height = ImageEditor.get_frame_size(img.width, img.height, hvframes)
             for x in range(0, img.width, width):
                 line = ((x + offset[0], 0), (x + offset[0], img.height))
                 draw.line(line, color, line_width)
@@ -78,7 +78,7 @@ class ImageEditor:
     def crop_frame(input_path, output_path, hvframes=(), frame=()):
         """Crops Image; hvframes/frame parameters are tuples, frame starts at 0"""
         with Image.open(input_path) as img:
-            width, height = get_frame_size(img.width, img.height, hvframes)
+            width, height = ImageEditor.get_frame_size(img.width, img.height, hvframes)
             x = width * frame[0]
             y = height * frame[1]
             sprite = img.crop((x, y, x + width, y + height))
@@ -106,3 +106,9 @@ class ImageEditor:
             out.save(output_path)
             out.close()
             
+    @staticmethod
+    def resize_image(input_path, output_path, size=()):
+        with Image.open(input_path, "r") as img:
+            img = img.resize(size)
+            img.save(output_path)
+

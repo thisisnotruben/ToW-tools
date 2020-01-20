@@ -1,0 +1,18 @@
+{
+    "icon": {
+        "path": "/home/rubsz/tiled/Tides_of_War/assets/dev_icon/icons.png",
+        "atlas_name": "icon_atlas.png",
+        "size": [
+            512,
+            4096
+        ],
+        "hv_frames": [
+            16,
+            128
+        ],
+        "bg":"DARK_GREY",
+        "grid":"GREEN",
+        "text":"RED",
+        "font":"MAGO"
+    }
+}
