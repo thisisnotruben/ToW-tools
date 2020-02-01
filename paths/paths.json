@@ -1,5 +1,5 @@
 {
-    "root":"/home/rubsz/tiled/Tides_of_War/scripts/paths",
+    "root":"/home/rubsz/tiled/Tides_of_War/non_map/scripts/paths",
     "db":"data_db.json",
     "tiled":"data_tiled.json",
     "archive":"data_archiver.json",

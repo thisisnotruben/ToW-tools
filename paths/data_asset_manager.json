@@ -1,6 +1,6 @@
 {
     "icon": {
-        "path": "/home/rubsz/tiled/Tides_of_War/assets/dev_icon/icons.png",
+        "path": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_icon/icons.png",
         "atlas_name": "icon_atlas.png",
         "size": [
             512,
