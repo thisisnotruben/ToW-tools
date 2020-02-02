@@ -1,4 +1,5 @@
 # ToW-tools
+![icon](icon.png)
 #### Author:
 Ruben Alvarez Reyes
 <br/>
