@@ -2,7 +2,7 @@
 ![icon](icon.png)
 #### Author:
 Ruben Alvarez Reyes
-<br/>
+
 rubenar1996@gmail.com
 
 #### Description:
@@ -10,5 +10,5 @@ rubenar1996@gmail.com
 * Export game databases for game engine.
 
 #### Programs used for:
-* [**Tiled Map Editor**](https://www.mapeditor.org/)
-* [**Godot Game Engine**](https://godotengine.org/)
+* [Tiled Map Editor](https://www.mapeditor.org/)
+* [Godot Game Engine](https://godotengine.org/)
