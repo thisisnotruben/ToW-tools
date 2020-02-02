@@ -1,6 +1,4 @@
 *.pyc
 *.ods
 __pycache__/
-game_DB/
-meta_DB/
-fonts/
+gui/
