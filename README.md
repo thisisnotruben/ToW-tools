@@ -10,5 +10,6 @@ rubenar1996@gmail.com
 * Export game databases for game engine.
 
 #### Programs used for:
+* [Tides of War](https://github.com/thisisnotruben/Tides-of-War)
 * [Tiled Map Editor](https://www.mapeditor.org/)
 * [Godot Game Engine](https://godotengine.org/)
