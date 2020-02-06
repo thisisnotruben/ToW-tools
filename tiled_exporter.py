@@ -76,7 +76,7 @@ class TiledExporter:
         elif "template" in unit_atts:
             base_name = unit_atts["template"].split("/")[-1].split(".")[0]
         elif bool(unit_meta):
-            base_name = unit_meta[unit_atts["id"]]["img"].split("/")[0]
+            base_name = unit_meta[unit_atts["id"]]["img"].split("-")[0]
         return "%s-%s" % (unit_atts["id"], base_name)
 
     def _get_map_character_layer(self):
@@ -127,8 +127,8 @@ class TiledExporter:
                                 attrib = attrib.attrib
                                 master_dict[unit_attr["id"]][attrib["name"]] = attrib["value"]
                         elif attribute.tag == "image":
-                            tex_path = tilesets[tile_id].split("/")[-1].split(".")[0] + "/" + attribute.attrib["source"]
-                            master_dict[unit_attr["id"]]["img"] = tex_path
+                            tex_name = attribute.attrib["source"]
+                            master_dict[unit_attr["id"]]["img"] = tex_name
                 id_idx += 1
         return master_dict
 
@@ -240,13 +240,12 @@ class TiledExporter:
         if os.path.exists(self.game["tileset_dir"]):
             shutil.rmtree(self.game["tileset_dir"])
         shutil.copytree(self.tiled["tileset_dir"], self.game["tileset_dir"])
-        for dirpath, dirnames, filenames in os.walk(self.tiled["character_dir"]):
-            for filename in filenames:
-                if filename.endswith(TiledExporter.tileset_ext):
-                    src = os.path.join(dirpath, filename)
-                    dest = os.path.join(self.game["character_dir"], os.path.split(dirpath)[-1])
-                    shutil.copy(src, dest)
-                    print(" |-> TILESET EXPORTED: (%s)" % dest)
+        for filename in os.listdir(self.tiled["character_dir"]):
+            if filename.endswith(TiledExporter.tileset_ext):
+                src = os.path.join(self.tiled["character_dir"], filename)
+                dest = self.game["character_dir"]
+                shutil.copy(src, dest)
+                print(" |-> TILESET EXPORTED: (%s)" % dest)
         print("--> ALL TILESETS EXPORTED")
 
     def export_map(self):
@@ -313,7 +312,7 @@ class TiledExporter:
                 master_dict[unit_ID] = {
                     "editorName":editor_names[unit_ID],
                     "name":game_names[unit_ID].strip(),
-                    "img":unit_meta[unit_ID]["img"],
+                    "img":os.path.splitext(unit_meta[unit_ID]["img"])[0],
                     "enemy":unit_meta[unit_ID]["enemy"],
                     TiledExporter.tag_spawn: spawn_locs[unit_ID]}
                 if unit_ID in unit_patrol_paths:
