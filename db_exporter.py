@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 class DBExporter:
 
     defined_text_tags = ["description", "start", "active", "completed", "delivered", "receiver_completed", "receiver_delivered"]
+    repeated_tags = {"ImageDB":"img", "ItemDB":"item", "QuestDB":"quest", "SpellDB":"spell"}
     db_ext = "ods"
     
     def __init__(self, file_path_data):
@@ -43,8 +44,8 @@ class DBExporter:
                                 sheet[row].append("")
                     for row in rows_to_delete:
                         sheet.remove(row)
-                    # set data
-                    self.data[sheet_name] = {"data":sheet, "tag":os.path.splitext(db)[0]}
+                    # set data                   
+                    self.data[sheet_name] = {"data":sheet, "tag":DBExporter.repeated_tags[os.path.splitext(db)[0]]}
 
     def export_databases(self):
         self.load_db()
