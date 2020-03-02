@@ -6,8 +6,10 @@ Tiled version tested on: 1.3.1
 """
 
 import os
+import sys
 import json
 import shutil
+import db_exporter
 import image_editor
 import xml.etree.ElementTree as ET
 
@@ -234,6 +236,37 @@ class TiledExporter:
                 image_editor.ImageEditor.pad_height(src, dest, 16, 16)
                 print(" |-> TILESET MADE: (%s)" % dest)
         print("--> ALL 32px TILESETS MADE")
+
+    def make_sprite_icons(self):
+        print("--> MAKING SPRITE ICONS")
+        # load img db
+        data_paths = {}
+        with open(sys.argv[1], "r") as f:
+            data_paths = json.load(f)
+            for file_path in data_paths:
+                if file_path != "root":
+                    data_paths[file_path] = os.path.join(data_paths["root"], data_paths[file_path])
+        db = db_exporter.DBExporter(data_paths["db"])
+        db.load_db()
+        img_data = db.data["ImageDB"]["data"]
+        # make character icons
+        for img in os.listdir(self.game["character_dir"]):
+            if img.endswith(TiledExporter.img_ext):
+                # make paths
+                src = os.path.join(self.game["character_dir"], img)
+                dest = os.path.join(self.tiled["character_dir"], img)
+                # get hv frames for current sprite
+                img_name = os.path.splitext(img)[0]
+                character_hv_frames = ()
+                for row in range(len(img_data)):
+                    if img_name in img_data[row]:
+                        character_hv_frames = (int(img_data[row][1]), 1)
+                if character_hv_frames == ():
+                    print(" |-> SPRITE DOESN'T HAVE FRAME DATA: (%s)" % src)
+                else:
+                    # write image
+                    image_editor.ImageEditor.crop_frame(src, dest, character_hv_frames, (0,0))
+        print("--> ALL SPRITE ICONS MADE")
 
     def export_tilesets(self):
         print("--> EXPORTING TILESETS")

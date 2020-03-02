@@ -28,6 +28,7 @@ class Commands(enum.Enum):
     MAKE_32_TILESETS = enum.auto()
     MAKE_32_DEBUG_TILESETS = enum.auto()
     MAKE_ICON_ATLAS = enum.auto()
+    MAKE_SPRITE_ICONS = enum.auto()
     BACKUP = enum.auto()
     HELP = enum.auto()
 
@@ -123,6 +124,9 @@ elif command == Commands.MAKE_32_DEBUG_TILESETS:
 
 elif command == Commands.MAKE_ICON_ATLAS:
     asset.make_icon_atlas()
+
+elif command == Commands.MAKE_SPRITE_ICONS:
+    tiled.make_sprite_icons()
 
 elif command == Commands.BACKUP:
     archive.backup()
