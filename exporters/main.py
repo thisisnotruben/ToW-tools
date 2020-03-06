@@ -27,7 +27,7 @@ class Commands(enum.Enum):
     MAKE_32_DEBUG_TILESETS = enum.auto()
     MAKE_ICON_ATLAS = enum.auto()
     MAKE_SPRITE_ICONS = enum.auto()
-    MAKE_SPRITE_DEATHS = enum.auto()
+    MAKE_SPRITE_DEATHS = "OPTIONAL ARG: PNG FILE PATH"
     BACKUP = enum.auto()
     HELP = enum.auto()
     QUIT = enum.auto()
@@ -47,6 +47,8 @@ class Main:
         print("--> COMMANDS:")
         for command in Commands:
             print(" |-> ", command.name)
+            if type(command.value) == str:
+                print("    \*-> ", command.value)
         print("\n--> COLORS:")
         for color in image_editor.Color:
             print(" |-> ", color.name)
@@ -54,7 +56,7 @@ class Main:
         for font in image_editor.Font:
             print(" |-> ", font.name)
 
-    def execute_command(self, command):
+    def execute_command(self, command, *arg):
         if not command in [c.name for c in Commands]:
             print("--> UNKNOWN COMMAND: (%s)\n--> TYPE HELP FOR ALL COMMANDS" %
                   command)
@@ -121,7 +123,7 @@ class Main:
             self.tiled.make_sprite_icons()
 
         elif command == Commands.MAKE_SPRITE_DEATHS:
-            self.asset.make_sprite_deaths()
+            self.asset.make_sprite_deaths(*arg)
 
         elif command == Commands.BACKUP:
             self.archive.backup()
@@ -134,11 +136,13 @@ class Main:
 
     def main_loop(self):
         print("---TIDES OF WAR TOOL----")
-        prompt = "\n--> ENTER COMMAND:\n~$ "
+        prompt_message = "\n--> ENTER COMMAND:\n~$ "
         while True:
-            command = input(prompt).strip().upper()
+            prompt = input(prompt_message).strip().split(" ")
+            command = prompt[0].upper()
+            args = prompt[1:]
             print("")
-            self.execute_command(command)
+            self.execute_command(command, *args)
 
 
 if __name__ == "__main__":

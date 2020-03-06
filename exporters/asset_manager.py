@@ -64,30 +64,44 @@ class AssetManager:
         print(" |-> IMAGE ENUMERATED")
         print("--> ICON ATLAS MADE: (%s)" % dest)
 
-    def make_sprite_deaths(self):
+    def make_sprite_deaths(self, order_path=""):
         # load img db
         db_path = path_manager.PathManager.get_paths()["db"]
         img_data = game_db.GameDB(db_path).get_database(
             game_db.DataBases.IMAGEDB)
+        # determine order
+        batch_order = []
+        if os.path.isfile(order_path):
+            batch_order.append(order_path)
+        elif order_path == "":
+            batch_order = [
+                os.path.join(self.assets["character_dir"], f)
+                for f in os.listdir(self.assets["character_dir"])
+            ]
+        else:
+            print("--> ERROR: (order_path) CANNOT BE DIRECTORY")
         # start command
         command = "gimp -idf"
         # build command
         print("--> MAKING SPRITE DEATH ANIMATIONS")
-        for img in os.listdir(self.assets["character_dir"]):
-            if img.endswith(AssetManager.img_ext):
+        for src in batch_order:
+            if src.endswith(AssetManager.img_ext):
                 # make args
-                img_name = os.path.splitext(img)[0]
-                src = os.path.join(self.assets["character_dir"], img)
+                img_name = os.path.splitext(os.path.basename(src))[0]
                 dest = src
                 if not img_name in img_data:
-                    print(" |-> SPRITE DOESN'T HAVE FRAME DATA: (%s)" % src)
+                    print(
+                        " |-> SPRITE DOESN'T HAVE FRAME DATA, SKIPPING: (%s)" %
+                        src)
                     continue
                 h_frames = int(img_data[img_name]["total"])
                 death_frame_start = h_frames - int(
                     img_data[img_name]["attacking"]) - 4
                 # append arg
-                command += ' -b \'(python-fu-death-anim RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (
+                command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (
                     src, dest, h_frames, death_frame_start)
+            elif order_path != "":
+                print("--> ERROR: (order_path) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH")
         command += " -b '(gimp-quit 0)'"
         # execute command
         os.system(command)
