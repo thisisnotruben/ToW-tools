@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tides of War Exporter
+Comment=Tool to help with the development of Tides Tides_of_War
+Exec=/home/rubsz/tiled/Tides_of_War/non_map/scripts/main.sh
+Icon=/home/rubsz/tiled/Tides_of_War/non_map/scripts/icon.png
+Type=Application
+StartupNotify=false
+Categories=Development
+Terminal=true
