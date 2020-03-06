@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-
 """
 Ruben Alvarez Reyes
 """
 
+import os
 import json
-import os.path
 import tarfile
 from datetime import datetime
 
 
 class Archiver:
-    
+
     # %s is for the date/time
     archive_name_format = "%s_Tides_of_War"
     archive_ext = ".tar.gz"
@@ -26,7 +25,8 @@ class Archiver:
 
     def backup(self):
         # make name for archive file
-        tar_name = Archiver.archive_name_format % datetime.now().strftime("%Y-%m-%d-%H") + Archiver.archive_ext
+        tar_name = Archiver.archive_name_format % datetime.now().strftime(
+            "%Y-%m-%d-%H") + Archiver.archive_ext
         # make path
         tar_name = os.path.join(self.backup_dir, tar_name)
         # archive files

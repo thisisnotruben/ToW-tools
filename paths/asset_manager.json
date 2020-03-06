@@ -10,9 +10,10 @@
             16,
             128
         ],
-        "bg":"DARK_GREY",
-        "grid":"BLUE",
-        "text":"RED",
-        "font":"MAGO"
-    }
+        "bg": "DARK_GREY",
+        "grid": "BLUE",
+        "text": "RED",
+        "font": "MAGO"
+    },
+    "character_dir": "/home/rubsz/godot/my_games/Tides_of_War/asset/img/character"
 }

@@ -1,7 +1,6 @@
 {
-    "root":"/home/rubsz/tiled/Tides_of_War/non_map/scripts/paths",
-    "db":"data_db.json",
-    "tiled":"data_tiled.json",
-    "archive":"data_archiver.json",
-    "asset":"data_asset_manager.json"
+    "db":"game_db.json",
+    "tiled":"tiled_manager.json",
+    "archive":"archive_manager.json",
+    "asset":"asset_manager.json"
 }

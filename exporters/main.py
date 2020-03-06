@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-
 """
 Ruben Alvarez Reyes
 """
 
 import os
-import sys
 import enum
-import json
-import tiled_exporter
-import db_exporter
-import archive_maker
+import game_db
 import image_editor
+import path_manager
+import tiled_manager
 import asset_manager
+import archive_manager
 
 
 class Commands(enum.Enum):
@@ -29,107 +27,119 @@ class Commands(enum.Enum):
     MAKE_32_DEBUG_TILESETS = enum.auto()
     MAKE_ICON_ATLAS = enum.auto()
     MAKE_SPRITE_ICONS = enum.auto()
+    MAKE_SPRITE_DEATHS = enum.auto()
     BACKUP = enum.auto()
     HELP = enum.auto()
+    QUIT = enum.auto()
 
 
-def show_commands():
-    print("--> COMMANDS:")
-    for c in Commands:
-        print(" |-> ", c.name)
-    print("--> COLORS:")
-    for c in image_editor.Color:
-        print(" |-> ", c.name)
-    print("--> FONTS:")
-    for f in image_editor.Font:
-        print(" |-> ", f.name)
+class Main:
+    def __init__(self, master_path):
+        data_paths = path_manager.PathManager.get_paths()
+
+        self.db = game_db.GameDB(data_paths["db"])
+        self.tiled = tiled_manager.Tiled(data_paths["tiled"])
+        self.archive = archive_manager.Archiver(data_paths["archive"])
+        self.asset = asset_manager.AssetManager(data_paths["asset"])
+
+    @staticmethod
+    def show_commands():
+        print("--> COMMANDS:")
+        for command in Commands:
+            print(" |-> ", command.name)
+        print("\n--> COLORS:")
+        for color in image_editor.Color:
+            print(" |-> ", color.name)
+        print("\n--> FONTS:")
+        for font in image_editor.Font:
+            print(" |-> ", font.name)
+
+    def execute_command(self, command):
+        if not command in [c.name for c in Commands]:
+            print("--> UNKNOWN COMMAND: (%s)\n--> TYPE HELP FOR ALL COMMANDS" %
+                  command)
+            return
+
+        command = Commands[command]
+
+        if command == Commands.EXPORT_MAP:
+            self.tiled.export_map()
+
+        elif command == Commands.EXPORT_META:
+            self.tiled.export_meta()
+
+        elif command == Commands.EXPORT_MAP_META:
+            self.tiled.export_map()
+            self.tiled.export_meta()
+
+        elif command == Commands.EXPORT_TILESETS:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.export_tilesets()
+
+        elif command == Commands.EXPORT_ALL_TILED:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.export_tilesets()
+            self.tiled.export_map()
+            self.tiled.export_meta()
+
+        elif command == Commands.EXPORT_DATABASES:
+            self.db.export_databases()
+
+        elif command == Commands.EXPORT_ALL:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.export_tilesets()
+            self.tiled.export_map()
+            self.tiled.export_meta()
+            self.db.export_databases()
+
+        elif command == Commands.DEBUG_MAP:
+            self.tiled.debug_map()
+
+        elif command == Commands.MAKE_DEBUG_TILESETS:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.make_debug_tilesets()
+
+        elif command == Commands.MAKE_32_TILESETS:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.make_32_tilesets()
+
+        elif command == Commands.MAKE_32_DEBUG_TILESETS:
+            if self.tiled.is_debugging():
+                self.tiled.debug_map()
+            self.tiled.make_32_tilesets()
+            self.tiled.make_debug_tilesets()
+
+        elif command == Commands.MAKE_ICON_ATLAS:
+            self.asset.make_icon_atlas()
+
+        elif command == Commands.MAKE_SPRITE_ICONS:
+            self.tiled.make_sprite_icons()
+
+        elif command == Commands.MAKE_SPRITE_DEATHS:
+            self.asset.make_sprite_deaths()
+
+        elif command == Commands.BACKUP:
+            self.archive.backup()
+
+        elif command == Commands.HELP:
+            Main.show_commands()
+
+        elif command == Commands.QUIT:
+            exit(0)
+
+    def main_loop(self):
+        print("---TIDES OF WAR TOOL----")
+        prompt = "\n--> ENTER COMMAND:\n~$ "
+        while True:
+            command = input(prompt).strip().upper()
+            print("")
+            self.execute_command(command)
 
 
-argv = sys.argv
-if len(argv) != 3:
-    print("--> NEED ARGS TO RUN $ (PATHS) (COMMAND)")
-    show_commands()
-    exit(1)
-    
-elif not argv[2] in [c.name for c in Commands]:
-    print("--> UNKNOWN COMMAND: (%s)" % argv[2])
-    show_commands()
-    exit(1)
-
-command = Commands[argv[2]]
-
-data_paths = {"db":"", "tiled":"", "archive":"", "asset":""}
-with open(argv[1], "r") as f:
-    data_paths = json.load(f)
-    for file_path in data_paths:
-        if file_path != "root":
-            data_paths[file_path] = os.path.join(data_paths["root"], data_paths[file_path])
-
-db = db_exporter.DBExporter(data_paths["db"])
-tiled = tiled_exporter.TiledExporter(data_paths["tiled"])
-archive = archive_maker.Archiver(data_paths["archive"])
-asset = asset_manager.AssetManager(data_paths["asset"])
-
-if command == Commands.EXPORT_MAP:
-    tiled.export_map()
-
-elif command == Commands.EXPORT_META:
-    tiled.export_meta()
-
-elif command == Commands.EXPORT_MAP_META:
-    tiled.export_map()
-    tiled.export_meta()
-    
-elif command == Commands.EXPORT_TILESETS:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.export_tilesets()
-
-elif command == Commands.EXPORT_ALL_TILED:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.export_tilesets()
-    tiled.export_map()
-    tiled.export_meta()
-
-elif command == Commands.EXPORT_DATABASES:
-    db.export_databases()
-
-elif command == Commands.EXPORT_ALL:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.export_tilesets()
-    tiled.export_map()
-    tiled.export_meta()
-    db.export_databases()
-
-elif command == Commands.DEBUG_MAP:
-    tiled.debug_map()
-
-elif command == Commands.MAKE_DEBUG_TILESETS:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.make_debug_tilesets()
-
-elif command == Commands.MAKE_32_TILESETS:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.make_32_tilesets()
-
-elif command == Commands.MAKE_32_DEBUG_TILESETS:
-    if tiled.is_debugging():
-        tiled.debug_map()
-    tiled.make_32_tilesets()
-    tiled.make_debug_tilesets()
-
-elif command == Commands.MAKE_ICON_ATLAS:
-    asset.make_icon_atlas()
-
-elif command == Commands.MAKE_SPRITE_ICONS:
-    tiled.make_sprite_icons()
-
-elif command == Commands.BACKUP:
-    archive.backup()
-
-elif command == Commands.HELP:
-    show_commands()
+if __name__ == "__main__":
+    Main(path_manager.PathManager.get_master_path()).main_loop()
