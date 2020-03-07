@@ -27,7 +27,9 @@ class Commands(enum.Enum):
     MAKE_32_DEBUG_TILESETS = enum.auto()
     MAKE_ICON_ATLAS = enum.auto()
     MAKE_SPRITE_ICONS = enum.auto()
-    MAKE_SPRITE_DEATHS = "OPTIONAL ARG: PNG FILE PATH"
+    MAKE_SPRITE_DEATHS = "OPTIONAL ARG: (FILE_PATH)"
+    MAKE_SYM_LINKS = enum.auto()
+    MAKE_LID = "OPTIONAL ARGS: (ALL: ALL SPRITES) || (FILE_PATH: SPECIFIC SPRITE) || (NONE: SPRITES FROM SYM-LINKS)"
     BACKUP = enum.auto()
     HELP = enum.auto()
     QUIT = enum.auto()
@@ -124,6 +126,23 @@ class Main:
 
         elif command == Commands.MAKE_SPRITE_DEATHS:
             self.asset.make_sprite_deaths(*arg)
+
+        elif command == Commands.MAKE_SYM_LINKS:
+            self.asset.make_sym_links()
+
+        elif command == Commands.MAKE_LID:
+            sprites = self.asset.make_sym_links()        
+            self.tiled.make_sprite_icons()
+            if len(arg) > 0:
+                if arg[0] == "ALL":
+                    # ALL
+                    self.asset.make_sprite_deaths()
+                    sprites = []
+                else:
+                    # FILE PATHS
+                    sprites = arg
+            if len(sprites) > 0:
+                self.asset.make_sprite_deaths(*sprites)            
 
         elif command == Commands.BACKUP:
             self.archive.backup()

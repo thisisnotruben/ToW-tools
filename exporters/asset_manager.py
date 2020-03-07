@@ -3,8 +3,10 @@
 Ruben Alvarez Reyes
 """
 
+import re
 import os
 import json
+import shutil
 import game_db
 import image_editor
 import path_manager
@@ -15,7 +17,7 @@ class AssetManager:
     img_ext = ".png"
 
     def __init__(self, file_path_data):
-        self.assets = {"icon": {}, "character_dir": ""}
+        self.assets = {}
         # load paths
         with open(file_path_data, "r") as f:
             self.assets = json.load(f)
@@ -64,22 +66,26 @@ class AssetManager:
         print(" |-> IMAGE ENUMERATED")
         print("--> ICON ATLAS MADE: (%s)" % dest)
 
-    def make_sprite_deaths(self, order_path=""):
+    def make_sprite_deaths(self, *order_paths):
         # load img db
         db_path = path_manager.PathManager.get_paths()["db"]
         img_data = game_db.GameDB(db_path).get_database(
             game_db.DataBases.IMAGEDB)
         # determine order
         batch_order = []
-        if os.path.isfile(order_path):
-            batch_order.append(order_path)
-        elif order_path == "":
+        if len(order_paths) == 0:
             batch_order = [
-                os.path.join(self.assets["character_dir"], f)
-                for f in os.listdir(self.assets["character_dir"])
+                os.path.join(self.assets["game_character_dir"], f)
+                for f in os.listdir(self.assets["game_character_dir"])
             ]
         else:
-            print("--> ERROR: (order_path) CANNOT BE DIRECTORY")
+            batch_order = order_paths
+            for order in batch_order:
+                if not os.path.isfile(order):
+                    print(
+                        "--> ERROR: (order_paths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING"
+                    )
+                    return
         # start command
         command = "gimp -idf"
         # build command
@@ -100,9 +106,31 @@ class AssetManager:
                 # append arg
                 command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (
                     src, dest, h_frames, death_frame_start)
-            elif order_path != "":
-                print("--> ERROR: (order_path) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH")
+            elif len(order_paths) != 0:
+                print(
+                    "--> ERROR: (order_paths) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH"
+                )
         command += " -b '(gimp-quit 0)'"
         # execute command
         os.system(command)
         print("--> SPRITE DEATH ANIMATIONS MADE")
+
+    def make_sym_links(self):
+        syms_made = []
+        # file naming convention used
+        pattern = re.compile("[0-9]+%s" % AssetManager.img_ext)
+        # loop through all dirs to find hard copies and send to the game asset dir
+        print("--> MAKING SYM LINKS")
+        for dirpath, dirnames, filenames in os.walk(
+                self.assets["tiled_character_dir"]):
+            for file_name in filenames:
+                src = os.path.join(dirpath, file_name)
+                if not os.path.islink(src) and re.search(pattern, file_name):
+                    dest = os.path.join(self.assets["game_character_dir"],
+                                        file_name)
+                    shutil.move(src, dest)
+                    os.symlink(dest, src)
+                    syms_made.append(dest)
+                    print(" |-> SYM LINK MADE: (%s) -> (%s)" % (src, dest))
+        print("--> ALL SYM LINKS MADE")
+        return syms_made

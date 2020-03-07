@@ -15,5 +15,6 @@
         "text": "RED",
         "font": "MAGO"
     },
-    "character_dir": "/home/rubsz/godot/my_games/Tides_of_War/asset/img/character"
+    "game_character_dir": "/home/rubsz/godot/my_games/Tides_of_War/asset/img/character",
+    "tiled_character_dir": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_character"
 }
