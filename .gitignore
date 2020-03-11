@@ -1,4 +1,3 @@
 *.pyc
 *.ods
 __pycache__/
-gui/

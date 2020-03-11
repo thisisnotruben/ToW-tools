@@ -8,7 +8,6 @@ import enum
 import json
 import pyexcel_ods
 import xml.etree.ElementTree as ET
-import path_manager
 
 
 class DataBases(enum.Enum):
