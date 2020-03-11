@@ -1,7 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from quest_maker.calc_conf import *
+from calc_conf import *
 from node_editor.node_editor_widget import NodeEditorWidget
 from node_editor.node_edge import EDGE_TYPE_DIRECT, EDGE_TYPE_BEZIER
 from node_editor.node_graphics_view import MODE_EDGE_DRAG

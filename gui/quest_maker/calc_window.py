@@ -5,11 +5,11 @@ from PyQt5.QtCore import *
 
 from node_editor.utils import loadStylesheets
 from node_editor.node_editor_window import NodeEditorWindow
-from quest_maker.calc_sub_window import CalculatorSubWindow
-from quest_maker.calc_drag_listbox import QDMDragListbox
-from quest_maker.calc_database import DataView
+from calc_sub_window import CalculatorSubWindow
+from calc_drag_listbox import QDMDragListbox
+from calc_database import DataView
 from node_editor.utils import dumpException, pp
-from quest_maker.calc_conf import *
+from calc_conf import *
 
 # images for the dark skin
 import quest_maker.qss.node_editor_dark_resources

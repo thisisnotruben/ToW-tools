@@ -40,4 +40,4 @@ def get_class_from_opcode(op_code):
 
 
 # import all nodes and register them
-from quest_maker.nodes import *
+from nodes import *

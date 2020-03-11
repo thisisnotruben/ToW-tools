@@ -1,5 +1,5 @@
 from node_editor.node_node import Node
-from quest_maker.calc_conf import *
+from calc_conf import *
 
 
 @register_node(NODE_QUEST)

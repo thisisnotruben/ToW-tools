@@ -2,7 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from quest_maker.calc_conf import *
+from calc_conf import *
 from node_editor.utils import dumpException
 
 
