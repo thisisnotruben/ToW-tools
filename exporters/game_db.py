@@ -11,10 +11,10 @@ import xml.etree.ElementTree as ET
 
 
 class DataBases(enum.Enum):
-    IMAGEDB = "ImageDB"
-    ITEMDB = "ItemDB"
-    QUESTDB = "QuestDB"
-    SPELLDB = "SpellDB"
+    IMAGEDB = "Image"
+    ITEMDB = "Item"
+    QUESTDB = "Quest"
+    SPELLDB = "Spell"
 
 
 class GameDB:

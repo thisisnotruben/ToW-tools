@@ -240,7 +240,7 @@ class CalculatorWindow(NodeEditorWindow):
         self.nodesDock.setWidget(self.nodesListWidget)
         self.nodesDock.setFloating(False)
 
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.nodesDock)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.nodesDock)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dataDock)
 
     def createStatusBar(self):
