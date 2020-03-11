@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from nodeeditor.node_socket import *
+from node_editor.node_socket import *
 
 
 EDGE_CP_ROUNDNESS = 100     #: Bezier controll point distance on the line
@@ -17,14 +17,14 @@ class QDMGraphicsEdge(QGraphicsPathItem):
     """Base class for Graphics Edge"""
     def __init__(self, edge:'Edge', parent:QWidget=None):
         """
-        :param edge: reference to :class:`~nodeeditor.node_edge.Edge`
-        :type edge: :class:`~nodeeditor.node_edge.Edge`
+        :param edge: reference to :class:`~node_editor.node_edge.Edge`
+        :type edge: :class:`~node_editor.node_edge.Edge`
         :param parent: parent widget
         :type parent: ``QWidget``
 
         :Instance attributes:
 
-            - **edge** - reference to :class:`~nodeeditor.node_edge.Edge`
+            - **edge** - reference to :class:`~node_editor.node_edge.Edge`
             - **posSource** - ``[x, y]`` source position in the `Scene`
             - **posDestination** - ``[x, y]`` destination position in the `Scene`
         """
@@ -129,7 +129,7 @@ class QDMGraphicsEdge(QGraphicsPathItem):
         return self.calcPath()
 
     def paint(self, painter, QStyleOptionGraphicsItem, widget=None):
-        """Qt's overriden method to paint this Graphics Edge. Path calculated in :func:`~nodeeditor.node_graphics_edge.QDMGraphicsEdge.calcPath` method"""
+        """Qt's overriden method to paint this Graphics Edge. Path calculated in :func:`~node_editor.node_graphics_edge.QDMGraphicsEdge.calcPath` method"""
         self.setPath(self.calcPath())
 
         painter.setBrush(Qt.NoBrush)

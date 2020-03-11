@@ -6,8 +6,8 @@ import os
 import json
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from nodeeditor.node_editor_widget import NodeEditorWidget
-from nodeeditor.utils import pp
+from node_editor.node_editor_widget import NodeEditorWidget
+from node_editor.utils import pp
 
 
 class NodeEditorWindow(QMainWindow):
@@ -28,14 +28,14 @@ class NodeEditorWindow(QMainWindow):
 
 
     def initUI(self):
-        """Set up this ``QMainWindow``. Create :class:`~nodeeditor.node_editor_widget.NodeEditorWidget`, Actions and Menus"""
+        """Set up this ``QMainWindow``. Create :class:`~node_editor.node_editor_widget.NodeEditorWidget`, Actions and Menus"""
         self.createActions()
         self.createMenus()
 
         # create node editor widget
-        self.nodeeditor = NodeEditorWidget(self)
-        self.nodeeditor.scene.addHasBeenModifiedListener(self.setTitle)
-        self.setCentralWidget(self.nodeeditor)
+        self.node_editor = NodeEditorWidget(self)
+        self.node_editor.scene.addHasBeenModifiedListener(self.setTitle)
+        self.setCentralWidget(self.node_editor)
 
         self.createStatusBar()
 
@@ -49,7 +49,7 @@ class NodeEditorWindow(QMainWindow):
         self.statusBar().showMessage("")
         self.status_mouse_pos = QLabel("")
         self.statusBar().addPermanentWidget(self.status_mouse_pos)
-        self.nodeeditor.view.scenePosChanged.connect(self.onScenePosChanged)
+        self.node_editor.view.scenePosChanged.connect(self.onScenePosChanged)
 
     def createActions(self):
         """Create basic `File` and `Edit` actions"""
@@ -106,18 +106,18 @@ class NodeEditorWindow(QMainWindow):
             event.ignore()
 
     def isModified(self) -> bool:
-        """Has current :class:`~nodeeditor.node_scene.Scene` been modified?
+        """Has current :class:`~node_editor.node_scene.Scene` been modified?
 
-        :return: ``True`` if current :class:`~nodeeditor.node_scene.Scene` has been modified
+        :return: ``True`` if current :class:`~node_editor.node_scene.Scene` has been modified
         :rtype: ``bool``
         """
         return self.getCurrentNodeEditorWidget().scene.isModified()
 
     def getCurrentNodeEditorWidget(self) -> NodeEditorWidget:
-        """get current :class:`~nodeeditor.node_editor_widget`
+        """get current :class:`~node_editor.node_editor_widget`
 
-        :return: get current :class:`~nodeeditor.node_editor_widget`
-        :rtype: :class:`~nodeeditor.node_editor_widget`
+        :return: get current :class:`~node_editor.node_editor_widget`
+        :rtype: :class:`~node_editor.node_editor_widget`
         """
         return self.centralWidget()
 
@@ -171,30 +171,30 @@ class NodeEditorWindow(QMainWindow):
 
     def onFileSave(self):
         """Handle File Save operation"""
-        current_nodeeditor = self.getCurrentNodeEditorWidget()
-        if current_nodeeditor is not None:
-            if not current_nodeeditor.isFilenameSet(): return self.onFileSaveAs()
+        current_node_editor = self.getCurrentNodeEditorWidget()
+        if current_node_editor is not None:
+            if not current_node_editor.isFilenameSet(): return self.onFileSaveAs()
 
-            current_nodeeditor.fileSave()
-            self.statusBar().showMessage("Successfully saved %s" % current_nodeeditor.filename, 5000)
+            current_node_editor.fileSave()
+            self.statusBar().showMessage("Successfully saved %s" % current_node_editor.filename, 5000)
 
             # support for MDI app
-            if hasattr(current_nodeeditor, "setTitle"): current_nodeeditor.setTitle()
+            if hasattr(current_node_editor, "setTitle"): current_node_editor.setTitle()
             else: self.setTitle()
             return True
 
     def onFileSaveAs(self):
         """Handle File Save As operation"""
-        current_nodeeditor = self.getCurrentNodeEditorWidget()
-        if current_nodeeditor is not None:
+        current_node_editor = self.getCurrentNodeEditorWidget()
+        if current_node_editor is not None:
             fname, filter = QFileDialog.getSaveFileName(self, 'Save graph to file')
             if fname == '': return False
 
-            current_nodeeditor.fileSave(fname)
-            self.statusBar().showMessage("Successfully saved as %s" % current_nodeeditor.filename, 5000)
+            current_node_editor.fileSave(fname)
+            self.statusBar().showMessage("Successfully saved as %s" % current_node_editor.filename, 5000)
 
             # support for MDI app
-            if hasattr(current_nodeeditor, "setTitle"): current_nodeeditor.setTitle()
+            if hasattr(current_node_editor, "setTitle"): current_node_editor.setTitle()
             else: self.setTitle()
             return True
 

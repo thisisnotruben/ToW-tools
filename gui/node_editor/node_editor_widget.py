@@ -7,10 +7,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from nodeeditor.node_scene import Scene, InvalidFile
-from nodeeditor.node_node import Node
-from nodeeditor.node_edge import Edge, EDGE_TYPE_BEZIER
-from nodeeditor.node_graphics_view import QDMGraphicsView
+from node_editor.node_scene import Scene, InvalidFile
+from node_editor.node_node import Node
+from node_editor.node_edge import Edge, EDGE_TYPE_BEZIER
+from node_editor.node_graphics_view import QDMGraphicsView
 
 
 class NodeEditorWidget(QWidget):
@@ -32,8 +32,8 @@ class NodeEditorWidget(QWidget):
 
 
     def initUI(self):
-        """Set up this ``NodeEditorWidget`` with its layout,  :class:`~nodeeditor.node_scene.Scene` and
-        :class:`~nodeeditor.node_graphics_view.QDMGraphicsView`"""
+        """Set up this ``NodeEditorWidget`` with its layout,  :class:`~node_editor.node_scene.Scene` and
+        :class:`~node_editor.node_graphics_view.QDMGraphicsView`"""
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
@@ -71,7 +71,7 @@ class NodeEditorWidget(QWidget):
         return self.scene.getSelectedItems()
 
     def hasSelectedItems(self) -> bool:
-        """Is there something selected in the :class:`nodeeditor.node_scene.Scene`?
+        """Is there something selected in the :class:`node_editor.node_scene.Scene`?
 
         :return: ``True`` if there is something selected in the `Scene`
         :rtype: ``bool``

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A module containing Graphic representation of :class:`~nodeeditor.node_scene.Scene`
+A module containing Graphic representation of :class:`~node_editor.node_scene.Scene`
 """
 import math
 from PyQt5.QtWidgets import *
@@ -9,7 +9,7 @@ from PyQt5.QtGui import *
 
 
 class QDMGraphicsScene(QGraphicsScene):
-    """Class representing Graphic of :class:`~nodeeditor.node_scene.Scene`"""
+    """Class representing Graphic of :class:`~node_editor.node_scene.Scene`"""
     #: pyqtSignal emitted when some item is selected in the `Scene`
     itemSelected = pyqtSignal()
     #: pyqtSignal emitted when items are deselected in the `Scene`
@@ -17,8 +17,8 @@ class QDMGraphicsScene(QGraphicsScene):
 
     def __init__(self, scene:'Scene', parent:QWidget=None):
         """
-        :param scene: reference to the :class:`~nodeeditor.node_scene.Scene`
-        :type scene: :class:`~nodeeditor.node_scene.Scene`
+        :param scene: reference to the :class:`~node_editor.node_scene.Scene`
+        :type scene: :class:`~node_editor.node_scene.Scene`
         :param parent: parent widget
         :type parent: QWidget
         """

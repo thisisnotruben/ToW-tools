@@ -1,4 +1,4 @@
-from nodeeditor.node_node import Node
+from node_editor.node_node import Node
 from quest_maker.calc_conf import *
 
 

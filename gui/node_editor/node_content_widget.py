@@ -2,7 +2,7 @@
 """A module containing base class for Node's content graphical representation. It also contains example of
 overriden Text Widget which can pass to it's parent notification about currently being modified."""
 from collections import OrderedDict
-from nodeeditor.node_serializable import Serializable
+from node_editor.node_serializable import Serializable
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
@@ -10,16 +10,16 @@ from PyQt5.QtGui import QIcon
 
 class QDMNodeContentWidget(QWidget, Serializable):
     """Base class for representation of the Node's graphics content. This class also provides layout
-    for other widgets inside of a :py:class:`~nodeeditor.node_node.Node`"""
+    for other widgets inside of a :py:class:`~node_editor.node_node.Node`"""
     def __init__(self, node:'Node', parent:QWidget=None):
         """
-        :param node: reference to the :py:class:`~nodeeditor.node_node.Node`
-        :type node: :py:class:`~nodeeditor.node_node.Node`
+        :param node: reference to the :py:class:`~node_editor.node_node.Node`
+        :type node: :py:class:`~node_editor.node_node.Node`
         :param parent: parent widget
         :type parent: QWidget
 
         :Instance Attributes:
-            - **node** - reference to the :class:`~nodeeditor.node_node.Node`
+            - **node** - reference to the :class:`~node_editor.node_node.Node`
             - **layout** - ``QLayout`` container
         """
         self.node = node
@@ -28,7 +28,7 @@ class QDMNodeContentWidget(QWidget, Serializable):
         self.initUI()
 
     def initUI(self):
-        """Sets up layouts and widgets to be rendered in :py:class:`~nodeeditor.node_graphics_node.QDMGraphicsNode` class.
+        """Sets up layouts and widgets to be rendered in :py:class:`~node_editor.node_graphics_node.QDMGraphicsNode` class.
         """
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0,0,0,0)

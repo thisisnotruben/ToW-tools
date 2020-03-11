@@ -2,8 +2,8 @@
 """
 A module containing all code for working with History (Undo/Redo)
 """
-from nodeeditor.node_graphics_edge import QDMGraphicsEdge
-from nodeeditor.utils import dumpException
+from node_editor.node_graphics_edge import QDMGraphicsEdge
+from node_editor.utils import dumpException
 
 DEBUG = False
 
@@ -12,12 +12,12 @@ class SceneHistory():
     """Class contains all the code for undo/redo operations"""
     def __init__(self, scene:'Scene'):
         """
-        :param scene: Reference to the :class:`~nodeeditor.node_scene.Scene`
-        :type scene: :class:`~nodeeditor.node_scene.Scene`
+        :param scene: Reference to the :class:`~node_editor.node_scene.Scene`
+        :type scene: :class:`~node_editor.node_scene.Scene`
 
         :Instance Attributes:
 
-        - **scene** - reference to the :class:`~nodeeditor.node_scene.Scene`
+        - **scene** - reference to the :class:`~node_editor.node_scene.Scene`
         - **history_limit** - number of history steps that can be stored
         """
         self.scene = scene
@@ -119,7 +119,7 @@ class SceneHistory():
 
         :param desc: Description of current History Stamp
         :type desc: ``str``
-        :param setModified: if ``True`` marks :class:`~nodeeditor.node_scene.Scene` with `has_been_modified`
+        :param setModified: if ``True`` marks :class:`~node_editor.node_scene.Scene` with `has_been_modified`
         :type setModified: ``bool``
 
         Triggers:

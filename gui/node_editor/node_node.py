@@ -2,10 +2,10 @@
 """
 A module containing NodeEditor's class for representing `Node`.
 """
-from nodeeditor.node_graphics_node import QDMGraphicsNode
-from nodeeditor.node_content_widget import QDMNodeContentWidget
-from nodeeditor.node_socket import *
-from nodeeditor.utils import dumpException
+from node_editor.node_graphics_node import QDMGraphicsNode
+from node_editor.node_content_widget import QDMNodeContentWidget
+from node_editor.node_socket import *
+from node_editor.utils import dumpException
 
 DEBUG = False
 
@@ -17,20 +17,20 @@ class Node(Serializable):
     def __init__(self, scene:'Scene', title:str="Quest Node", inputs:list=[], outputs:list=[]):
         """
 
-        :param scene: reference to the :class:`~nodeeditor.node_scene.Scene`
-        :type scene: :class:`~nodeeditor.node_scene.Scene`
+        :param scene: reference to the :class:`~node_editor.node_scene.Scene`
+        :type scene: :class:`~node_editor.node_scene.Scene`
         :param title: Node Title shown in Scene
         :type title: str
-        :param inputs: list of :class:`~nodeeditor.node_socket.Socket` types from which the `Sockets` will be auto created
-        :param outputs: list of :class:`~nodeeditor.node_socket.Socket` types from which the `Sockets` will be auto created
+        :param inputs: list of :class:`~node_editor.node_socket.Socket` types from which the `Sockets` will be auto created
+        :param outputs: list of :class:`~node_editor.node_socket.Socket` types from which the `Sockets` will be auto created
 
         :Instance Attributes:
 
-            - **scene** - reference to the :class:`~nodeeditor.node_scene.Scene`
-            - **grNode** - Instance of :class:`~nodeeditor.node_graphics_node.QDMGraphicsNode` handling graphical representation in the ``QGraphicsScene``. Automatically created in constructor
-            - **content** - Instance of :class:`~nodeeditor.node_graphics_content.QDMGraphicsContent` which is child of ``QWidget`` representing container for all inner widgets inside of the Node. Automatically created in constructor
-            - **inputs** - list containin Input :class:`~nodeeditor.node_socket.Socket` instances
-            - **outputs** - list containin Output :class:`~nodeeditor.node_socket.Socket` instances
+            - **scene** - reference to the :class:`~node_editor.node_scene.Scene`
+            - **grNode** - Instance of :class:`~node_editor.node_graphics_node.QDMGraphicsNode` handling graphical representation in the ``QGraphicsScene``. Automatically created in constructor
+            - **content** - Instance of :class:`~node_editor.node_graphics_content.QDMGraphicsContent` which is child of ``QWidget`` representing container for all inner widgets inside of the Node. Automatically created in constructor
+            - **inputs** - list containin Input :class:`~node_editor.node_socket.Socket` instances
+            - **outputs** - list containin Output :class:`~node_editor.node_socket.Socket` instances
 
         """
         super().__init__()
@@ -152,8 +152,8 @@ class Node(Serializable):
         """
         Event handling that any connection (`Edge`) has changed. Currently not used...
 
-        :param new_edge: reference to the changed :class:`~nodeeditor.node_edge.Edge`
-        :type new_edge: :class:`~nodeeditor.node_edge.Edge`
+        :param new_edge: reference to the changed :class:`~node_editor.node_edge.Edge`
+        :type new_edge: :class:`~node_editor.node_edge.Edge`
         """
         print("%s::onEdgeConnectionChanged" % self.__class__.__name__, new_edge)
 
@@ -161,8 +161,8 @@ class Node(Serializable):
         """Event handling when Node's input Edge has changed. We auto-mark this `Node` to be `Dirty` with all it's
         descendants
 
-        :param new_edge: reference to the changed :class:`~nodeeditor.node_edge.Edge`
-        :type new_edge: :class:`~nodeeditor.node_edge.Edge`
+        :param new_edge: reference to the changed :class:`~node_editor.node_edge.Edge`
+        :type new_edge: :class:`~node_editor.node_edge.Edge`
         """
         print("%s::onInputChanged" % self.__class__.__name__, new_edge)
         self.markDirty()
@@ -178,7 +178,7 @@ class Node(Serializable):
 
     def getSocketPosition(self, index:int, position:int, num_out_of:int=1) -> '(x, y)':
         """
-        Get the relative `x, y` position of a :class:`~nodeeditor.node_socket.Socket`. This is used for placing
+        Get the relative `x, y` position of a :class:`~node_editor.node_socket.Socket`. This is used for placing
         the `Graphics Sockets` on `Graphics Node`.
 
         :param index: Order number of the Socket. (0, 1, 2, ...)
@@ -345,7 +345,7 @@ class Node(Serializable):
         Retreive all first-level children connected to this `Node` `Outputs`
 
         :return: list of `Nodes` connected to this `Node` from all `Outputs`
-        :rtype: List[:class:`~nodeeditor.node_node.Node`]
+        :rtype: List[:class:`~node_editor.node_node.Node`]
         """
         if self.outputs == []: return []
         other_nodes = []
@@ -362,8 +362,8 @@ class Node(Serializable):
 
         :param index: Order number of the `Input Socket`
         :type index: ``int``
-        :return: :class:`~nodeeditor.node_node.Node` which is connected to the specified `Input` or ``None`` if there is no connection of index is out of range
-        :rtype: :class:`~nodeeditor.node_node.Node`
+        :return: :class:`~node_editor.node_node.Node` which is connected to the specified `Input` or ``None`` if there is no connection of index is out of range
+        :rtype: :class:`~node_editor.node_node.Node`
         """
         try:
             edge = self.inputs[index].edges[0]
@@ -383,8 +383,8 @@ class Node(Serializable):
 
         :param index: Order number of the `Input Socket`
         :type index: ``int``
-        :return: all :class:`~nodeeditor.node_node.Node` instances which are connected to the specified `Input` or ``[]`` if there is no connection of index is out of range
-        :rtype: List[:class:`~nodeeditor.node_node.Node`]
+        :return: all :class:`~node_editor.node_node.Node` instances which are connected to the specified `Input` or ``[]`` if there is no connection of index is out of range
+        :rtype: List[:class:`~node_editor.node_node.Node`]
         """
         ins = []
         for edge in self.inputs[index].edges:
@@ -398,8 +398,8 @@ class Node(Serializable):
 
         :param index: Order number of the `Output Socket`
         :type index: ``int``
-        :return: all :class:`~nodeeditor.node_node.Node` instances which are connected to the specified `Output` or ``[]`` if there is no connection of index is out of range
-        :rtype: List[:class:`~nodeeditor.node_node.Node`]
+        :return: all :class:`~node_editor.node_node.Node` instances which are connected to the specified `Output` or ``[]`` if there is no connection of index is out of range
+        :rtype: List[:class:`~node_editor.node_node.Node`]
         """
         outs = []
         for edge in self.outputs[index].edges:

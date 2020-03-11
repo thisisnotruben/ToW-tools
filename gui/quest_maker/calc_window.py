@@ -3,16 +3,16 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-from nodeeditor.utils import loadStylesheets
-from nodeeditor.node_editor_window import NodeEditorWindow
+from node_editor.utils import loadStylesheets
+from node_editor.node_editor_window import NodeEditorWindow
 from quest_maker.calc_sub_window import CalculatorSubWindow
 from quest_maker.calc_drag_listbox import QDMDragListbox
 from quest_maker.calc_database import DataView
-from nodeeditor.utils import dumpException, pp
+from node_editor.utils import dumpException, pp
 from quest_maker.calc_conf import *
 
 # images for the dark skin
-import quest_maker.qss.nodeeditor_dark_resources
+import quest_maker.qss.node_editor_dark_resources
 
 DEBUG = False
 
@@ -23,9 +23,9 @@ class CalculatorWindow(NodeEditorWindow):
         self.name_company = 'Blenderfreak'
         self.name_product = 'Calculator NodeEditor'
 
-        self.stylesheet_filename = os.path.join(os.path.dirname(__file__), "qss/nodeeditor.qss")
+        self.stylesheet_filename = os.path.join(os.path.dirname(__file__), "qss/node_editor.qss")
         loadStylesheets(
-            os.path.join(os.path.dirname(__file__), "qss/nodeeditor-dark.qss"),
+            os.path.join(os.path.dirname(__file__), "qss/node_editor-dark.qss"),
             self.stylesheet_filename
         )
 
@@ -110,14 +110,14 @@ class CalculatorWindow(NodeEditorWindow):
                         self.mdiArea.setActiveSubWindow(existing)
                     else:
                         # we need to create new subWindow and open the file
-                        nodeeditor = CalculatorSubWindow()
-                        if nodeeditor.fileLoad(fname):
+                        node_editor = CalculatorSubWindow()
+                        if node_editor.fileLoad(fname):
                             self.statusBar().showMessage("File %s loaded" % fname, 5000)
-                            nodeeditor.setTitle()
-                            subwnd = self.createMdiChild(nodeeditor)
+                            node_editor.setTitle()
+                            subwnd = self.createMdiChild(node_editor)
                             subwnd.show()
                         else:
-                            nodeeditor.close()
+                            node_editor.close()
         except Exception as e: dumpException(e)
 
 
@@ -247,13 +247,13 @@ class CalculatorWindow(NodeEditorWindow):
         self.statusBar().showMessage("Ready")
 
     def createMdiChild(self, child_widget=None):
-        nodeeditor = child_widget if child_widget is not None else CalculatorSubWindow()
-        subwnd = self.mdiArea.addSubWindow(nodeeditor)
+        node_editor = child_widget if child_widget is not None else CalculatorSubWindow()
+        subwnd = self.mdiArea.addSubWindow(node_editor)
         subwnd.setWindowIcon(self.empty_icon)
-        # nodeeditor.scene.addItemSelectedListener(self.updateEditMenu)
-        # nodeeditor.scene.addItemsDeselectedListener(self.updateEditMenu)
-        nodeeditor.scene.history.addHistoryModifiedListener(self.updateEditMenu)
-        nodeeditor.addCloseEventListener(self.onSubWndClose)
+        # node_editor.scene.addItemSelectedListener(self.updateEditMenu)
+        # node_editor.scene.addItemsDeselectedListener(self.updateEditMenu)
+        node_editor.scene.history.addHistoryModifiedListener(self.updateEditMenu)
+        node_editor.addCloseEventListener(self.onSubWndClose)
         return subwnd
 
     def onSubWndClose(self, widget, event):

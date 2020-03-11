@@ -5,13 +5,13 @@ A module containing
 import os
 import json
 from collections import OrderedDict
-from nodeeditor.utils import dumpException
-from nodeeditor.node_serializable import Serializable
-from nodeeditor.node_graphics_scene import QDMGraphicsScene
-from nodeeditor.node_node import Node
-from nodeeditor.node_edge import Edge
-from nodeeditor.node_scene_history import SceneHistory
-from nodeeditor.node_scene_clipboard import SceneClipboard
+from node_editor.utils import dumpException
+from node_editor.node_serializable import Serializable
+from node_editor.node_graphics_scene import QDMGraphicsScene
+from node_editor.node_node import Node
+from node_editor.node_edge import Edge
+from node_editor.node_scene_history import SceneHistory
+from node_editor.node_scene_clipboard import SceneClipboard
 
 
 class InvalidFile(Exception): pass
@@ -25,8 +25,8 @@ class Scene(Serializable):
 
             - **nodes** - list of `Nodes` in this `Scene`
             - **edges** - list of `Edges` in this `Scene`
-            - **history** - Instance of :class:`~nodeeditor.node_scene_history.SceneHistory`
-            - **clipboard** - Instance of :class:`~nodeeditor.node_scene_clipboard.SceneClipboard`
+            - **history** - Instance of :class:`~node_editor.node_scene_history.SceneHistory`
+            - **clipboard** - Instance of :class:`~node_editor.node_scene_clipboard.SceneClipboard`
             - **scene_width** - width of this `Scene` in pixels
             - **scene_height** - height of this `Scene` in pixels
         """
@@ -183,35 +183,35 @@ class Scene(Serializable):
         return self.getView().itemAt(pos)
 
     def addNode(self, node:Node):
-        """Add :class:`~nodeeditor.node_node.Node` to this `Scene`
+        """Add :class:`~node_editor.node_node.Node` to this `Scene`
 
-        :param node: :class:`~nodeeditor.node_node.Node` to be added to this `Scene`
-        :type node: :class:`~nodeeditor.node_node.Node`
+        :param node: :class:`~node_editor.node_node.Node` to be added to this `Scene`
+        :type node: :class:`~node_editor.node_node.Node`
         """
         self.nodes.append(node)
 
     def addEdge(self, edge:Edge):
-        """Add :class:`~nodeeditor.node_edge.Edge` to this `Scene`
+        """Add :class:`~node_editor.node_edge.Edge` to this `Scene`
 
-        :param edge: :class:`~nodeeditor.node_edge.Edge` to be added to this `Scene`
-        :return: :class:`~nodeeditor.node_edge.Edge`
+        :param edge: :class:`~node_editor.node_edge.Edge` to be added to this `Scene`
+        :return: :class:`~node_editor.node_edge.Edge`
         """
         self.edges.append(edge)
 
     def removeNode(self, node:Node):
-        """Remove :class:`~nodeeditor.node_node.Node` from this `Scene`
+        """Remove :class:`~node_editor.node_node.Node` from this `Scene`
 
-        :param node: :class:`~nodeeditor.node_node.Node` to be removed from this `Scene`
-        :type node: :class:`~nodeeditor.node_node.Node`
+        :param node: :class:`~node_editor.node_node.Node` to be removed from this `Scene`
+        :type node: :class:`~node_editor.node_node.Node`
         """
         if node in self.nodes: self.nodes.remove(node)
         else: print("!W:", "Scene::removeNode", "wanna remove node", node, "from self.nodes but it's not in the list!")
 
     def removeEdge(self, edge:Edge):
-        """Remove :class:`~nodeeditor.node_edge.Edge` from this `Scene`
+        """Remove :class:`~node_editor.node_edge.Edge` from this `Scene`
 
-        :param edge: :class:`~nodeeditor.node_edge.Edge` to be remove from this `Scene`
-        :return: :class:`~nodeeditor.node_edge.Edge`
+        :param edge: :class:`~node_editor.node_edge.Edge` to be remove from this `Scene`
+        :return: :class:`~node_editor.node_edge.Edge`
         """
         if edge in self.edges: self.edges.remove(edge)
         else: print("!W:", "Scene::removeEdge", "wanna remove edge", edge, "from self.edges but it's not in the list!")
@@ -244,7 +244,7 @@ class Scene(Serializable):
 
         :param filename: from what file to load the `Scene`
         :type filename: ``str``
-        :raises: :class:`~nodeeditor.node_scene.InvalidFile` if there was an error decoding JSON file
+        :raises: :class:`~node_editor.node_scene.InvalidFile` if there was an error decoding JSON file
         """
 
         with open(filename, "r") as file:
@@ -261,7 +261,7 @@ class Scene(Serializable):
     def setNodeClassSelector(self, class_selecting_function:'functon') -> 'Node class type':
         """
         Set the function which decides what `Node` class to instantiate when deserializating `Scene`.
-        If not set, we will always instantiate :class:`~nodeeditor.node_node.Node` for each `Node` in the `Scene`
+        If not set, we will always instantiate :class:`~node_editor.node_node.Node` for each `Node` in the `Scene`
 
         :param class_selecting_function: function which returns `Node` class type (not instance) from `Node` serialized ``dict`` data
         :type class_selecting_function: ``function``

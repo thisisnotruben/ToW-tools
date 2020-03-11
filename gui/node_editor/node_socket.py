@@ -3,8 +3,8 @@
 A module containing NodeEditor's class for representing Socket and Socket Position Constants.
 """
 from collections import OrderedDict
-from nodeeditor.node_serializable import Serializable
-from nodeeditor.node_graphics_socket import QDMGraphicsSocket
+from node_editor.node_serializable import Serializable
+from node_editor.node_graphics_socket import QDMGraphicsSocket
 
 
 LEFT_TOP = 1        #:
@@ -23,8 +23,8 @@ class Socket(Serializable):
 
     def __init__(self, node:'Node', index:int=0, position:int=LEFT_TOP, socket_type:int=1, multi_edges:bool=True, count_on_this_node_side:int=1, is_input:bool=False):
         """
-        :param node: reference to the :class:`~nodeeditor.node_node.Node` containing this `Socket`
-        :type node: :class:`~nodeeditor.node_node.Node`
+        :param node: reference to the :class:`~node_editor.node_node.Node` containing this `Socket`
+        :type node: :class:`~node_editor.node_node.Node`
         :param index: Current index of this socket in the position
         :type index: ``int``
         :param position: Socket position. See :ref:`socket-position-constants`
@@ -38,9 +38,9 @@ class Socket(Serializable):
 
         :Instance Attributes:
 
-            - **node** - reference to the :class:`~nodeeditor.node_node.Node` containing this `Socket`
+            - **node** - reference to the :class:`~node_editor.node_node.Node` containing this `Socket`
             - **edges** - list of `Edges` connected to this `Socket`
-            - **grSocket** - reference to the :class:`~nodeeditor.node_graphics_socket.QDMGraphicsSocket`
+            - **grSocket** - reference to the :class:`~node_editor.node_graphics_socket.QDMGraphicsSocket`
             - **position** - Socket position. See :ref:`socket-position-constants`
             - **index** - Current index of this socket in the position
             - **socket_type** - Constant defining type(color) of this socket
@@ -75,13 +75,13 @@ class Socket(Serializable):
 
     def setSocketPosition(self):
         """Helper function to set `Graphics Socket` position. Exact socket position is calculated
-        inside :class:`~nodeeditor.node_node.Node`."""
+        inside :class:`~node_editor.node_node.Node`."""
         self.grSocket.setPos(*self.node.getSocketPosition(self.index, self.position, self.count_on_this_node_side))
 
     def getSocketPosition(self):
         """
         :return: Returns this `Socket` position according the implementation stored in
-            :class:`~nodeeditor.node_node.Node`
+            :class:`~node_editor.node_node.Node`
         :rtype: ``x, y`` position
         """
         if DEBUG: print("  GSP: ", self.index, self.position, "node:", self.node)
@@ -94,16 +94,16 @@ class Socket(Serializable):
         """
         Append an Edge to the list of connected Edges
 
-        :param edge: :class:`~nodeeditor.node_edge.Edge` to connect to this `Socket`
-        :type edge: :class:`~nodeeditor.node_edge.Edge`
+        :param edge: :class:`~node_editor.node_edge.Edge` to connect to this `Socket`
+        :type edge: :class:`~node_editor.node_edge.Edge`
         """
         self.edges.append(edge)
 
     def removeEdge(self, edge:'Edge'):
         """
-        Disconnect passed :class:`~nodeeditor.node_edge.Edge` from this `Socket`
-        :param edge: :class:`~nodeeditor.node_edge.Edge` to disconnect
-        :type edge: :class:`~nodeeditor.node_edge.Edge`
+        Disconnect passed :class:`~node_editor.node_edge.Edge` from this `Socket`
+        :param edge: :class:`~node_editor.node_edge.Edge` to disconnect
+        :type edge: :class:`~node_editor.node_edge.Edge`
         """
         if edge in self.edges: self.edges.remove(edge)
         else: print("!W:", "Socket::removeEdge", "wanna remove edge", edge, "from self.edges but it's not in the list!")
