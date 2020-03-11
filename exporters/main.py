@@ -4,13 +4,17 @@ Ruben Alvarez Reyes
 """
 
 import os
+import sys
 import enum
-import game_db
-import image_editor
-import path_manager
-import tiled_manager
-import asset_manager
-import archive_manager
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
+
+from exporters.game_db import GameDB
+from exporters.image_editor import Color, Font
+from exporters.path_manager import PathManager
+from exporters.tiled_manager import Tiled
+from exporters.asset_manager import AssetManager 
+from exporters.archive_manager import Archiver
 
 
 class Commands(enum.Enum):
@@ -37,12 +41,12 @@ class Commands(enum.Enum):
 
 class Main:
     def __init__(self, master_path):
-        data_paths = path_manager.PathManager.get_paths()
+        data_paths = PathManager.get_paths()
 
-        self.db = game_db.GameDB(data_paths["db"])
-        self.tiled = tiled_manager.Tiled(data_paths["tiled"])
-        self.archive = archive_manager.Archiver(data_paths["archive"])
-        self.asset = asset_manager.AssetManager(data_paths["asset"])
+        self.db = GameDB(data_paths["db"])
+        self.tiled = Tiled(data_paths["tiled"])
+        self.archive = Archiver(data_paths["archive"])
+        self.asset = AssetManager(data_paths["asset"])
 
     @staticmethod
     def show_commands():
@@ -52,10 +56,10 @@ class Main:
             if type(command.value) == str:
                 print("    \*-> ", command.value)
         print("\n--> COLORS:")
-        for color in image_editor.Color:
+        for color in Color:
             print(" |-> ", color.name)
         print("\n--> FONTS:")
-        for font in image_editor.Font:
+        for font in Font:
             print(" |-> ", font.name)
 
     def execute_command(self, command, *arg):
@@ -165,4 +169,4 @@ class Main:
 
 
 if __name__ == "__main__":
-    Main(path_manager.PathManager.get_master_path()).main_loop()
+    Main(PathManager.get_master_path()).main_loop()

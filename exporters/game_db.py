@@ -7,6 +7,7 @@ import os
 import enum
 import json
 import pyexcel_ods
+from exporters.path_manager import PathManager
 import xml.etree.ElementTree as ET
 
 

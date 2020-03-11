@@ -7,9 +7,9 @@ Tiled version tested on: 1.3.1
 import os
 import json
 import shutil
-import game_db
-import image_editor
-import path_manager
+from exporters.game_db import GameDB, DataBases
+from exporters.image_editor import ImageEditor, Color
+from exporters.path_manager import PathManager
 import xml.etree.ElementTree as ET
 
 
@@ -236,7 +236,7 @@ class Tiled:
             % debug)
 
     def make_debug_tilesets(self):
-        defined_color_names = [c.name for c in image_editor.Color]
+        defined_color_names = [c.name for c in Color]
         print("--> MAKING DEBUG TILESETS:")
         for tileset in os.listdir(self.tiled["tileset_dir"]):
             if tileset.endswith(Tiled.img_ext):
@@ -253,8 +253,8 @@ class Tiled:
                 src = os.path.join(self.tiled["tileset_dir"], tileset)
                 dest = os.path.join(self.tiled["debug_dir"], tileset)
                 # create overlay
-                image_editor.ImageEditor.create_overlay(
-                    src, dest, image_editor.Color[self.debug[tileset]].value)
+                ImageEditor.create_overlay(
+                    src, dest, Color[self.debug[tileset]].value)
                 print(" |-> TILESET MADE: (%s)" % dest)
         print("--> ALL DEBUG TILESETS MADE")
 
@@ -268,16 +268,16 @@ class Tiled:
                                              Tiled.img_ext)
                 dest = os.path.join(self.tiled["tileset_dir"], new_file_name)
                 # make 32 image
-                image_editor.ImageEditor.pad_height(src, dest, 16, 16)
+                ImageEditor.pad_height(src, dest, 16, 16)
                 print(" |-> TILESET MADE: (%s)" % dest)
         print("--> ALL 32px TILESETS MADE")
 
     def make_sprite_icons(self):
         print("--> MAKING SPRITE ICONS")
         # load img db
-        db_path = path_manager.PathManager.get_paths()["db"]
-        img_data = game_db.GameDB(db_path).get_database(
-            game_db.DataBases.IMAGEDB)
+        db_path = PathManager.get_paths()["db"]
+        img_data = GameDB(db_path).get_database(
+            DataBases.IMAGEDB)
         # make character icons
         for img in os.listdir(self.game["character_dir"]):
             if img.endswith(Tiled.img_ext):
@@ -291,9 +291,56 @@ class Tiled:
                     continue
                 character_hv_frames = (int(img_data[img_name]["total"]), 1)
                 # write image
-                image_editor.ImageEditor.crop_frame(
+                ImageEditor.crop_frame(
                     src, dest, character_hv_frames, (0, 0))
         print("--> ALL SPRITE ICONS MADE")
+
+    def get_character_data(self):
+        unit_data = self.get_character_map_data()
+        for unit_id in unit_data:
+            unit_data[unit_id]["img"] = os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext)
+            unit_data[unit_id]["map"] = os.path.splitext(os.path.basename(self.tiled["map_file"]))[0]
+        return unit_data
+
+    def get_character_map_data(self):
+        master_dict = {}
+        root = ET.parse(self.tiled["map_file"]).getroot()    
+        # get unit attributes
+        group_index, layer_index = self._get_map_character_layer()
+        unit_attribute_index = 0
+        unit_meta = self._get_character_attributes()
+        unit_patrol_paths = self._get_unit_paths()
+        spawn_locs = self._get_unit_spawn_locs()
+        layer = root[group_index][layer_index]
+        editor_names = self._get_character_names(True)
+        game_names = self._get_character_names(False)
+        for unit_index in range(len(layer)):
+            unit_atts = layer[unit_index].attrib
+            unit_ID = layer[unit_index].attrib["id"]
+            if not "player" in unit_atts.values():
+                master_dict[unit_ID] = {
+                    "editorName": editor_names[unit_ID],
+                    "name": game_names[unit_ID].strip(),
+                    "img": os.path.splitext(unit_meta[unit_ID]["img"])[0],
+                    "enemy": unit_meta[unit_ID]["enemy"],
+                    Tiled.tag_spawn: spawn_locs[unit_ID]
+                }
+                if unit_ID in unit_patrol_paths:
+                    master_dict[unit_ID][
+                        Tiled.tag_path] = unit_patrol_paths[unit_ID]
+                for unit_property in layer[unit_index]:
+                    if unit_property.tag == "properties":
+                        for unit_attribute in layer[unit_index][
+                                unit_attribute_index]:
+                            for tag in Tiled.all_tags:
+                                attribute_name = unit_attribute.attrib["name"]
+                                if attribute_name == tag or tag in attribute_name:
+                                    master_dict[unit_ID][
+                                        attribute_name] = unit_attribute.attrib[
+                                            "value"]
+                        unit_attribute_index += 1
+                    unit_attribute_index = 0
+        return master_dict
 
     def export_tilesets(self):
         print("--> EXPORTING TILESETS")
@@ -361,43 +408,7 @@ class Tiled:
         print("--> MAP: (%s) EXPORTED" % self.file_name)
 
     def export_meta(self):
-        root = ET.parse(self.tiled["map_file"]).getroot()
-        # get unit attributes
-        group_index, layer_index = self._get_map_character_layer()
-        unit_attribute_index = 0
-        master_dict = {}
-        unit_meta = self._get_character_attributes()
-        unit_patrol_paths = self._get_unit_paths()
-        spawn_locs = self._get_unit_spawn_locs()
-        layer = root[group_index][layer_index]
-        editor_names = self._get_character_names(True)
-        game_names = self._get_character_names(False)
-        for unit_index in range(len(layer)):
-            unit_atts = layer[unit_index].attrib
-            unit_ID = layer[unit_index].attrib["id"]
-            if not "player" in unit_atts.values():
-                master_dict[unit_ID] = {
-                    "editorName": editor_names[unit_ID],
-                    "name": game_names[unit_ID].strip(),
-                    "img": os.path.splitext(unit_meta[unit_ID]["img"])[0],
-                    "enemy": unit_meta[unit_ID]["enemy"],
-                    Tiled.tag_spawn: spawn_locs[unit_ID]
-                }
-                if unit_ID in unit_patrol_paths:
-                    master_dict[unit_ID][
-                        Tiled.tag_path] = unit_patrol_paths[unit_ID]
-                for unit_property in layer[unit_index]:
-                    if unit_property.tag == "properties":
-                        for unit_attribute in layer[unit_index][
-                                unit_attribute_index]:
-                            for tag in Tiled.all_tags:
-                                attribute_name = unit_attribute.attrib["name"]
-                                if attribute_name == tag or tag in attribute_name:
-                                    master_dict[unit_ID][
-                                        attribute_name] = unit_attribute.attrib[
-                                            "value"]
-                        unit_attribute_index += 1
-                    unit_attribute_index = 0
+        master_dict = self.get_character_map_data()
         # clean data
         clean_dict = {}
         for unit_ID in master_dict:

@@ -7,9 +7,9 @@ import re
 import os
 import json
 import shutil
-import game_db
-import image_editor
-import path_manager
+from exporters.game_db import GameDB, DataBases
+from exporters.image_editor import Color, Font, ImageEditor
+from exporters.path_manager import PathManager
 
 
 class AssetManager:
@@ -25,7 +25,7 @@ class AssetManager:
     def make_icon_atlas(self):
         icon = self.assets["icon"]
         # check data integrity
-        defined_color_names = [c.name for c in image_editor.Color]
+        defined_color_names = [c.name for c in Color]
         for color in [icon["bg"], icon["grid"], icon["text"]]:
             if not color in defined_color_names:
                 print(
@@ -35,7 +35,7 @@ class AssetManager:
                     print(" |-> ", color)
                 print("--> ABORTING")
                 exit(1)
-        defined_font_names = [f.name for f in image_editor.Font]
+        defined_font_names = [f.name for f in Font]
         if not icon["font"] in defined_font_names:
             print(
                 "--> FONT: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED FONTS:"
@@ -52,25 +52,24 @@ class AssetManager:
         hv_frames = (int(icon["hv_frames"][0]), int(icon["hv_frames"][1]))
         # make atlas
         print("--> MAKING ICON ATLAS:")
-        image_editor.ImageEditor.resize_image(src, dest, size)
+        ImageEditor.resize_image(src, dest, size)
         print(" |-> IMAGE RESIZED")
-        image_editor.ImageEditor.fill_bg(dest, dest,
-                                         image_editor.Color[icon["bg"]].value)
+        ImageEditor.fill_bg(dest, dest,
+                                         Color[icon["bg"]].value)
         print(" |-> IMAGE FILLED")
-        image_editor.ImageEditor.line_grid(
-            dest, dest, hv_frames, image_editor.Color[icon["grid"]].value)
+        ImageEditor.line_grid(
+            dest, dest, hv_frames, Color[icon["grid"]].value)
         print(" |-> IMAGE GRID LINES MADE")
-        image_editor.ImageEditor.text_grid(
-            dest, dest, hv_frames, image_editor.Color[icon["text"]].value,
-            image_editor.Font[icon["font"]].value)
+        ImageEditor.text_grid(
+            dest, dest, hv_frames, Color[icon["text"]].value,
+            Font[icon["font"]].value)
         print(" |-> IMAGE ENUMERATED")
         print("--> ICON ATLAS MADE: (%s)" % dest)
 
     def make_sprite_deaths(self, *order_paths):
         # load img db
-        db_path = path_manager.PathManager.get_paths()["db"]
-        img_data = game_db.GameDB(db_path).get_database(
-            game_db.DataBases.IMAGEDB)
+        db_path = PathManager.get_paths()["db"]
+        img_data = GameDB(db_path).get_database(DataBases.IMAGEDB)
         # determine order
         batch_order = []
         if len(order_paths) == 0:
