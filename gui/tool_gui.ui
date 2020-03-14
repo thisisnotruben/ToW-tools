@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>582</width>
+    <height>332</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Tides of War Tool</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../scripts/icon.png</normaloff>../scripts/icon.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <layout class="QHBoxLayout" name="main_layout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" name="exp_dbg_layout">
+        <item>
+         <widget class="QLabel" name="exp_dbg_header">
+          <property name="text">
+           <string>Asset Commands</string>
+          </property>
+          <property name="scaledContents">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignHCenter|Qt::AlignTop</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="make_sprite_icons">
+          <property name="toolTip">
+           <string>MAKE_SPRITE_ICONS</string>
+          </property>
+          <property name="text">
+           <string>Make Sprite Icons</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="make_sprite_deaths">
+          <property name="toolTip">
+           <string>MAKE_SPRITE_DEATHS</string>
+          </property>
+          <property name="text">
+           <string>Make Sprite Deaths</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="may_sym_links">
+          <property name="toolTip">
+           <string>MAKE_SYM_LINKS</string>
+          </property>
+          <property name="text">
+           <string>Make Sym-Links</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="make_icon_atlas">
+          <property name="toolTip">
+           <string>MAKE_ICON_ATLAS</string>
+          </property>
+          <property name="text">
+           <string>Make Icon Atlas</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="archive">
+          <property name="toolTip">
+           <string>BACKUP</string>
+          </property>
+          <property name="text">
+           <string>Archive</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="exp_dbg_spacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="asset_layout">
+        <item>
+         <widget class="QLabel" name="asset_header">
+          <property name="text">
+           <string>Export/Debug Commands</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignHCenter|Qt::AlignTop</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="export_map">
+          <property name="toolTip">
+           <string>EXPORT_ALL_TILED</string>
+          </property>
+          <property name="text">
+           <string>Export Map</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="export_db">
+          <property name="toolTip">
+           <string>EXPORT_DATABASES</string>
+          </property>
+          <property name="text">
+           <string>Export Databases</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="debug_map">
+          <property name="toolTip">
+           <string>DEBUG_MAP</string>
+          </property>
+          <property name="text">
+           <string>Debug Map</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="asset_layout_spacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>30</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTextEdit" name="terminal_output">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="textInteractionFlags">
+       <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>582</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="action_about"/>
+    <addaction name="action_source_code"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_about">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="action_source_code">
+   <property name="text">
+    <string>Open Source Code</string>
+   </property>
+  </action>
+ </widget>
+ <tabstops>
+  <tabstop>make_sprite_icons</tabstop>
+  <tabstop>make_sprite_deaths</tabstop>
+  <tabstop>may_sym_links</tabstop>
+  <tabstop>make_icon_atlas</tabstop>
+  <tabstop>archive</tabstop>
+  <tabstop>export_map</tabstop>
+  <tabstop>export_db</tabstop>
+  <tabstop>debug_map</tabstop>
+  <tabstop>terminal_output</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
