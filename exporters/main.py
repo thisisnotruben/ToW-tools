@@ -40,7 +40,7 @@ class Commands(enum.Enum):
 
 
 class Main:
-    def __init__(self, master_path):
+    def __init__(self):
         data_paths = PathManager.get_paths()
 
         self.db = GameDB(data_paths["db"])
@@ -158,7 +158,7 @@ class Main:
             exit(0)
 
     def main_loop(self):
-        print("---TIDES OF WAR TOOL----")
+        print("----TIDES OF WAR TOOL----")
         prompt_message = "\n--> ENTER COMMAND:\n~$ "
         while True:
             prompt = input(prompt_message).strip().split(" ")
@@ -169,4 +169,4 @@ class Main:
 
 
 if __name__ == "__main__":
-    Main(PathManager.get_master_path()).main_loop()
+    Main().main_loop()
