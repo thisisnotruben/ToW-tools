@@ -9,12 +9,12 @@ import enum
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 
-from exporters.game_db import GameDB
-from exporters.image_editor import Color, Font
-from exporters.path_manager import PathManager
-from exporters.tiled_manager import Tiled
-from exporters.asset_manager import AssetManager 
-from exporters.archive_manager import Archiver
+from core.game_db import GameDB
+from core.image_editor import Color, Font
+from core.path_manager import PathManager
+from core.tiled_manager import Tiled
+from core.asset_manager import AssetManager 
+from core.archive_manager import Archiver
 
 
 class Commands(enum.Enum):
@@ -41,12 +41,10 @@ class Commands(enum.Enum):
 
 class Main:
     def __init__(self):
-        data_paths = PathManager.get_paths()
-
-        self.db = GameDB(data_paths["db"])
-        self.tiled = Tiled(data_paths["tiled"])
-        self.archive = Archiver(data_paths["archive"])
-        self.asset = AssetManager(data_paths["asset"])
+        self.db = GameDB()
+        self.tiled = Tiled()
+        self.archive = Archiver()
+        self.asset = AssetManager()
 
     @staticmethod
     def show_commands():

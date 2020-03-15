@@ -5,12 +5,12 @@ Tiled version tested on: 1.3.1
 """
 
 import os
-import json
 import shutil
-from exporters.game_db import GameDB, DataBases
-from exporters.image_editor import ImageEditor, Color
-from exporters.path_manager import PathManager
 import xml.etree.ElementTree as ET
+
+from core.game_db import GameDB, DataBases
+from core.image_editor import ImageEditor, Color
+from core.path_manager import PathManager
 
 
 class Tiled:
@@ -27,30 +27,16 @@ class Tiled:
     all_tags = []
     cell_size = 16
 
-    def __init__(self, file_path_data):
-        self.tiled = {"root":"","map_dir":"", "tileset_dir":"", "character_dir":"", \
-            "debug_dir":"", "map_file":"", "template_dir":""}
-        self.game = {
-            "root": "",
-            "map_dir": "",
-            "tileset_dir": "",
-            "character_dir": ""
-        }
+    def __init__(self):
+        self.tiled = {}
+        self.game = {}
         self.debug = {}
         self.tilesets_32 = []
-        # load file_paths
-        with open(file_path_data, "r") as f:
-            data = json.load(f)
-            self.tiled = data["tiled"]
-            self.game = data["game"]
-            self.debug = data["debug"]
-            self.tilesets_32 = data["32"]
-        # make rel paths abs paths
-        for asset_dir in [self.tiled, self.game]:
-            for file_name in asset_dir:
-                if file_name != "root":
-                    asset_dir[file_name] = os.path.join(
-                        asset_dir["root"], asset_dir[file_name])
+        data = PathManager.get_paths()
+        self.tiled = data["tiled"]
+        self.game = data["game"]
+        self.debug = data["debug"]
+        self.tilesets_32 = data["32"]
         # parse file name
         self.file_name = os.path.split(self.tiled["map_file"])[-1]
         # add all tags
@@ -275,9 +261,7 @@ class Tiled:
     def make_sprite_icons(self):
         print("--> MAKING SPRITE ICONS")
         # load img db
-        db_path = PathManager.get_paths()["db"]
-        img_data = GameDB(db_path).get_database(
-            DataBases.IMAGEDB)
+        img_data = GameDB().get_database(DataBases.IMAGEDB)
         # make character icons
         for img in os.listdir(self.game["character_dir"]):
             if img.endswith(Tiled.img_ext):

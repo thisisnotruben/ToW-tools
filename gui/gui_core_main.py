@@ -12,8 +12,8 @@ from PyQt5.QtCore import QThread
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 
-from gui.tool_gui import Ui_MainWindow
-from exporters.main import Main
+from gui.gui_core import Ui_MainWindow
+from core.main import Main
 
 
 class Thread(QThread):

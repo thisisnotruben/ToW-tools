@@ -1,0 +1,57 @@
+{
+        "tiled": {
+                "root": "/home/rubsz/tiled/Tides_of_War",
+                "map_dir": "map",
+                "tileset_dir": "map/tilesets",
+                "debug_dir": "map/debug",
+                "character_dir": "character",
+                "template_dir": "map/tilesets/templates",
+                "map_file": "map/zone_4.tmx"
+        },
+        "game": {
+                "root": "/home/rubsz/godot/my_games/Tides_of_War",
+                "map_dir": "asset/img/map",
+                "tileset_dir": "asset/img/map/tilesets",
+                "character_dir": "asset/img/character",
+                "meta_dir": "data"
+        },
+        "debug": {
+                "buildings.png": "GREEN",
+                "misc_32.png": "GREEN",
+                "tiles_32.png": "GREEN",
+                "trees.png": "GREEN",
+                "walls.png": "GREEN",
+                "misc.png": "BLUE",
+                "terrain.png": "BLUE",
+                "tiles.png": "BLUE",
+                "ui.png": "RED"
+        },
+        "32": [
+                "misc.png",
+                "tiles.png"
+        ],
+        "archive": [
+                "/home/rubsz/godot/my_games/Tides_of_War",
+                "/home/rubsz/tiled/Tides_of_War"
+        ],
+        "archive_backup_dir": "/home/rubsz/ToW_backups",
+        "db_dir": "/home/rubsz/tiled/Tides_of_War/non_map/scripts/db/game",
+        "db_export_path": "/home/rubsz/godot/my_games/Tides_of_War/data",
+        "dev_character_dir":"/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_character",
+        "icon_atlas_data": {
+                "path": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_icon/icons.png",
+                "atlas_name": "icon_atlas.png",
+                "size": [
+                        512,
+                        4096
+                ],
+                "hv_frames": [
+                        16,
+                        128
+                ],
+                "bg": "DARK_GREY",
+                "grid": "BLUE",
+                "text": "RED",
+                "font": "MAGO"
+        }
+}

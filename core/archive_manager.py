@@ -4,9 +4,10 @@ Ruben Alvarez Reyes
 """
 
 import os
-import json
 import tarfile
 from datetime import datetime
+
+from core.path_manager import PathManager
 
 
 class Archiver:
@@ -15,13 +16,12 @@ class Archiver:
     archive_name_format = "%s_Tides_of_War"
     archive_ext = ".tar.gz"
 
-    def __init__(self, file_path_data):
+    def __init__(self):
         self.files_to_archive = []
         self.backup_dir = ""
-        with open(file_path_data, "r") as f:
-            data = json.load(f)
-            self.files_to_archive = data["archive"]
-            self.backup_dir = data["backup_dir"]
+        data = PathManager.get_paths()
+        self.files_to_archive = data["archive"]
+        self.backup_dir = data["archive_backup_dir"]
 
     def backup(self):
         # make name for archive file

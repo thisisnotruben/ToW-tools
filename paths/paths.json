@@ -1,6 +1,0 @@
-{
-    "db":"game_db.json",
-    "tiled":"tiled_manager.json",
-    "archive":"archive_manager.json",
-    "asset":"asset_manager.json"
-}

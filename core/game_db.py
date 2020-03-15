@@ -7,8 +7,9 @@ import os
 import enum
 import json
 import pyexcel_ods
-from exporters.path_manager import PathManager
 import xml.etree.ElementTree as ET
+
+from core.path_manager import PathManager
 
 
 class DataBases(enum.Enum):
@@ -32,10 +33,11 @@ class GameDB:
     }
     db_ext = ".ods"
 
-    def __init__(self, file_path_data):
-        self.paths = {"export_path": "", "db_dir": ""}
-        with open(file_path_data, "r") as f:
-            self.paths = json.load(f)
+    def __init__(self):
+        self.paths = {}
+        paths = PathManager.get_paths()
+        self.paths["db_dir"] = paths["db_dir"]
+        self.paths["db_export_path"] = paths["db_export_path"]
         self.data = {}
         self.load_db()
 
@@ -142,7 +144,7 @@ class GameDB:
                         "amount": objectives[objective]
                     })
             # make path
-            dest = os.path.join(self.paths["export_path"], sheet_name + ".xml")
+            dest = os.path.join(self.paths["db_export_path"], sheet_name + ".xml")
             # write xml
             tree = ET.ElementTree(root)
             tree.write(dest, encoding="UTF-8", xml_declaration=True)

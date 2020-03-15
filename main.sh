@@ -8,7 +8,7 @@
 
 PEOJECT_DIR="$(dirname $(readlink -f "$0"))"
 
-TERMINAL="/exporters/main.py"
-GUI="/gui/tool_gui_main.py"
+TERMINAL="/core/main.py"
+GUI="/gui/gui_core_main.py"
 
 $PEOJECT_DIR$GUI $@

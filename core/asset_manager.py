@@ -5,25 +5,27 @@ Ruben Alvarez Reyes
 
 import re
 import os
-import json
 import shutil
-from exporters.game_db import GameDB, DataBases
-from exporters.image_editor import Color, Font, ImageEditor
-from exporters.path_manager import PathManager
+
+from core.game_db import GameDB, DataBases
+from core.image_editor import Color, Font, ImageEditor
+from core.path_manager import PathManager
 
 
 class AssetManager:
 
     img_ext = ".png"
 
-    def __init__(self, file_path_data):
+    def __init__(self):
         self.assets = {}
         # load paths
-        with open(file_path_data, "r") as f:
-            self.assets = json.load(f)
+        assets = PathManager.get_paths()
+        self.assets["icon_atlas_data"] = assets["icon_atlas_data"]
+        self.assets["game_character_dir"] = assets["game"]["character_dir"]
+        self.assets["dev_character_dir"] = assets["dev_character_dir"]
 
     def make_icon_atlas(self):
-        icon = self.assets["icon"]
+        icon = self.assets["icon_atlas_data"]
         # check data integrity
         defined_color_names = [c.name for c in Color]
         for color in [icon["bg"], icon["grid"], icon["text"]]:
@@ -68,8 +70,7 @@ class AssetManager:
 
     def make_sprite_deaths(self, *order_paths):
         # load img db
-        db_path = PathManager.get_paths()["db"]
-        img_data = GameDB(db_path).get_database(DataBases.IMAGEDB)
+        img_data = GameDB().get_database(DataBases.IMAGEDB)
         # determine order
         batch_order = []
         if len(order_paths) == 0:
@@ -121,11 +122,11 @@ class AssetManager:
         # loop through all dirs to find hard copies and send to the game asset dir
         print("--> MAKING SYM LINKS")
         for dirpath, dirnames, filenames in os.walk(
-                self.assets["tiled_character_dir"]):
+                self.assets["dev_character_dir"]):
             for file_name in filenames:
                 src = os.path.join(dirpath, file_name)
                 if not os.path.islink(src) and re.search(pattern, file_name):
-                    dest = os.path.join(self.assets["game_character_dir"],
+                    dest = os.path.join(self.assets["dev_character_dir"],
                                         file_name)
                     shutil.move(src, dest)
                     os.symlink(dest, src)
