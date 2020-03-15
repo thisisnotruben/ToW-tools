@@ -86,10 +86,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.action_about = QtWidgets.QAction(MainWindow)
         self.action_about.setObjectName("action_about")
-        self.action_source_code = QtWidgets.QAction(MainWindow)
-        self.action_source_code.setObjectName("action_source_code")
         self.menuFile.addAction(self.action_about)
-        self.menuFile.addAction(self.action_source_code)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -131,7 +128,6 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.menuFile.setTitle(_translate("MainWindow", "Help"))
         self.action_about.setText(_translate("MainWindow", "About"))
-        self.action_source_code.setText(_translate("MainWindow", "Open Source Code"))
 
 
 if __name__ == "__main__":

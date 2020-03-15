@@ -202,7 +202,6 @@ p, li { white-space: pre-wrap; }
      <string>Help</string>
     </property>
     <addaction name="action_about"/>
-    <addaction name="action_source_code"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -210,11 +209,6 @@ p, li { white-space: pre-wrap; }
   <action name="action_about">
    <property name="text">
     <string>About</string>
-   </property>
-  </action>
-  <action name="action_source_code">
-   <property name="text">
-    <string>Open Source Code</string>
    </property>
   </action>
  </widget>
