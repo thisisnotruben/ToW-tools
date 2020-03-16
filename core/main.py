@@ -11,7 +11,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 
 from core.game_db import GameDB
 from core.image_editor import Color, Font
-from core.path_manager import PathManager
 from core.tiled_manager import Tiled
 from core.asset_manager import AssetManager 
 from core.archive_manager import Archiver

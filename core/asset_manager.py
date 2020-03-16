@@ -121,13 +121,11 @@ class AssetManager:
         pattern = re.compile("[0-9]+%s" % AssetManager.img_ext)
         # loop through all dirs to find hard copies and send to the game asset dir
         print("--> MAKING SYM LINKS")
-        for dirpath, dirnames, filenames in os.walk(
-                self.assets["dev_character_dir"]):
+        for dirpath, dirnames, filenames in os.walk(self.assets["dev_character_dir"]):
             for file_name in filenames:
                 src = os.path.join(dirpath, file_name)
                 if not os.path.islink(src) and re.search(pattern, file_name):
-                    dest = os.path.join(self.assets["dev_character_dir"],
-                                        file_name)
+                    dest = os.path.join(self.assets["game_character_dir"], file_name)
                     shutil.move(src, dest)
                     os.symlink(dest, src)
                     syms_made.append(dest)
