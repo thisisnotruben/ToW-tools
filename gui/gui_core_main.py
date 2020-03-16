@@ -21,7 +21,6 @@ class Thread(QThread):
         super().__init__(parent=parent)
         self.main = Main()
         self.print_redirect = StringIO()
-        self.reg_stdout = sys.stdout
         self.command = ""
         self.args = []
         self.output = ""
@@ -29,7 +28,7 @@ class Thread(QThread):
     def run(self):
         sys.stdout = self.print_redirect
         self.main.execute_command(self.command, *self.args)
-        sys.stdout = self.reg_stdout
+        sys.stdout = sys.__stdout__
         self.output = self.print_redirect.getvalue()
 
 class MainWindow(Ui_MainWindow):
