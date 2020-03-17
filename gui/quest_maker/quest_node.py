@@ -21,6 +21,8 @@ class QuestObjective(Ui_Form, QWidget):
 
     def setupUi(self, Form):
         super().setupUi(Form)
+        self.world_object_drop_event = self.world_object.dropEvent
+        self.world_object.dropEvent = MethodType(self.onDropEvent, self.world_object)
 
     def getData(self):
         data = {}
@@ -42,13 +44,17 @@ class QuestObjective(Ui_Form, QWidget):
     def isEmpty(self):
         return self.world_object.count() == 0
 
+    def onDropEvent(self, list_widget, event):
+        self.world_object_drop_event(event)
+        if list_widget.count() > 1:
+            list_widget.takeItem(0)
+
 class QuestNode(Ui_quest_node, QWidget):
 
     def __init__(self, db_list):
         super().__init__()
         self.dropEventMap = {}
         self.objectiveEntryMap = {}
-        self.all_objectives = []
         self.db_list = db_list
         self.setupUi(self)
         self.show()
@@ -106,15 +112,14 @@ class QuestNode(Ui_quest_node, QWidget):
         self.objective_list.takeItem(row)
         # delete events from objective copied
         self.objectiveEntryMap.pop(objective)
-        self.all_objectives.remove(objective)
     
     def move(self, row, by):
         # get widgets
-        objective = self.getObjective(row)
+        objective = self.copyObjective(row, self.objective_list.item(row))
         entry = self.objective_list.takeItem(row)
         # move widgets
         self.objective_list.insertItem(row + by, entry)
-        # self.objective_list.setItemWidget(entry, objective)
+        self.objective_list.setItemWidget(entry, objective)
 
     def copyObjective(self, row, entry):
         # transfer data
@@ -124,15 +129,12 @@ class QuestNode(Ui_quest_node, QWidget):
         self.routeObjectiveSignals(copied_objective, entry)
         # delete events from objective copied
         self.objectiveEntryMap.pop(objective)
-        self.all_objectives.remove(objective)
         # return copied object
         return copied_objective
 
     def getObjective(self, row):
         entry = self.objective_list.item(row)
-        if entry is None:
-            return None
-        return self.objective_list.itemWidget(entry)
+        return None if entry == None else self.objective_list.itemWidget(entry)
 
     def addObjective(self):
         # init widgets to add
@@ -143,14 +145,11 @@ class QuestNode(Ui_quest_node, QWidget):
         self.routeObjectiveSignals(objective, entry)
         # insert widgets
         self.objective_list.addItem(entry)
-        # self.objective_list.insertItem(row, entry)
         self.objective_list.setItemWidget(entry, objective)
 
     def routeObjectiveSignals(self, objective, entry):
         objective.contextMenuEvent = MethodType(self.objectiveContextMenu, objective)
-        self.all_objectives.append(objective)
         self.objectiveEntryMap[objective] = entry
-        self.mapDropEvent(objective.world_object)
 
     def mapDropEvent(self, list_widget):
         self.dropEventMap[list_widget] = list_widget.dropEvent
@@ -159,9 +158,9 @@ class QuestNode(Ui_quest_node, QWidget):
     def onDropEvent(self, list_widget, event):
         self.dropEventMap[list_widget](event)
         row = list_widget.count() - 1
-        entry = list_widget.item(row) 
-        charOnlyEntry = list_widget in [self.giver_list, self.receiver_list]
-        if not self.db_list.isCharacter(entry.text()) and charOnlyEntry:
+        character_entry = list_widget.item(row)
+        # Only allow one entry, and can only be characters
+        if not self.db_list.isCharacter(character_entry.text()):
             list_widget.takeItem(row)
         elif list_widget.count() > 1:
             list_widget.takeItem(row - 1)
