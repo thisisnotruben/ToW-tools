@@ -84,7 +84,7 @@ class Ui_quest_node(object):
         self.add_objective_bttn.setObjectName("add_objective_bttn")
         self.verticalLayout_4.addWidget(self.add_objective_bttn)
         self.objective_list = QtWidgets.QListWidget(self.objective_tab)
-        self.objective_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.objective_list.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
         self.objective_list.setTabKeyNavigation(True)
         self.objective_list.setDragEnabled(False)
         self.objective_list.setAlternatingRowColors(True)
