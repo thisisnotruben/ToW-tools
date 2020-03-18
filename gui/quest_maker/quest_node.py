@@ -26,16 +26,21 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
         super().setupUi(quest_node)
         self.mapDropEvent(self.giver_list)
         self.mapDropEvent(self.receiver_list)
-        self.addObjective()
         # setup delete button function
-        self.setAttribute(Qt.WA_DeleteOnClose)
-        self.delete_node_bttn.clicked.connect(self.onDeleteSelf)
+        self.delete_node_bttn.clicked.connect(self.deleteQuestNode)
+        self.on_delete_confirm = QAction()
         
-    def onDeleteSelf(self):
-        reply = QMessageBox.question(self, "Delete Quest Node",
-            "Delete?", QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            self.hide()
+    def deleteQuestNode(self, bypass_prompt=False):
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        if bypass_prompt:
+            self.on_delete_confirm.trigger()
+            self.close()
+        else:
+            reply = QMessageBox.question(self, "Delete Quest Node",
+                "Delete?", QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.on_delete_confirm.trigger()
+                self.close()
 
     def contextMenuEvent(self, QContextMenuEvent):
         # only allow one empty objective entry in list

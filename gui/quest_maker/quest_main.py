@@ -6,7 +6,7 @@ Ruben Alvarez Reyes
 import os
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
@@ -62,17 +62,60 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         self.filter_sub_type.currentTextChanged.connect(
             lambda: self.onSearch(self.search.text()))
         # route clicked function
-        self.add_quest_node_bttn.clicked.connect(self.addQuestNode)
+        self.add_quest_node_bttn.clicked.connect(self.insertQuestNode)
         # add quest node so there is no empty screen
-        self.addQuestNode()    
+        self.insertQuestNode()    
 
-    def addQuestNode(self):
+    def insertQuestNode(self, index=0, serialized_data={}):
+        # init widget
         node = QuestNode(self.list_view)
-        node.delete_node_bttn.clicked.connect(lambda: self.quest_nodes.remove(node))
-        self.scroll_layout.insertWidget(0, node)
-        self.quest_nodes.append(node)
+        if len(serialized_data.keys()) > 0:
+            node.unserialize(serialized_data)
+        # route button connections
+        node.on_delete_confirm = QAction(
+            triggered=lambda: self.onDeleteQuestNode(node))
+        node.move_node_left_bttn.clicked.connect(
+            lambda: self.onMoveQuestNode(node, -1))
+        node.move_node_right_bttn.clicked.connect(
+            lambda: self.onMoveQuestNode(node, 1))
+        # add widget
+        self.scroll_layout.insertWidget(index, node)
+        self.quest_nodes.insert(index, node)
+        # possibly disable move buttons
+        # for node and neighbor nodes
+        self.disableQuestNodeMoveButtons(index)
+        self.disableQuestNodeMoveButtons(index - 1)
+        self.disableQuestNodeMoveButtons(index + 1)
         return node
-        
+
+    def onDeleteQuestNode(self, quest_node):
+        index = self.quest_nodes.index(quest_node)
+        self.quest_nodes.remove(quest_node)
+        self.scroll_layout.removeWidget(quest_node)
+        # possibly disable move buttons
+        # for node and neighbor nodes
+        self.disableQuestNodeMoveButtons(index)
+        self.disableQuestNodeMoveButtons(index - 1)
+        self.disableQuestNodeMoveButtons(index + 1)
+
+    def onMoveQuestNode(self, quest_node, by):
+        # get node data
+        serialized_data = quest_node.serialize()
+        # get current node index
+        node_curr_index = self.quest_nodes.index(quest_node)
+        # delete node
+        quest_node.deleteQuestNode(True)
+        # insert node new at index and set data
+        self.insertQuestNode(node_curr_index + by, serialized_data)
+
+    def disableQuestNodeMoveButtons(self, index):
+        # disable move left/right buttons based on first/last index
+        if index >= 0 and index < len(self.quest_nodes):
+            self.quest_nodes[index].move_node_left_bttn.setDisabled( \
+                index == 0)
+            self.quest_nodes[index].move_node_right_bttn.setDisabled( \
+                index == len(self.quest_nodes) - 1)
+            
     def onSearch(self, current_text):
         founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
 
@@ -135,7 +178,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             - Quest Nodes
         """
         for quest_node_data in data:
-            self.addQuestNode().unserialize(quest_node_data)
+            self.insertQuestNode().unserialize(quest_node_data)
 
 
 if __name__ == "__main__":
