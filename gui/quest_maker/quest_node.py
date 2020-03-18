@@ -4,53 +4,15 @@ Ruben Alvarez Reyes
 """
 
 from types import MethodType
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction, QMessageBox
 from PyQt5.QtCore import Qt
 
-from gui.quest_maker.views.gui_quest_node import Ui_quest_node
-from gui.quest_maker.views.gui_quest_objective import Ui_Form
+from gui.quest_maker.views.quest_node_view import Ui_quest_node
+from gui.quest_maker.quest_objective import QuestObjective
+from gui.quest_maker.ISerializable import ISerializable
 
 
-class QuestObjective(Ui_Form, QWidget):
-    def __init__(self, data={}):
-        super().__init__()  
-        self.setupUi(self)
-        self.show()
-        if data:
-            self.setData(data)
-
-    def setupUi(self, Form):
-        super().setupUi(Form)
-        self.world_object_drop_event = self.world_object.dropEvent
-        self.world_object.dropEvent = MethodType(self.onDropEvent, self.world_object)
-
-    def getData(self):
-        data = {}
-        world_object = self.world_object.item(0)
-        data["item_name"] = world_object.text()
-        data["item_icon"] = world_object.icon()
-        data["amount"] = self.amount.value()
-        # TODO
-        # data["quest_types"] = self.quest_type.currentText()
-        return data
-
-    def setData(self, data):
-        world_object = QListWidgetItem(data["item_icon"], data["item_name"])
-        self.world_object.addItem(world_object)
-        # TODO
-        # self.quest_type
-        self.amount.setValue(data["amount"])
-
-    def isEmpty(self):
-        return self.world_object.count() == 0
-
-    def onDropEvent(self, list_widget, event):
-        self.world_object_drop_event(event)
-        if list_widget.count() > 1:
-            list_widget.takeItem(0)
-
-class QuestNode(Ui_quest_node, QWidget):
-
+class QuestNode(Ui_quest_node, QWidget, ISerializable):
     def __init__(self, db_list):
         super().__init__()
         self.dropEventMap = {}
@@ -64,6 +26,15 @@ class QuestNode(Ui_quest_node, QWidget):
         self.mapDropEvent(self.giver_list)
         self.mapDropEvent(self.receiver_list)
         self.addObjective()
+        # setup delete button function
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.delete_node_bttn.clicked.connect(self.onDeleteSelf)
+        
+    def onDeleteSelf(self):
+        reply = QMessageBox.question(self, "Delete Quest Node",
+            "Delete?", QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.hide()
 
     def contextMenuEvent(self, QContextMenuEvent):
         # only allow one empty objective entry in list
@@ -126,7 +97,7 @@ class QuestNode(Ui_quest_node, QWidget):
         objective = self.getObjective(row)
         copied_objective = QuestObjective(objective.getData())
         # route events to objective copied
-        self.routeObjectiveSignals(copied_objective, entry)
+        self.routeObjectiveContextMenu(copied_objective, entry)
         # delete events from objective copied
         self.objectiveEntryMap.pop(objective)
         # return copied object
@@ -142,12 +113,12 @@ class QuestNode(Ui_quest_node, QWidget):
         entry = QListWidgetItem(self.objective_list)
         entry.setSizeHint(objective.minimumSizeHint())
         # route objective events
-        self.routeObjectiveSignals(objective, entry)
+        self.routeObjectiveContextMenu(objective, entry)
         # insert widgets
         self.objective_list.addItem(entry)
         self.objective_list.setItemWidget(entry, objective)
 
-    def routeObjectiveSignals(self, objective, entry):
+    def routeObjectiveContextMenu(self, objective, entry):
         objective.contextMenuEvent = MethodType(self.objectiveContextMenu, objective)
         self.objectiveEntryMap[objective] = entry
 
@@ -164,4 +135,28 @@ class QuestNode(Ui_quest_node, QWidget):
             list_widget.takeItem(row)
         elif list_widget.count() > 1:
             list_widget.takeItem(row - 1)
+
+    def serialize(self):
+        """
+        Serialize:
+            - Quest name
+            - Quest Giver
+            - Quest Receiver
+            - Dialogues for Giver/Receiver
+            - Objectives
+        """
+        # TODO
+        return super().serialize()
+
+    def unserialize(self, data):
+        """
+        Unserialize:
+            - Quest name
+            - Quest Giver
+            - Quest Receiver
+            - Dialogues for Giver/Receiver
+            - Objectives
+        """
+        # TODO
+        return super().unserialize(data)
 

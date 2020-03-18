@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Ruben Alvarez Reyes
+"""
+
 import os
 from PyQt5.QtCore import Qt, QRect, QSize, QMimeData
 from PyQt5.QtGui import QIcon, QPixmap
@@ -92,7 +97,7 @@ class DataView(QListWidget):
         else:
             icon = QIcon(icon_data)
         entry = DataEntry(self.count(), icon, label, self)
-        entry.setSizeHint(QSize(24, 24))
+        entry.setSizeHint(QSize(32, 32))
         entry.setData(Qt.UserRole, data)
         super().addItem(entry)
         self.all_items.add(entry)

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-Ruben Alvaerz Reyes
+Ruben Alvarez Reyes
 """
 
 import os
 import sys
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
 root_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 sys.path.insert(0, root_dir)
 
-from gui.quest_maker.views.gui_dialogue import Ui_MainWindow
+from gui.quest_maker.views.quest_main_view import Ui_quest_maker_main
 
 from gui.quest_maker.game_database import DataView
 from gui.quest_maker.quest_node import QuestNode
@@ -20,51 +20,50 @@ from gui.quest_maker.quest_node import QuestNode
 from core.game_db import DataBases
 
 
-class MainWindow(Ui_MainWindow):
+class MainWindow(Ui_quest_maker_main, QMainWindow):
     def __init__(self):
         super().__init__()
         self.title = "Tides of War Quest Maker"
         self.about = "Author: Ruben Alvarez Reyes<br/>Source: " \
             "<a href=\"https://github.com/thisisnotruben/ToW-tools/\">Github</a>"
-        self.main_window = QMainWindow()
-        self.setupUi(self.main_window)
-        self.main_window.show()
-
+        self.setupUi(self)
+        self.showMaximized()
+    
     def setupUi(self, MainWindow):
         super().setupUi(MainWindow)
-
+        # set main window title/icon
         icon = QIcon(os.path.join(root_dir, "icon.png"))
         MainWindow.setWindowIcon(icon)
         MainWindow.setWindowTitle(self.title)
-
+        # add about popup
         about_popup = lambda: QMessageBox.about(MainWindow, "About", self.about)
         self.action_about.triggered.connect(about_popup)
-
+        # replace database widget
         self.list_view.setAttribute(Qt.WA_DeleteOnClose)
         self.list_view.hide()
         self.list_view = DataView(MainWindow)
         self.db_layout.addWidget(self.list_view)
-
         self.search.textChanged.connect(self.onSearch)
-
+        # route database combobox connections
         self.filter_db.addItem("All")
         self.filter_db.currentTextChanged.connect(self.onFilterDb)
         self.filter_db.addItems(self.list_view.db_tags)
-
         self.filter_type.addItem("All")
         self.filter_type.hide()
         self.filter_type.currentTextChanged.connect(
             lambda: self.onSearch(self.search.text()))
-
         self.filter_sub_type.addItem("All")
         self.filter_sub_type.hide()
         self.filter_sub_type.currentTextChanged.connect(
             lambda: self.onSearch(self.search.text()))
+        # route clicked function
+        self.add_quest_node_bttn.clicked.connect(self.addQuestNode)
+        # add quest node so there is no empty screen
+        self.addQuestNode()    
 
+    def addQuestNode(self):
         node = QuestNode(self.list_view)
-        self.node_list.setCellWidget(0, 0, node)
-        self.node_list.resizeColumnsToContents()
-        self.node_list.resizeRowsToContents()
+        self.scroll_layout.insertWidget(0, node)
         
     def onSearch(self, current_text):
         founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
