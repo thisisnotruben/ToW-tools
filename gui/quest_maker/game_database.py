@@ -8,8 +8,9 @@ from PyQt5.QtCore import Qt, QRect, QSize, QMimeData
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem
 
+from gui.quest_maker.icon_generator import IconGenerator
+
 from core.game_db import GameDB, DataBases
-from core.path_manager import PathManager
 from core.tiled_manager import Tiled
 
 
@@ -25,9 +26,7 @@ class DataEntry(QListWidgetItem):
 class DataView(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-
-        self.icon_atlas = QPixmap(PathManager.get_paths()["icon_atlas_data"]["path"])
-        self.icon_size = (16, 16)
+        self.icon_generator = IconGenerator()
         self.character_tag = "Character"
         self.all_items = set()
         self.db_tags = {}
@@ -89,20 +88,21 @@ class DataView(QListWidget):
                 character_data[character_id]["editorName"])
 
     def addItem(self, data, icon_data, label):
-        icon = None
-        if type(icon_data) == int:
-            width = self.icon_atlas.width() / self.icon_size[0]
-            rect = QRect(icon_data % width * self.icon_size[0], icon_data // width * self.icon_size[1], *self.icon_size)
-            icon = QIcon(self.icon_atlas.copy(rect))    
-        else:
-            icon = QIcon(icon_data)
+        icon = self.icon_generator.getIcon(icon_data)
         entry = DataEntry(self.count(), icon, label, self)
         entry.setSizeHint(QSize(32, 32))
         entry.setData(Qt.UserRole, data)
+        entry.setData(Qt.UserRole + 1, icon_data)
         super().addItem(entry)
         self.all_items.add(entry)
 
     def isCharacter(self, entry_name):
         return entry_name in [entry.text() for entry in self.all_items
             if entry.data(Qt.UserRole)["_DB"] == self.character_tag]
+
+    def getEntryIconSource(self, entry_name):
+        for entry in self.all_items:
+            if entry.text() == entry_name:
+                return entry.data(Qt.UserRole + 1)
+        return -1
         

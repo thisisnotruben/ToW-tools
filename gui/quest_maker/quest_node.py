@@ -9,14 +9,15 @@ from PyQt5.QtCore import Qt
 
 from gui.quest_maker.views.quest_node_view import Ui_quest_node
 from gui.quest_maker.quest_objective import QuestObjective
-from gui.quest_maker.ISerializable import ISerializable
+from gui.quest_maker.ISerializable import ISerializable, OrderedDict
+from gui.quest_maker.icon_generator import IconGenerator
 
 
 class QuestNode(Ui_quest_node, QWidget, ISerializable):
     def __init__(self, db_list):
         super().__init__()
         self.dropEventMap = {}
-        self.objectiveEntryMap = {}
+        self.objectiveEntryMap = OrderedDict()
         self.db_list = db_list
         self.setupUi(self)
         self.show()
@@ -95,7 +96,8 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
     def copyObjective(self, row, entry):
         # transfer data
         objective = self.getObjective(row)
-        copied_objective = QuestObjective(objective.getData())
+        copied_objective = QuestObjective(self.db_list)
+        copied_objective.unserialize(objective.serialize())
         # route events to objective copied
         self.routeObjectiveContextMenu(copied_objective, entry)
         # delete events from objective copied
@@ -109,7 +111,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
 
     def addObjective(self):
         # init widgets to add
-        objective = QuestObjective()
+        objective = QuestObjective(self.db_list)
         entry = QListWidgetItem(self.objective_list)
         entry.setSizeHint(objective.minimumSizeHint())
         # route objective events
@@ -117,6 +119,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
         # insert widgets
         self.objective_list.addItem(entry)
         self.objective_list.setItemWidget(entry, objective)
+        return objective
 
     def routeObjectiveContextMenu(self, objective, entry):
         objective.contextMenuEvent = MethodType(self.objectiveContextMenu, objective)
@@ -145,8 +148,47 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
             - Dialogues for Giver/Receiver
             - Objectives
         """
-        # TODO
-        return super().serialize()
+        payload = OrderedDict([
+            ("quest_name", self.name_entry.text()),
+            ("quest_giver", ""),
+            ("quest_giver_icon", -1),
+            ("quest_receiver", ""),
+            ("quest_receiver_icon", -1)
+        ])
+        quest_giver = self.giver_list.item(0)
+        quest_receiver = self.receiver_list.item(0)
+        if quest_giver != None:
+            payload["quest_giver"] = quest_giver.text()
+            payload["quest_giver_icon"] = \
+                self.db_list.getEntryIconSource(payload["quest_giver"])
+        if quest_receiver != None:
+            payload["quest_receiver"] = quest_receiver.text()
+            payload["quest_receiver_icon"] = \
+                self.db_list.getEntryIconSource(payload["quest_receiver"])
+
+        giver_dialogue = OrderedDict([
+            ("start", self.g_start_entry.toPlainText()),
+            ("active", self.g_active_entry.toPlainText()),
+            ("completed", self.g_completed_entry.toPlainText()),
+            ("delivered", self.g_delivered_entry.toPlainText())
+        ])
+
+        receiver_dialogue = OrderedDict([
+            ("start", self.r_start_entry.toPlainText()),
+            ("active", self.r_active_entry.toPlainText()),
+            ("completed", self.r_completed_entry.toPlainText()),
+            ("delivered", self.r_delivered_entry.toPlainText())
+        ])
+
+        objective_data = OrderedDict([
+            ("objective_%d" % i, objective.serialize())
+                for i, objective in enumerate(self.objectiveEntryMap.keys())
+        ])
+        
+        payload["giver_dialogue"] = giver_dialogue
+        payload["receiver_dialogue"] = receiver_dialogue
+        payload["objectives"] = objective_data
+        return payload
 
     def unserialize(self, data):
         """
@@ -157,6 +199,28 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
             - Dialogues for Giver/Receiver
             - Objectives
         """
-        # TODO
-        return super().unserialize(data)
+        icon_generator = IconGenerator()
+        # set quest name
+        self.name_entry.setText(data["quest_name"])
+        # set quest giver
+        if data["quest_giver"] != "":
+            icon = icon_generator.getIcon(data["quest_giver_icon"])
+            self.giver_list.addItem(QListWidgetItem(icon, data["quest_giver"]))
+        # set quest reciever
+        if data["quest_receiver"] != "":
+            icon = icon_generator.getIcon(data["quest_receiver_icon"])
+            self.receiver_list.addItem(QListWidgetItem(icon, data["quest_receiver"]))
+        # set quest giver dialogues
+        self.g_start_entry.setText(data["giver_dialogue"]["start"])
+        self.g_active_entry.setText(data["giver_dialogue"]["active"])
+        self.g_completed_entry.setText(data["giver_dialogue"]["completed"])
+        self.g_delivered_entry.setText(data["giver_dialogue"]["delivered"])
+        # set quest reciever dialogues
+        self.r_start_entry.setText(data["receiver_dialogue"]["start"])
+        self.r_active_entry.setText(data["receiver_dialogue"]["active"])
+        self.r_completed_entry.setText(data["receiver_dialogue"]["completed"])
+        self.r_delivered_entry.setText(data["receiver_dialogue"]["delivered"])
+        # set quest objectives
+        for objective_data in data["objectives"].keys():
+            self.addObjective().unserialize(data["objectives"][objective_data])
 

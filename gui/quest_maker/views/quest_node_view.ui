@@ -168,7 +168,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QTextEdit" name="g_ompleted_entry">
+            <widget class="QTextEdit" name="g_completed_entry">
              <property name="placeholderText">
               <string>Quest Giver Completed</string>
              </property>
