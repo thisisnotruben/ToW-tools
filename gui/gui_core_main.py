@@ -67,9 +67,10 @@ class MainWindow(Ui_MainWindow):
         self.thread.finished.connect(self.onCommandFinished)
 
     def onMakeSpriteDeaths(self, command):
-        self.files = QFileDialog.getOpenFileNames(self.main_window, "Open a SpriteSheet", \
+        # TODO: hard coded filepath
+        files = QFileDialog.getOpenFileNames(self.main_window, "Open a SpriteSheet", \
             "/home/rubsz/godot/my_games/Tides_of_War/asset/img/character", "png (*.png)")
-        file_paths = self.files[0]
+        file_paths = files[0]
         if len(file_paths) > 0:
             self.onClick(command, file_paths)
 

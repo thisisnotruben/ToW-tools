@@ -6,9 +6,9 @@ Ruben Alvarez Reyes
 import os
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFileDialog
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QDir
 
 root_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 sys.path.insert(0, root_dir)
@@ -22,12 +22,14 @@ from core.game_db import DataBases
 
 
 class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
         self.quest_nodes = []
+        self.current_file = ""
         self.title = "Tides of War Quest Maker"
         self.about = "Author: Ruben Alvarez Reyes<br/>Source: " \
             "<a href=\"https://github.com/thisisnotruben/ToW-tools/\">Github</a>"
+        self.app = app
         self.setupUi(self)
         self.showMaximized()
     
@@ -37,9 +39,12 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         icon = QIcon(os.path.join(root_dir, "icon.png"))
         MainWindow.setWindowIcon(icon)
         MainWindow.setWindowTitle(self.title)
-        # route save action
-        # TODO: needs to be implemented more robustly
-        self.action_save.triggered.connect(self.serialize)
+        # route actions
+        self.action_new.triggered.connect(self.onNewFile)
+        self.action_open.triggered.connect(self.onOpenFile)
+        self.action_save.triggered.connect(self.onSaveFile)
+        self.action_save_As.triggered.connect(self.onSaveAsFile)
+        self.action_quit.triggered.connect(self.closeEvent)
         # add about popup
         about_popup = lambda: QMessageBox.about(MainWindow, "About", self.about)
         self.action_about.triggered.connect(about_popup)
@@ -73,7 +78,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             node.unserialize(serialized_data)
         # route button connections
         node.on_delete_confirm = QAction(
-            triggered=lambda: self.onDeleteQuestNode(node))
+            triggered=lambda: self.onDeleteQuestNodeConfirm(node))
         node.move_node_left_bttn.clicked.connect(
             lambda: self.onMoveQuestNode(node, -1))
         node.move_node_right_bttn.clicked.connect(
@@ -88,7 +93,18 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         self.disableQuestNodeMoveButtons(index + 1)
         return node
 
-    def onDeleteQuestNode(self, quest_node):
+    def deleteQuestNode(self, quest_node):
+        quest_node.deleteQuestNode(True)
+
+    def disableQuestNodeMoveButtons(self, index):
+        # disable move left/right buttons based on first/last index
+        if index >= 0 and index < len(self.quest_nodes):
+            self.quest_nodes[index].move_node_left_bttn.setDisabled( \
+                index == 0)
+            self.quest_nodes[index].move_node_right_bttn.setDisabled( \
+                index == len(self.quest_nodes) - 1)
+
+    def onDeleteQuestNodeConfirm(self, quest_node):
         index = self.quest_nodes.index(quest_node)
         self.quest_nodes.remove(quest_node)
         self.scroll_layout.removeWidget(quest_node)
@@ -104,18 +120,10 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         # get current node index
         node_curr_index = self.quest_nodes.index(quest_node)
         # delete node
-        quest_node.deleteQuestNode(True)
+        self.deleteQuestNode(quest_node)
         # insert node new at index and set data
         self.insertQuestNode(node_curr_index + by, serialized_data)
-
-    def disableQuestNodeMoveButtons(self, index):
-        # disable move left/right buttons based on first/last index
-        if index >= 0 and index < len(self.quest_nodes):
-            self.quest_nodes[index].move_node_left_bttn.setDisabled( \
-                index == 0)
-            self.quest_nodes[index].move_node_right_bttn.setDisabled( \
-                index == len(self.quest_nodes) - 1)
-            
+  
     def onSearch(self, current_text):
         founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
 
@@ -159,6 +167,52 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
                 self.filter_sub_type.show()
         self.onSearch(self.search.text())
 
+    def clearWorkspace(self):
+        while len(self.quest_nodes) != 0:
+            self.deleteQuestNode(self.quest_nodes[0])
+
+    def getFileDialogue(self, save_prompt=False):
+        open_dir = QDir.homePath()
+        file_filter = "json (*.json)"
+        if save_prompt:
+            return QFileDialog.getSaveFileName(self, "Save Quest File", open_dir, file_filter)[0]
+        return QFileDialog.getOpenFileName(self, "Open Quest File", open_dir, file_filter)[0]
+
+    def onNewFile(self):
+        self.clearWorkspace()
+        self.current_file = ""
+
+    def onOpenFile(self):
+        self.current_file = self.getFileDialogue()
+        if os.path.isfile(self.current_file):
+            self.clearWorkspace()
+            with open(self.current_file, "r") as infile:
+                try:
+                    self.unserialize(json.load(infile))
+                except Exception as e:
+                    print(sys.exc_info())
+
+    def onSaveFile(self):
+        if os.path.isabs(self.current_file):
+            with open(self.current_file, "w") as outfile:
+                try:
+                    json.dump(self.serialize(), outfile, indent=4)
+                except Exception as e:
+                    print(sys.exc_info())
+        else:
+            self.onSaveAsFile()
+
+    def onSaveAsFile(self):
+        self.current_file = self.getFileDialogue(True)
+        file_ext = ".json"
+        if not self.current_file.endswith(file_ext):
+            self.current_file += file_ext
+        self.onSaveFile()
+
+    def closeEvent(self, QCloseEvent):
+        # TODO
+        pass
+
     def serialize(self):
         """
         Serialize:
@@ -167,9 +221,6 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         payload = OrderedDict([
             ("quest_node_%d" % i, node.serialize())
                 for i, node in enumerate(self.quest_nodes)])
-        # TODO: this operation below must be moved to another function
-        with open(os.path.join(root_dir, "TEST.json"), "w") as outfile:
-            json.dump(payload, outfile, indent=4)
         return payload
 
     def unserialize(self, data):
@@ -177,11 +228,12 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         Unserialize:
             - Quest Nodes
         """
+        data = OrderedDict(reversed(list(data.items())))
         for quest_node_data in data:
-            self.insertQuestNode().unserialize(quest_node_data)
+            self.insertQuestNode().unserialize(data[quest_node_data])
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ui = MainWindow()
+    ui = MainWindow(app)
     sys.exit(app.exec_())

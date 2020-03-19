@@ -24,12 +24,27 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
                 
     def setupUi(self, quest_node):
         super().setupUi(quest_node)
-        self.mapDropEvent(self.giver_list)
-        self.mapDropEvent(self.receiver_list)
+        # map character lists drop events
+        for list_widget in [self.giver_list, self.receiver_list]:
+            self.dropEventMap[list_widget] = list_widget.dropEvent
+            list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
         # setup delete button function
         self.delete_node_bttn.clicked.connect(self.deleteQuestNode)
         self.on_delete_confirm = QAction()
-        
+        # map objective list drop events
+        self.objective_list.dropEvent = MethodType(
+            self.onObjectiveListDropEvent, self.objective_list)
+
+    def onCharacterDropEvent(self, list_widget, event):
+        self.dropEventMap[list_widget](event)
+        row = list_widget.count() - 1
+        character_entry = list_widget.item(row)
+        # Only allow one entry, and can only be characters
+        if not self.db_list.isCharacter(character_entry.text()):
+            list_widget.takeItem(row)
+        elif list_widget.count() > 1:
+            list_widget.takeItem(row - 1)
+
     def deleteQuestNode(self, bypass_prompt=False):
         self.setAttribute(Qt.WA_DeleteOnClose)
         if bypass_prompt:
@@ -41,22 +56,12 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
             if reply == QMessageBox.Yes:
                 self.on_delete_confirm.trigger()
                 self.close()
-
-    def contextMenuEvent(self, QContextMenuEvent):
-        # only allow one empty objective entry in list
-        for row in range(self.objective_list.count()):
-            if self.getObjective(row).isEmpty():
-                super().contextMenuEvent(QContextMenuEvent)
-                return
-        # create context menu
-        menu = QMenu(self)
-        # create actions
-        add_action = QAction("Add", triggered=self.addObjective)
-        menu.addAction(add_action)
-        # exec action
-        action = menu.exec_(QContextMenuEvent.globalPos())
-
-    def objectiveContextMenu(self, objective_node, QContextMenuEvent):
+    
+    def routeObjectiveContextMenu(self, objective, entry):
+        objective.contextMenuEvent = MethodType(self.onObjectiveContextMenu, objective)
+        self.objectiveEntryMap[objective] = entry
+        
+    def onObjectiveContextMenu(self, objective_node, QContextMenuEvent):
         # get index from right click
         row = self.objective_list.row(self.objectiveEntryMap[objective_node])
         objective = self.getObjective(row)
@@ -65,38 +70,41 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
         menu = QMenu(self)
         # create actions
         move_up_action = QAction("Move Up",
-            triggered=lambda: self.move(row, -1))
+            triggered=lambda: self.onObjectveMove(row, -1))
         move_down_action = QAction("Move Down",
-            triggered=lambda: self.move(row, 1))
+            triggered=lambda: self.onObjectveMove(row, 1))
         delete_action = QAction("Delete",
-            triggered=lambda: self.delete(row))
+            triggered=lambda: self.onObjectveDelete(row))
         # set actions according to index
-        if not objective.isEmpty():
-            if row > 0:
-                menu.addSeparator()
-                menu.addAction(move_up_action)
-            if next_objective != None and not next_objective.isEmpty():
-                menu.addAction(move_down_action)
         if row > 0:
             menu.addSeparator()
-            menu.addAction(delete_action)
+            menu.addAction(move_up_action)
+        if next_objective != None and not next_objective.isEmpty():
+            menu.addAction(move_down_action)
+        menu.addSeparator()
+        menu.addAction(delete_action)
         # exec action
         action = menu.exec_(QContextMenuEvent.globalPos())
 
-    def delete(self, row):
+    def onObjectveDelete(self, row):
         objective = self.getObjective(row)
         # delete entry
         self.objective_list.takeItem(row)
         # delete events from objective copied
         self.objectiveEntryMap.pop(objective)
     
-    def move(self, row, by):
+    def onObjectveMove(self, row, by):
         # get widgets
         objective = self.copyObjective(row, self.objective_list.item(row))
         entry = self.objective_list.takeItem(row)
         # move widgets
         self.objective_list.insertItem(row + by, entry)
         self.objective_list.setItemWidget(entry, objective)
+
+    def onObjectiveListDropEvent(self, list_widget, QDropEvent):
+        # create quest objective on drop
+        objective = self.addObjective()
+        objective.onDropEvent(objective.world_object, QDropEvent)
 
     def copyObjective(self, row, entry):
         # transfer data
@@ -125,24 +133,6 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
         self.objective_list.addItem(entry)
         self.objective_list.setItemWidget(entry, objective)
         return objective
-
-    def routeObjectiveContextMenu(self, objective, entry):
-        objective.contextMenuEvent = MethodType(self.objectiveContextMenu, objective)
-        self.objectiveEntryMap[objective] = entry
-
-    def mapDropEvent(self, list_widget):
-        self.dropEventMap[list_widget] = list_widget.dropEvent
-        list_widget.dropEvent = MethodType(self.onDropEvent, list_widget)
-
-    def onDropEvent(self, list_widget, event):
-        self.dropEventMap[list_widget](event)
-        row = list_widget.count() - 1
-        character_entry = list_widget.item(row)
-        # Only allow one entry, and can only be characters
-        if not self.db_list.isCharacter(character_entry.text()):
-            list_widget.takeItem(row)
-        elif list_widget.count() > 1:
-            list_widget.takeItem(row - 1)
 
     def serialize(self):
         """
