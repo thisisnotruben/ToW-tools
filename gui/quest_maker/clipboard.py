@@ -3,7 +3,7 @@
 Ruben Alvarez Reyes
 """
 
-from gui.quest_maker.ISerializable import OrderedDict
+from collections import OrderedDict
 
 
 class Clipboard:

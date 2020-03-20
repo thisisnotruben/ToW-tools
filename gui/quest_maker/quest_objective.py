@@ -4,16 +4,18 @@ Ruben Alvarez Reyes
 """
 
 from types import MethodType
+from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem
 
 from gui.quest_maker.views.quest_objective_view import Ui_quest_objective
-from gui.quest_maker.ISerializable import ISerializable, OrderedDict
+from gui.quest_maker.metas import ISerializable, Dirty
 from gui.quest_maker.icon_generator import IconGenerator
 
 
-class QuestObjective(Ui_quest_objective, QWidget, ISerializable):
+class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
     def __init__(self, db_list, data={}):
-        super().__init__()  
+        super().__init__()
+        Dirty.__init__(self)
         self.db_list = db_list
         self.setupUi(self)
         self.show()
@@ -33,11 +35,17 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable):
         if list_widget.count() > 1:
             list_widget.takeItem(0)
 
+    def routeDirtiables(self, parent):
+        self.world_object.itemChanged.connect(parent.setDirty)
+        self.quest_type.currentTextChanged.connect(parent.setDirty)
+        self.amount.valueChanged.connect(parent.setDirty)
+
     def serialize(self):
         """
         Serialize:
             - World object / Type / Amount
         """
+        self.dirty = False
         payload = OrderedDict([
             ("world_object", ""),
             ("world_object_icon", -1),

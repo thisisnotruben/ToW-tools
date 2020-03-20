@@ -6,6 +6,7 @@ Ruben Alvarez Reyes
 import os
 import sys
 import json
+from collections import OrderedDict
 from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFileDialog
 from PyQt5.QtGui import QIcon, QCloseEvent
 from PyQt5.QtCore import Qt, QDir
@@ -16,15 +17,16 @@ sys.path.insert(0, root_dir)
 from gui.quest_maker.views.quest_main_view import Ui_quest_maker_main
 from gui.quest_maker.game_database import DataView
 from gui.quest_maker.quest_node import QuestNode
-from gui.quest_maker.ISerializable import ISerializable, OrderedDict
+from gui.quest_maker.metas import ISerializable, Dirty
 from gui.quest_maker.clipboard import Clipboard
 
 from core.game_db import DataBases
 
 
-class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
+class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
     def __init__(self, app):
         super().__init__()
+        Dirty.__init__(self)
 
         self.clipboard = Clipboard()
         self.quest_nodes = []
@@ -78,21 +80,25 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             lambda: self.onSearch(self.search.text()))
         # route clicked function
         self.add_quest_node_bttn.clicked.connect(self.insertQuestNode)
-        # add quest node so there is no empty screen
-        self.insertQuestNode()
+
         
     def setTitle(self):
-        saved = self.clipboard.isHistoryCurrent()
+        modified = self.isModified()
         header = self.title
         if os.path.isabs(self.current_file):
             header = "%s \u2015 %s" % \
                 (os.path.basename(self.current_file), header)
-            if not saved: header = "*%s" % header
+        if modified: header = "*%s" % header
         self.setWindowTitle(header)
 
+    def isModified(self):
+        return not self.clipboard.isHistoryCurrent() or self.dirty
+
     def insertQuestNode(self, index=0):
+        self.setDirty([])
         # init widget 
         node = QuestNode(self.list_view)
+        node.routeDirtiables(self)
         # route button connections
         node.on_delete_confirm = QAction(
             triggered=lambda: self.onDeleteQuestNodeConfirm(node))
@@ -134,6 +140,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
                 index == len(self.quest_nodes) - 1)
 
     def onDeleteQuestNodeConfirm(self, quest_node):
+        self.setDirty([])
         index = self.quest_nodes.index(quest_node)
         self.quest_nodes.remove(quest_node)
         self.scroll_layout.removeWidget(quest_node)
@@ -217,17 +224,17 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         return reply
 
     def onNewFile(self):
-        if not (not self.clipboard.isHistoryCurrent() \
+        if not (self.isModified() \
         and self.onFileChangeDialogue() == QMessageBox.Cancel):
             # clear work area
             self.clearWorkspace()
             self.clipboard.clearHistoryStack()
             self.current_file = ""
+            self.dirty = False
             self.setTitle()
-            self.insertQuestNode()
 
     def onOpenFile(self):
-        if not (not self.clipboard.isHistoryCurrent() \
+        if not (self.isModified() \
         and self.onFileChangeDialogue() == QMessageBox.Cancel):
             potential_file = self.getFileDialogue()
             if os.path.isabs(potential_file):
@@ -235,7 +242,6 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
                 self.clearWorkspace()
                 self.clipboard.clearHistoryStack()
                 self.current_file = potential_file
-                self.setTitle()
                 # load data
                 with open(self.current_file, "r") as infile:
                     try:
@@ -245,6 +251,9 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
                         self.clipboard.addToHistory(payload)
                     except Exception as e:
                         print(sys.exc_info())
+                # set title
+                self.dirty = False
+                self.setTitle()
 
     def onSaveFile(self):
         if os.path.isabs(self.current_file):
@@ -270,7 +279,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             self.onSaveFile()
 
     def closeEvent(self, QCloseEvent):
-        if not self.clipboard.isHistoryCurrent() \
+        if self.isModified() \
         and self.onFileChangeDialogue() == QMessageBox.Cancel:
             QCloseEvent.ignore()
         else:
@@ -279,9 +288,25 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
     def onDo(self, redo):
         self.clearWorkspace()
         payload = self.clipboard.redo() if redo else self.clipboard.undo()
-        self.setTitle()
         self.unserialize(payload)
         self.disableUndoRedoActions()
+        if self.clipboard.isHistoryCurrent():
+            # because every single add-in will mark
+            # dirty, this is the last saved moment,
+            # which means it's not dirty
+            self.dirty = False
+        self.setTitle()
+
+    def setDirty(self, *args, **kwargs):
+        if not self.dirty:
+            self.dirty = True
+            self.onDirty.trigger()
+            self.setTitle()
+
+    def routeDirtiables(self, parent):
+        # not implemented, because
+        # this node is root
+        pass
 
     def serialize(self):
         """
@@ -291,9 +316,13 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         payload = OrderedDict([
             ("quest_node_%d" % i, node.serialize())
                 for i, node in enumerate(self.quest_nodes)])
-        # add a stamp of history
-        self.clipboard.addToHistory(payload)
-        self.disableUndoRedoActions()
+        if self.dirty:
+            # add a stamp of history if changes were made
+            # else, it's just a duplicate of history
+            self.dirty = False
+            self.setTitle()
+            self.clipboard.addToHistory(payload)
+            self.disableUndoRedoActions()
         return payload
 
     def unserialize(self, data):

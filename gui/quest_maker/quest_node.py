@@ -4,18 +4,20 @@ Ruben Alvarez Reyes
 """
 
 from types import MethodType
+from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction, QMessageBox
 from PyQt5.QtCore import Qt
 
 from gui.quest_maker.views.quest_node_view import Ui_quest_node
 from gui.quest_maker.quest_objective import QuestObjective
-from gui.quest_maker.ISerializable import ISerializable, OrderedDict
+from gui.quest_maker.metas import ISerializable, Dirty
 from gui.quest_maker.icon_generator import IconGenerator
 
 
-class QuestNode(Ui_quest_node, QWidget, ISerializable):
+class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
     def __init__(self, db_list):
         super().__init__()
+        Dirty.__init__(self)
         self.dropEventMap = {}
         self.objectiveEntryMap = OrderedDict()
         self.db_list = db_list
@@ -125,6 +127,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
     def addObjective(self):
         # init widgets to add
         objective = QuestObjective(self.db_list)
+        objective.routeDirtiables(self)
         entry = QListWidgetItem(self.objective_list)
         entry.setSizeHint(objective.minimumSizeHint())
         # route objective events
@@ -133,6 +136,27 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
         self.objective_list.addItem(entry)
         self.objective_list.setItemWidget(entry, objective)
         return objective
+
+    def routeDirtiables(self, parent):
+        self.move_node_left_bttn.clicked.connect(parent.setDirty)
+        self.move_node_right_bttn.clicked.connect(parent.setDirty)
+
+        self.name_entry.textChanged.connect(parent.setDirty)
+        self.giver_list.itemChanged.connect(parent.setDirty)
+        self.receiver_list.itemChanged.connect(parent.setDirty)
+
+        dialogue_entries = [
+            self.g_start_entry,
+            self.g_active_entry,
+            self.g_completed_entry,
+            self.g_delivered_entry,
+            self.r_start_entry,
+            self.r_active_entry,
+            self.r_completed_entry,
+            self.r_delivered_entry
+        ]
+        for entry in dialogue_entries:
+            entry.textChanged.connect(parent.setDirty)
 
     def serialize(self):
         """
@@ -143,6 +167,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable):
             - Dialogues for Giver/Receiver
             - Objectives
         """
+        self.dirty = False
         payload = OrderedDict([
             ("quest_name", self.name_entry.text()),
             ("quest_giver", ""),
