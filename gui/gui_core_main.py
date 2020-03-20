@@ -13,6 +13,7 @@ from PyQt5.QtCore import QThread
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 
 from gui.gui_core import Ui_MainWindow
+from core.path_manager import PathManager
 from core.main import Main
 
 
@@ -67,9 +68,8 @@ class MainWindow(Ui_MainWindow):
         self.thread.finished.connect(self.onCommandFinished)
 
     def onMakeSpriteDeaths(self, command):
-        # TODO: hard coded filepath
         files = QFileDialog.getOpenFileNames(self.main_window, "Open a SpriteSheet", \
-            "/home/rubsz/godot/my_games/Tides_of_War/asset/img/character", "png (*.png)")
+            PathManager.get_paths()["game"]["character_dir"], "png (*.png)")
         file_paths = files[0]
         if len(file_paths) > 0:
             self.onClick(command, file_paths)

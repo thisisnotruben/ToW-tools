@@ -16,10 +16,11 @@ class PathManager:
     def get_paths():
         data_paths = {}
         with open(PathManager.get_master_path(), "r") as f:
-            data_paths = json.load(f)
+            data = json.load(f)
             for parent_key in ["game", "tiled"]:
-                for key in data_paths[parent_key]:
+                for key in data[parent_key]:
                     if key != "root":
-                        data_paths[parent_key][key] = os.path.join(data_paths[parent_key]["root"],
-                            data_paths[parent_key][key])
+                        data[parent_key][key] = os.path.join(data[parent_key]["root"],
+                            data[parent_key][key])
+            data_paths = data
         return data_paths
