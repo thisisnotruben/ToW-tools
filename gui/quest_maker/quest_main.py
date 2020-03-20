@@ -7,7 +7,7 @@ import os
 import sys
 import json
 from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFileDialog
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QCloseEvent
 from PyQt5.QtCore import Qt, QDir
 
 root_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
@@ -17,6 +17,7 @@ from gui.quest_maker.views.quest_main_view import Ui_quest_maker_main
 from gui.quest_maker.game_database import DataView
 from gui.quest_maker.quest_node import QuestNode
 from gui.quest_maker.ISerializable import ISerializable, OrderedDict
+from gui.quest_maker.clipboard import Clipboard
 
 from core.game_db import DataBases
 
@@ -24,11 +25,15 @@ from core.game_db import DataBases
 class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
     def __init__(self, app):
         super().__init__()
+
+        self.clipboard = Clipboard()
         self.quest_nodes = []
         self.current_file = ""
+
         self.title = "Tides of War Quest Maker"
         self.about = "Author: Ruben Alvarez Reyes<br/>Source: " \
             "<a href=\"https://github.com/thisisnotruben/ToW-tools/\">Github</a>"
+
         self.app = app
         self.setupUi(self)
         self.showMaximized()
@@ -38,13 +43,18 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         # set main window title/icon
         icon = QIcon(os.path.join(root_dir, "icon.png"))
         MainWindow.setWindowIcon(icon)
-        MainWindow.setWindowTitle(self.title)
+        self.setTitle()
         # route actions
+        self.action_undo.triggered.connect(lambda: self.onDo(False))
+        self.action_redo.triggered.connect(lambda: self.onDo(True))
+        self.undo_save_bttn.clicked.connect(lambda: self.onDo(False))
+        self.redo_save_bttn.clicked.connect(lambda: self.onDo(True))
+        self.disableUndoRedoActions()
         self.action_new.triggered.connect(self.onNewFile)
         self.action_open.triggered.connect(self.onOpenFile)
         self.action_save.triggered.connect(self.onSaveFile)
         self.action_save_As.triggered.connect(self.onSaveAsFile)
-        self.action_quit.triggered.connect(self.closeEvent)
+        self.action_quit.triggered.connect(self.close)
         # add about popup
         about_popup = lambda: QMessageBox.about(MainWindow, "About", self.about)
         self.action_about.triggered.connect(about_popup)
@@ -69,13 +79,20 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         # route clicked function
         self.add_quest_node_bttn.clicked.connect(self.insertQuestNode)
         # add quest node so there is no empty screen
-        self.insertQuestNode()    
+        self.insertQuestNode()
+        
+    def setTitle(self):
+        saved = self.clipboard.isHistoryCurrent()
+        header = self.title
+        if os.path.isabs(self.current_file):
+            header = "%s \u2015 %s" % \
+                (os.path.basename(self.current_file), header)
+            if not saved: header = "*%s" % header
+        self.setWindowTitle(header)
 
-    def insertQuestNode(self, index=0, serialized_data={}):
-        # init widget
+    def insertQuestNode(self, index=0):
+        # init widget 
         node = QuestNode(self.list_view)
-        if len(serialized_data.keys()) > 0:
-            node.unserialize(serialized_data)
         # route button connections
         node.on_delete_confirm = QAction(
             triggered=lambda: self.onDeleteQuestNodeConfirm(node))
@@ -95,6 +112,15 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
 
     def deleteQuestNode(self, quest_node):
         quest_node.deleteQuestNode(True)
+
+    def disableUndoRedoActions(self):
+        # check index of buttons and 
+        # potentially disable buttons
+        reached_end = self.clipboard.reached_end()
+        self.action_undo.setDisabled(reached_end[0])
+        self.action_redo.setDisabled(reached_end[1])
+        self.undo_save_bttn.setDisabled(reached_end[0])
+        self.redo_save_bttn.setDisabled(reached_end[1])
 
     def disableQuestNodeMoveButtons(self, index):
         # disable move left/right buttons based on first/last index
@@ -122,7 +148,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         # delete node
         self.deleteQuestNode(quest_node)
         # insert node new at index and set data
-        self.insertQuestNode(node_curr_index + by, serialized_data)
+        self.insertQuestNode(node_curr_index + by).unserialize(serialized_data)
   
     def onSearch(self, current_text):
         founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
@@ -172,28 +198,54 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             self.deleteQuestNode(self.quest_nodes[0])
 
     def getFileDialogue(self, save_prompt=False):
-        open_dir = QDir.homePath()
+        self.recent_dir = os.path.dirname(self.current_file) \
+            if os.path.isabs(self.current_file) else QDir().homePath()
         file_filter = "json (*.json)"
         if save_prompt:
-            return QFileDialog.getSaveFileName(self, "Save Quest File", open_dir, file_filter)[0]
-        return QFileDialog.getOpenFileName(self, "Open Quest File", open_dir, file_filter)[0]
+            return QFileDialog.getSaveFileName(self, "Save Quest File", self.recent_dir, file_filter)[0]
+        return QFileDialog.getOpenFileName(self, "Open Quest File", self.recent_dir, file_filter)[0]
+
+    def onFileChangeDialogue(self):
+        reply = QMessageBox.warning(self, "Unsaved Changes \u2015 %s" % self.title, \
+            "There are unsaved changes. Do you want to save now?", \
+            QMessageBox.Discard | QMessageBox.Cancel | QMessageBox.Save)
+        if reply == QMessageBox.Save:
+            self.onSaveFile()        
+        return reply
 
     def onNewFile(self):
-        self.clearWorkspace()
-        self.current_file = ""
+        if not (not self.clipboard.isHistoryCurrent() \
+        and self.onFileChangeDialogue() == QMessageBox.Cancel):
+            # clear work area
+            self.clearWorkspace()
+            self.clipboard.clearHistoryStack()
+            self.current_file = ""
+            self.setTitle()
+            self.insertQuestNode()
 
     def onOpenFile(self):
-        self.current_file = self.getFileDialogue()
-        if os.path.isfile(self.current_file):
-            self.clearWorkspace()
-            with open(self.current_file, "r") as infile:
-                try:
-                    self.unserialize(json.load(infile))
-                except Exception as e:
-                    print(sys.exc_info())
+        if not (not self.clipboard.isHistoryCurrent() \
+        and self.onFileChangeDialogue() == QMessageBox.Cancel):
+            potential_file = self.getFileDialogue()
+            if os.path.isabs(potential_file):
+                # clear work area
+                self.clearWorkspace()
+                self.clipboard.clearHistoryStack()
+                self.current_file = potential_file
+                self.setTitle()
+                # load data
+                with open(self.current_file, "r") as infile:
+                    try:
+                        payload = json.load(infile)
+                        self.unserialize(payload)
+                        # make root of history
+                        self.clipboard.addToHistory(payload)
+                    except Exception as e:
+                        print(sys.exc_info())
 
     def onSaveFile(self):
         if os.path.isabs(self.current_file):
+            self.setTitle()
             with open(self.current_file, "w") as outfile:
                 try:
                     json.dump(self.serialize(), outfile, indent=4)
@@ -203,15 +255,30 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
             self.onSaveAsFile()
 
     def onSaveAsFile(self):
-        self.current_file = self.getFileDialogue(True)
-        file_ext = ".json"
-        if not self.current_file.endswith(file_ext):
-            self.current_file += file_ext
-        self.onSaveFile()
+        potential_file = self.getFileDialogue(True)
+        if os.path.isabs(potential_file):
+            # set current file
+            self.current_file = potential_file
+            # check if user added the appropriate extension
+            file_ext = ".json"
+            if not self.current_file.endswith(file_ext):
+                self.current_file += file_ext
+            # save file
+            self.onSaveFile()
 
     def closeEvent(self, QCloseEvent):
-        # TODO
-        pass
+        if not self.clipboard.isHistoryCurrent() \
+        and self.onFileChangeDialogue() == QMessageBox.Cancel:
+            QCloseEvent.ignore()
+        else:
+            QCloseEvent.accept()
+    
+    def onDo(self, redo):
+        self.clearWorkspace()
+        payload = self.clipboard.redo() if redo else self.clipboard.undo()
+        self.setTitle()
+        self.unserialize(payload)
+        self.disableUndoRedoActions()
 
     def serialize(self):
         """
@@ -221,6 +288,9 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         payload = OrderedDict([
             ("quest_node_%d" % i, node.serialize())
                 for i, node in enumerate(self.quest_nodes)])
+        # add a stamp of history
+        self.clipboard.addToHistory(payload)
+        self.disableUndoRedoActions()
         return payload
 
     def unserialize(self, data):
@@ -228,9 +298,8 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         Unserialize:
             - Quest Nodes
         """
-        data = OrderedDict(reversed(list(data.items())))
-        for quest_node_data in data:
-            self.insertQuestNode().unserialize(data[quest_node_data])
+        for i, quest_node_data in enumerate(data):
+            self.insertQuestNode(i).unserialize(data[quest_node_data])
 
 
 if __name__ == "__main__":
