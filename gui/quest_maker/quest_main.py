@@ -103,6 +103,9 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable):
         # add widget
         self.scroll_layout.insertWidget(index, node)
         self.quest_nodes.insert(index, node)
+        # name all quest node headers
+        for i, n in enumerate(self.quest_nodes):
+            n.group_box.setTitle("Quest Node %d" % i)
         # possibly disable move buttons
         # for node and neighbor nodes
         self.disableQuestNodeMoveButtons(index)
