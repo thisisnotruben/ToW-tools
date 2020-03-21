@@ -5,7 +5,7 @@ Ruben Alvarez Reyes
 
 from types import MethodType
 from collections import OrderedDict
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction, QMessageBox
 
 from quest_maker.views.quest_objective_view import Ui_quest_objective
 from quest_maker.metas import ISerializable, Dirty
@@ -34,12 +34,40 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         self.world_object_drop_event(event)
         if list_widget.count() > 1:
             list_widget.takeItem(0)
-
+        # if character name is not unique ask if you want this character
+        # in particular, or all units with this name
+        if not self.db_list.isEntryUnique(self.getWorldObjectName()):            
+            reply = QMessageBox.question(self, "Duplicate found in world \u2015 Tides of War", \
+                "World object is mentioned more then once in game. "
+                "Include all world objects with this name, or just "
+                "this specfic world object?",
+                QMessageBox.YesToAll | QMessageBox.Yes | QMessageBox.Cancel)
+            # route reply
+            if reply == QMessageBox.Yes:
+                # since it's unique, there can only
+                # an amount of one
+                self.amount.setValue(1)
+                self.amount.setDisabled(True)
+            elif reply == QMessageBox.YesToAll:
+                entry = self.world_object.item(0)
+                entry.setText(self.db_list.getEntryNameToGameName(entry.text()))
+            elif reply == QMessageBox.Cancel:
+                self.onObjectveDelete(self.objective_list.count() - 1)
+        # spells will always have an amount equal to one, because you
+        # only learn a spell once
+        elif self.db_list.isSpell(self.getWorldObjectName()):
+            self.amount.setValue(1)
+            self.amount.setDisabled(True)
+    
     def routeDirtiables(self, parent):
         self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
         self.world_object.itemChanged.connect(parent.setDirty)
         self.quest_type.currentTextChanged.connect(parent.setDirty)
         self.amount.valueChanged.connect(parent.setDirty)
+
+    def getWorldObjectName(self):
+        world_object = self.world_object.item(0)
+        return world_object.text() if world_object != None else ""
 
     def serialize(self):
         """
@@ -48,16 +76,14 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         """
         self.dirty = False
         payload = OrderedDict([
-            ("world_object", ""),
+            ("world_object", self.getWorldObjectName()),
             ("world_object_icon", -1),
             ("quest_type", self.quest_type.currentText()),
             ("amount", self.amount.value())
         ])
-        world_object = self.world_object.item(0)
-        if world_object != None:
-            payload["world_object"] = world_object.text()
+        if payload["world_object"] != "":
             payload["world_object_icon"] = \
-                self.db_list.getEntryIconSource(payload["world_object"])
+            self.db_list.getEntryIconSource(payload["world_object"])
         return payload
 
     def unserialize(self, data):

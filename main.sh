@@ -9,6 +9,6 @@
 PEOJECT_DIR="$(dirname $(readlink -f "$0"))"
 
 TERMINAL="/core/main.py"
-GUI="/gui/gui_core_main.py"
+GUI="/exporter/exporter_main.py"
 
 $PEOJECT_DIR$GUI $@

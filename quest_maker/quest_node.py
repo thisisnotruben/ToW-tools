@@ -107,6 +107,12 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         # create quest objective on drop
         objective = self.addObjective()
         objective.onDropEvent(objective.world_object, QDropEvent)
+        # check if dropped event is a duplicate and delete if it is
+        for other_objective in self.objectiveEntryMap.keys():
+            if other_objective.getWorldObjectName() == objective.getWorldObjectName() \
+            and other_objective != objective:
+                self.onObjectveDelete(self.objective_list.count() - 1)
+                break
 
     def copyObjective(self, row, entry):
         # transfer data

@@ -4,6 +4,7 @@ Ruben Alvarez Reyes
 """
 
 import os
+from collections import Counter
 from PyQt5.QtCore import Qt, QRect, QSize, QMimeData
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem
@@ -99,6 +100,26 @@ class DataView(QListWidget):
     def isCharacter(self, entry_name):
         return entry_name in [entry.text() for entry in self.all_items
             if entry.data(Qt.UserRole)["_DB"] == self.character_tag]
+
+    def isSpell(self, entry_name):
+        return entry_name in [entry.text() for entry in self.all_items
+            if entry.data(Qt.UserRole)["_DB"] == DataBases.SPELLDB.value]
+
+    def isEntryUnique(self, entry_name):
+        # turn all database names to the actual game names
+        formatted_names = [
+            self.getEntryNameToGameName(entry.text())
+            for entry in self.all_items
+        ]
+        entry_name = self.getEntryNameToGameName(entry_name)
+        # if it equals zero, then item doesn't exist
+        duplicate_finder = Counter(formatted_names)
+        return duplicate_finder[entry_name] == 1
+
+    def getEntryNameToGameName(self, entry_name):
+        if "-" in entry_name:
+            entry_name = entry_name.split("-")[1]
+        return entry_name
 
     def getEntryIconSource(self, entry_name):
         for entry in self.all_items:
