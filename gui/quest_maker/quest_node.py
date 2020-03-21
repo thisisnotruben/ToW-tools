@@ -138,6 +138,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         return objective
 
     def routeDirtiables(self, parent):
+        self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
         self.move_node_left_bttn.clicked.connect(parent.setDirty)
         self.move_node_right_bttn.clicked.connect(parent.setDirty)
 

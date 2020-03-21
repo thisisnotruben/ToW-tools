@@ -81,7 +81,6 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         # route clicked function
         self.add_quest_node_bttn.clicked.connect(self.insertQuestNode)
 
-        
     def setTitle(self):
         modified = self.isModified()
         header = self.title
@@ -207,7 +206,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         while len(self.quest_nodes) != 0:
             self.deleteQuestNode(self.quest_nodes[0])
 
-    def getFileDialogue(self, save_prompt=False):
+    def getFileOpenDialogue(self, save_prompt=False):
         self.recent_dir = os.path.dirname(self.current_file) \
             if os.path.isabs(self.current_file) else QDir().homePath()
         file_filter = "json (*.json)"
@@ -215,7 +214,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
             return QFileDialog.getSaveFileName(self, "Save Quest File", self.recent_dir, file_filter)[0]
         return QFileDialog.getOpenFileName(self, "Open Quest File", self.recent_dir, file_filter)[0]
 
-    def onFileChangeDialogue(self):
+    def getFileChangeDialogue(self):
         reply = QMessageBox.warning(self, "Unsaved Changes \u2015 %s" % self.title, \
             "There are unsaved changes. Do you want to save now?", \
             QMessageBox.Discard | QMessageBox.Cancel | QMessageBox.Save)
@@ -225,7 +224,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
 
     def onNewFile(self):
         if not (self.isModified() \
-        and self.onFileChangeDialogue() == QMessageBox.Cancel):
+        and self.getFileChangeDialogue() == QMessageBox.Cancel):
             # clear work area
             self.clearWorkspace()
             self.clipboard.clearHistoryStack()
@@ -235,8 +234,8 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
 
     def onOpenFile(self):
         if not (self.isModified() \
-        and self.onFileChangeDialogue() == QMessageBox.Cancel):
-            potential_file = self.getFileDialogue()
+        and self.getFileChangeDialogue() == QMessageBox.Cancel):
+            potential_file = self.getFileOpenDialogue()
             if os.path.isabs(potential_file):
                 # clear work area
                 self.clearWorkspace()
@@ -267,7 +266,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
             self.onSaveAsFile()
 
     def onSaveAsFile(self):
-        potential_file = self.getFileDialogue(True)
+        potential_file = self.getFileOpenDialogue(True)
         if os.path.isabs(potential_file):
             # set current file
             self.current_file = potential_file
@@ -280,7 +279,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
 
     def closeEvent(self, QCloseEvent):
         if self.isModified() \
-        and self.onFileChangeDialogue() == QMessageBox.Cancel:
+        and self.getFileChangeDialogue() == QMessageBox.Cancel:
             QCloseEvent.ignore()
         else:
             QCloseEvent.accept()

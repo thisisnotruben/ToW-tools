@@ -5,7 +5,7 @@ Ruben Alvarez Reyes
 
 from types import MethodType
 from collections import OrderedDict
-from PyQt5.QtWidgets import QWidget, QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction
 
 from gui.quest_maker.views.quest_objective_view import Ui_quest_objective
 from gui.quest_maker.metas import ISerializable, Dirty
@@ -36,6 +36,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
             list_widget.takeItem(0)
 
     def routeDirtiables(self, parent):
+        self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
         self.world_object.itemChanged.connect(parent.setDirty)
         self.quest_type.currentTextChanged.connect(parent.setDirty)
         self.amount.valueChanged.connect(parent.setDirty)
