@@ -12,7 +12,8 @@ from PyQt5.QtCore import QThread
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 
-from gui.gui_core import Ui_MainWindow
+from exporter.views.exporter_main_view import Ui_MainWindow
+
 from core.path_manager import PathManager
 from core.main import Main
 

@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QRect, QSize, QMimeData
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem
 
-from gui.quest_maker.icon_generator import IconGenerator
+from quest_maker.icon_generator import IconGenerator
 
 from core.game_db import GameDB, DataBases
 from core.tiled_manager import Tiled

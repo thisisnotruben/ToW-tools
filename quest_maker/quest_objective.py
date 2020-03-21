@@ -7,9 +7,9 @@ from types import MethodType
 from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction
 
-from gui.quest_maker.views.quest_objective_view import Ui_quest_objective
-from gui.quest_maker.metas import ISerializable, Dirty
-from gui.quest_maker.icon_generator import IconGenerator
+from quest_maker.views.quest_objective_view import Ui_quest_objective
+from quest_maker.metas import ISerializable, Dirty
+from quest_maker.icon_generator import IconGenerator
 
 
 class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):

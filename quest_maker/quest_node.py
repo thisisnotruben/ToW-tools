@@ -8,10 +8,10 @@ from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction, QMessageBox
 from PyQt5.QtCore import Qt
 
-from gui.quest_maker.views.quest_node_view import Ui_quest_node
-from gui.quest_maker.quest_objective import QuestObjective
-from gui.quest_maker.metas import ISerializable, Dirty
-from gui.quest_maker.icon_generator import IconGenerator
+from quest_maker.views.quest_node_view import Ui_quest_node
+from quest_maker.quest_objective import QuestObjective
+from quest_maker.metas import ISerializable, Dirty
+from quest_maker.icon_generator import IconGenerator
 
 
 class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):

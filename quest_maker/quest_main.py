@@ -11,14 +11,14 @@ from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFi
 from PyQt5.QtGui import QIcon, QCloseEvent
 from PyQt5.QtCore import Qt, QDir
 
-root_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.insert(0, root_dir)
 
-from gui.quest_maker.views.quest_main_view import Ui_quest_maker_main
-from gui.quest_maker.game_database import DataView
-from gui.quest_maker.quest_node import QuestNode
-from gui.quest_maker.metas import ISerializable, Dirty
-from gui.quest_maker.clipboard import Clipboard
+from quest_maker.views.quest_main_view import Ui_quest_maker_main
+from quest_maker.game_database import DataView
+from quest_maker.quest_node import QuestNode
+from quest_maker.metas import ISerializable, Dirty
+from quest_maker.clipboard import Clipboard
 
 from core.game_db import DataBases
 
