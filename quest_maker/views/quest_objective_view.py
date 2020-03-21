@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'quest_objective_view.ui'
+# Form implementation generated from reading ui file './quest_maker/views/quest_objective_view.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
