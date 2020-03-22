@@ -37,7 +37,7 @@
         "archive_backup_dir": "/home/rubsz/ToW_backups",
         "db_dir": "/home/rubsz/tiled/Tides_of_War/non_map/scripts/db/game",
         "db_export_path": "/home/rubsz/godot/my_games/Tides_of_War/data",
-        "dev_character_dir":"/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_character",
+        "dev_character_dir": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_character",
         "icon_atlas_data": {
                 "path": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_icon/icons.png",
                 "atlas_name": "icon_atlas.png",
@@ -53,5 +53,17 @@
                 "grid": "BLUE",
                 "text": "RED",
                 "font": "MAGO"
+        },
+        "quest_maker_tags": {
+                "character": [
+                        "talk",
+                        "kill"
+                ],
+                "item": [
+                        "collect"
+                ],
+                "spell": [
+                        "learn"
+                ]
         }
 }

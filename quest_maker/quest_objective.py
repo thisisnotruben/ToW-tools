@@ -36,7 +36,8 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
             list_widget.takeItem(0)
         # if character name is not unique ask if you want this character
         # in particular, or all units with this name
-        if not self.db_list.isEntryUnique(self.getWorldObjectName()):            
+        entry_name = self.getWorldObjectName()
+        if not self.db_list.isEntryUnique(entry_name):            
             reply = QMessageBox.question(self, "Duplicate found in world \u2015 Tides of War", \
                 "World object is mentioned more then once in game. "
                 "Include all world objects with this name, or just "
@@ -53,11 +54,21 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
                 entry.setText(self.db_list.getEntryNameToGameName(entry.text()))
             elif reply == QMessageBox.Cancel:
                 self.onObjectveDelete(self.objective_list.count() - 1)
-        # spells will always have an amount equal to one, because you
-        # only learn a spell once
-        elif self.db_list.isSpell(self.getWorldObjectName()):
+        # spells and unique characters can only have an amount one
+        elif self.db_list.isSpell(entry_name) \
+        or (self.db_list.isCharacter(entry_name) \
+        and self.db_list.isEntryUnique(entry_name)):
             self.amount.setValue(1)
             self.amount.setDisabled(True)
+        # set quest types in combo box
+        while self.quest_type.count() != 0:
+            self.quest_type.removeItem(0)
+        self.quest_type.addItems(
+            [
+                tag.capitalize()
+                for tag in self.db_list.getQuestTypeTags(entry_name)
+            ]
+        )
     
     def routeDirtiables(self, parent):
         self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
@@ -78,7 +89,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         payload = OrderedDict([
             ("world_object", self.getWorldObjectName()),
             ("world_object_icon", -1),
-            ("quest_type", self.quest_type.currentText()),
+            ("quest_type", self.quest_type.currentText().lower()),
             ("amount", self.amount.value())
         ])
         if payload["world_object"] != "":
@@ -97,7 +108,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
             self.world_object.addItem(QListWidgetItem(icon, data["world_object"]))
         # set quest type
         if data["quest_type"] != "":
-            self.quest_type.setCurrentText(data["quest_type"])
+            self.quest_type.setCurrentText(data["quest_type"].capitalize())
         # set amount
         self.amount.setValue(int(data["amount"]))
 
