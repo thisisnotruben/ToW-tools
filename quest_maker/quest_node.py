@@ -26,10 +26,11 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
                 
     def setupUi(self, quest_node):
         super().setupUi(quest_node)
-        # map character lists drop events
-        for list_widget in [self.giver_list, self.receiver_list]:
+        # map character lists drop events and contxt menus
+        for list_widget in [self.giver_list, self.completer_list]:
             self.dropEventMap[list_widget] = list_widget.dropEvent
             list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
+            list_widget.contextMenuEvent = MethodType(self.onListContextMenu, list_widget)
         # setup delete button function
         self.delete_node_bttn.clicked.connect(self.deleteQuestNode)
         self.on_delete_confirm = QAction()
@@ -46,6 +47,18 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
             list_widget.takeItem(row)
         elif list_widget.count() > 1:
             list_widget.takeItem(row - 1)
+
+    def onListContextMenu(self, list_widget, QContextMenuEvent):
+        # get select item
+        row = list_widget.indexAt(QContextMenuEvent.pos()).row()
+        # create context menu
+        menu = QMenu(self)
+        # create actions
+        delete_action = QAction("Delete",
+            triggered=lambda: list_widget.takeItem(row))
+        menu.addAction(delete_action)
+        # exec actionrow
+        action = menu.exec_(QContextMenuEvent.globalPos())
 
     def deleteQuestNode(self, bypass_prompt=False):
         self.setAttribute(Qt.WA_DeleteOnClose)
@@ -79,7 +92,6 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
             triggered=lambda: self.onObjectveDelete(row))
         # set actions according to index
         if row > 0:
-            menu.addSeparator()
             menu.addAction(move_up_action)
         if next_objective != None and not next_objective.isEmpty():
             menu.addAction(move_down_action)
@@ -150,17 +162,13 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
 
         self.name_entry.textChanged.connect(parent.setDirty)
         self.giver_list.itemChanged.connect(parent.setDirty)
-        self.receiver_list.itemChanged.connect(parent.setDirty)
+        self.completer_list.itemChanged.connect(parent.setDirty)
 
         dialogue_entries = [
-            self.g_start_entry,
-            self.g_active_entry,
-            self.g_completed_entry,
-            self.g_delivered_entry,
-            self.r_start_entry,
-            self.r_active_entry,
-            self.r_completed_entry,
-            self.r_delivered_entry
+            self.start_entry,
+            self.active_entry,
+            self.completed_entry,
+            self.delivered_entry
         ]
         for entry in dialogue_entries:
             entry.textChanged.connect(parent.setDirty)
@@ -170,8 +178,8 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         Serialize:
             - Quest name
             - Quest Giver
-            - Quest Receiver
-            - Dialogues for Giver/Receiver
+            - Quest Completer
+            - Dialogues for Quest Giver
             - Objectives
         """
         self.dirty = False
@@ -179,32 +187,25 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
             ("quest_name", self.name_entry.text()),
             ("quest_giver", ""),
             ("quest_giver_icon", -1),
-            ("quest_receiver", ""),
-            ("quest_receiver_icon", -1)
+            ("quest_completer", ""),
+            ("quest_completer_icon", -1)
         ])
         quest_giver = self.giver_list.item(0)
-        quest_receiver = self.receiver_list.item(0)
+        quest_completer = self.completer_list.item(0)
         if quest_giver != None:
             payload["quest_giver"] = quest_giver.text()
             payload["quest_giver_icon"] = \
                 self.db_list.getEntryIconSource(payload["quest_giver"])
-        if quest_receiver != None:
-            payload["quest_receiver"] = quest_receiver.text()
-            payload["quest_receiver_icon"] = \
-                self.db_list.getEntryIconSource(payload["quest_receiver"])
+        if quest_completer != None:
+            payload["quest_completer"] = quest_completer.text()
+            payload["quest_completer_icon"] = \
+                self.db_list.getEntryIconSource(payload["quest_completer"])
 
         giver_dialogue = OrderedDict([
-            ("start", self.g_start_entry.toPlainText()),
-            ("active", self.g_active_entry.toPlainText()),
-            ("completed", self.g_completed_entry.toPlainText()),
-            ("delivered", self.g_delivered_entry.toPlainText())
-        ])
-
-        receiver_dialogue = OrderedDict([
-            ("start", self.r_start_entry.toPlainText()),
-            ("active", self.r_active_entry.toPlainText()),
-            ("completed", self.r_completed_entry.toPlainText()),
-            ("delivered", self.r_delivered_entry.toPlainText())
+            ("start", self.start_entry.toPlainText()),
+            ("active", self.active_entry.toPlainText()),
+            ("completed", self.completed_entry.toPlainText()),
+            ("delivered", self.delivered_entry.toPlainText())
         ])
 
         objective_data = OrderedDict([
@@ -213,7 +214,6 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         ])
         
         payload["giver_dialogue"] = giver_dialogue
-        payload["receiver_dialogue"] = receiver_dialogue
         payload["objectives"] = objective_data
         return payload
 
@@ -222,8 +222,8 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         Unserialize:
             - Quest name
             - Quest Giver
-            - Quest Receiver
-            - Dialogues for Giver/Receiver
+            - Quest Completer
+            - Dialogues for Quest Giver
             - Objectives
         """
         icon_generator = IconGenerator()
@@ -233,20 +233,15 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         if data["quest_giver"] != "":
             icon = icon_generator.getIcon(data["quest_giver_icon"])
             self.giver_list.addItem(QListWidgetItem(icon, data["quest_giver"]))
-        # set quest reciever
-        if data["quest_receiver"] != "":
-            icon = icon_generator.getIcon(data["quest_receiver_icon"])
-            self.receiver_list.addItem(QListWidgetItem(icon, data["quest_receiver"]))
+        # set quest completer
+        if data["quest_completer"] != "":
+            icon = icon_generator.getIcon(data["quest_completer_icon"])
+            self.completer_list.addItem(QListWidgetItem(icon, data["quest_completer"]))
         # set quest giver dialogues
-        self.g_start_entry.setText(data["giver_dialogue"]["start"])
-        self.g_active_entry.setText(data["giver_dialogue"]["active"])
-        self.g_completed_entry.setText(data["giver_dialogue"]["completed"])
-        self.g_delivered_entry.setText(data["giver_dialogue"]["delivered"])
-        # set quest reciever dialogues
-        self.r_start_entry.setText(data["receiver_dialogue"]["start"])
-        self.r_active_entry.setText(data["receiver_dialogue"]["active"])
-        self.r_completed_entry.setText(data["receiver_dialogue"]["completed"])
-        self.r_delivered_entry.setText(data["receiver_dialogue"]["delivered"])
+        self.start_entry.setText(data["giver_dialogue"]["start"])
+        self.active_entry.setText(data["giver_dialogue"]["active"])
+        self.completed_entry.setText(data["giver_dialogue"]["completed"])
+        self.delivered_entry.setText(data["giver_dialogue"]["delivered"])
         # set quest objectives
         for objective_data in data["objectives"].keys():
             self.addObjective().unserialize(data["objectives"][objective_data])

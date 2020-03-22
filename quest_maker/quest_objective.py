@@ -41,7 +41,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
             reply = QMessageBox.question(self, "Duplicate found in world \u2015 Tides of War", \
                 "World object is mentioned more then once in game. "
                 "Include all world objects with this name, or just "
-                "this specfic world object?",
+                "this specific world object?",
                 QMessageBox.YesToAll | QMessageBox.Yes | QMessageBox.Cancel)
             # route reply
             if reply == QMessageBox.Yes:
@@ -108,7 +108,13 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
             self.world_object.addItem(QListWidgetItem(icon, data["world_object"]))
         # set quest type
         if data["quest_type"] != "":
-            self.quest_type.setCurrentText(data["quest_type"].capitalize())
+            self.quest_type.addItems(
+                [
+                    tag.capitalize()
+                    for tag in self.db_list.getQuestTypeTags(data["world_object"])
+                ]
+            )
+        self.quest_type.setCurrentText(data["quest_type"].capitalize())
         # set amount
         self.amount.setValue(int(data["amount"]))
 
