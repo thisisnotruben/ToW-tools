@@ -3,20 +3,25 @@
 Ruben Alvarez Reyes
 """
 
+import os
 from types import MethodType
 from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction, QMessageBox
+from PyQt5.QtGui import QIcon
 
 from quest_maker.views.quest_objective_view import Ui_quest_objective
 from quest_maker.metas import ISerializable, Dirty
 from quest_maker.icon_generator import IconGenerator
+from quest_maker.quest_character_content import QuestCharacterContent
 
 
 class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
-    def __init__(self, db_list, data={}):
+    def __init__(self, parent, db_list, data={}):
         super().__init__()
         Dirty.__init__(self)
+        self.setParent(parent)
         self.db_list = db_list
+        self.wildcard = {"active" : False, "virgin_world_object_name": ""}
         self.setupUi(self)
         self.show()
 
@@ -25,6 +30,13 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         # route list drop event to this class
         self.world_object_drop_event = self.world_object.dropEvent
         self.world_object.dropEvent = MethodType(self.onDropEvent, self.world_object)
+        # setup character content
+        self.character_content = QuestCharacterContent(self.db_list)
+        self.character_content.routeDirtiables(self)
+        icon = QIcon(os.path.join(os.path.dirname(__file__), os.pardir, "icon.png"))
+        self.character_content.setWindowIcon(icon)
+        self.quest_type.currentTextChanged.connect(self.onQuestTypeCurrentTextChanged)
+        self.extra_content_bttn.clicked.connect(self.onExtraContentBttnClicked)
 
     def isEmpty(self):
         return self.world_object.count() == 0
@@ -34,6 +46,14 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         self.world_object_drop_event(event)
         if list_widget.count() > 1:
             list_widget.takeItem(0)
+        # add ability for more content
+        self.extra_content_bttn.setDisabled(not self.db_list.isCharacter(self.getWorldObjectName()))
+        # util function
+        def reset():
+            self.wildcard["active"] = False
+            self.wildcard["virgin_world_object_name"] = ""
+            self.amount.setValue(1)
+            self.amount.setDisabled(True)
         # if character name is not unique ask if you want this character
         # in particular, or all units with this name
         entry_name = self.getWorldObjectName()
@@ -45,12 +65,11 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
                 QMessageBox.YesToAll | QMessageBox.Yes | QMessageBox.Cancel)
             # route reply
             if reply == QMessageBox.Yes:
-                # since it's unique, there can only
-                # an amount of one
-                self.amount.setValue(1)
-                self.amount.setDisabled(True)
+                reset()
             elif reply == QMessageBox.YesToAll:
                 entry = self.world_object.item(0)
+                self.wildcard["active"] = True
+                self.wildcard["virgin_world_object_name"] = entry.text()
                 entry.setText(self.db_list.getEntryNameToGameName(entry.text()))
             elif reply == QMessageBox.Cancel:
                 self.onObjectveDelete(self.objective_list.count() - 1)
@@ -58,8 +77,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         elif self.db_list.isSpell(entry_name) \
         or (self.db_list.isCharacter(entry_name) \
         and self.db_list.isEntryUnique(entry_name)):
-            self.amount.setValue(1)
-            self.amount.setDisabled(True)
+            reset()
         # set quest types in combo box
         while self.quest_type.count() != 0:
             self.quest_type.removeItem(0)
@@ -69,11 +87,22 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
                 for tag in self.db_list.getQuestTypeTags(entry_name)
             ]
         )
+
+    def onExtraContentBttnClicked(self):
+        self.character_content.setWindowTitle("%s \u2015 Tides of War" % self.getWorldObjectName())
+        self.character_content.show()
+        self.character_content.move(
+            self.mapToGlobal((self.parentWidget().pos())))
+
+    def onQuestTypeCurrentTextChanged(self, text):
+        # only hardcoded value here, so watch out
+        self.extra_content_bttn.setDisabled(text.lower() != "talk")
     
     def routeDirtiables(self, parent):
         self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
         self.world_object.itemChanged.connect(parent.setDirty)
-        self.quest_type.currentTextChanged.connect(parent.setDirty)
+        self.world_object_keep.stateChanged.connect(parent.setDirty)
+        self.quest_type.currentIndexChanged.connect(parent.setDirty)
         self.amount.valueChanged.connect(parent.setDirty)
 
     def getWorldObjectName(self):
@@ -81,33 +110,31 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         return world_object.text() if world_object != None else ""
 
     def serialize(self):
-        """
-        Serialize:
-            - World object / Type / Amount
-        """
         self.dirty = False
         payload = OrderedDict([
-            ("world_object", self.getWorldObjectName()),
-            ("world_object_icon", -1),
+            ("world_object", [self.getWorldObjectName(), -1]),
+            ("keep_world_object", self.world_object_keep.isChecked()),
             ("quest_type", self.quest_type.currentText().lower()),
-            ("amount", self.amount.value())
+            ("amount", self.amount.value()),
+            ("wildcard", OrderedDict(self.wildcard)),
+            ("extra_content", self.character_content.serialize())
         ])
-        if payload["world_object"] != "":
-            payload["world_object_icon"] = \
-            self.db_list.getEntryIconSource(payload["world_object"])
+        if payload["world_object"][0] != "":
+            icon = self.db_list.getEntryIconSource(payload["world_object"][0])
+            if icon == -1:
+                icon = self.db_list.getEntryIconSource(self.wildcard["virgin_world_object_name"])
+            payload["world_object"] = [payload["world_object"][0], icon]
         return payload
 
     def unserialize(self, data):
-        """
-        Unserialize:
-            - World object / Type / Amount
-        """
         # set world object
-        if data["world_object"] != "":
-            icon = IconGenerator().getIcon(data["world_object_icon"])
-            self.world_object.addItem(QListWidgetItem(icon, data["world_object"]))
+        if data["world_object"][0] != "":
+            icon = IconGenerator().getIcon(data["world_object"][1])
+            self.world_object.addItem(QListWidgetItem(icon, data["world_object"][0]))
+        # set keep world object
+        self.world_object_keep.setChecked(bool(data["keep_world_object"]))
         # set quest type
-        if data["quest_type"] != "":
+        if data["quest_type"][0] != "":
             self.quest_type.addItems(
                 [
                     tag.capitalize()
@@ -117,4 +144,10 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         self.quest_type.setCurrentText(data["quest_type"].capitalize())
         # set amount
         self.amount.setValue(int(data["amount"]))
+        # set generic data
+        self.wildcard["virgin_world_object_name"] = data["wildcard"]["virgin_world_object_name"]
+        self.wildcard["active"] = bool(data["wildcard"]["active"])
+        self.amount.setDisabled(not self.wildcard["active"])
+        # set character content data
+        self.character_content.unserialize(data["extra_content"])
 

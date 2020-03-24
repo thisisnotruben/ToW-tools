@@ -111,6 +111,19 @@
           </property>
          </spacer>
         </item>
+        <item>
+         <widget class="QPushButton" name="reload_database_bttn">
+          <property name="text">
+           <string>Reload Database</string>
+          </property>
+          <property name="autoRepeatDelay">
+           <number>1000</number>
+          </property>
+          <property name="autoRepeatInterval">
+           <number>1000</number>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>

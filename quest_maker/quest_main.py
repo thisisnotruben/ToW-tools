@@ -57,6 +57,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.action_save.triggered.connect(self.onSaveFile)
         self.action_save_As.triggered.connect(self.onSaveAsFile)
         self.action_quit.triggered.connect(self.close)
+        
         # add about popup
         about_popup = lambda: QMessageBox.about(MainWindow, "About", self.about)
         self.action_about.triggered.connect(about_popup)
@@ -66,6 +67,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.list_view = DataView(MainWindow)
         self.db_layout.addWidget(self.list_view)
         self.search.textChanged.connect(self.onSearch)
+        self.reload_database_bttn.clicked.connect(self.list_view.load_databases)
         # route database combobox connections
         self.filter_db.addItem("All")
         self.filter_db.currentTextChanged.connect(self.onFilterDb)

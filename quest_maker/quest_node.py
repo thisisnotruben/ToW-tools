@@ -129,7 +129,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
     def copyObjective(self, row, entry):
         # transfer data
         objective = self.getObjective(row)
-        copied_objective = QuestObjective(self.db_list)
+        copied_objective = QuestObjective(self, self.db_list)
         copied_objective.unserialize(objective.serialize())
         # route events to objective copied
         self.routeObjectiveContextMenu(copied_objective, entry)
@@ -144,7 +144,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
 
     def addObjective(self):
         # init widgets to add
-        objective = QuestObjective(self.db_list)
+        objective = QuestObjective(self, self.db_list)
         objective.routeDirtiables(self)
         entry = QListWidgetItem(self.objective_list)
         entry.setSizeHint(objective.minimumSizeHint())
@@ -161,6 +161,10 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         self.move_node_right_bttn.clicked.connect(parent.setDirty)
 
         self.name_entry.textChanged.connect(parent.setDirty)
+        self.next_quest_list.itemChanged.connect(parent.setDirty)
+        self.reward_list.itemChanged.connect(parent.setDirty)
+        self.reward_keep.stateChanged.connect(parent.setDirty)
+        self.gold_reward_amount.valueChanged.connect(parent.setDirty)
         self.giver_list.itemChanged.connect(parent.setDirty)
         self.completer_list.itemChanged.connect(parent.setDirty)
 
@@ -174,33 +178,28 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
             entry.textChanged.connect(parent.setDirty)
 
     def serialize(self):
-        """
-        Serialize:
-            - Quest name
-            - Quest Giver
-            - Quest Completer
-            - Dialogues for Quest Giver
-            - Objectives
-        """
         self.dirty = False
+
+        def getItemData(list_widget):
+            itemData = []
+            for i in range(list_widget.count()):
+                entry_text = list_widget.item(i).text()
+                itemData.append([entry_text, \
+                    self.db_list.getEntryIconSource(entry_text)])
+            if len(itemData) == 0:
+                itemData.append(["", -1])
+            return itemData
+
         payload = OrderedDict([
             ("quest_name", self.name_entry.text()),
-            ("quest_giver", ""),
-            ("quest_giver_icon", -1),
-            ("quest_completer", ""),
-            ("quest_completer_icon", -1)
+            ("next_quest", getItemData(self.next_quest_list)),
+            ("reward", getItemData(self.reward_list)),
+            ("keep_reward_items", self.reward_keep.isChecked()),
+            ("gold_reward", self.gold_reward_amount.value()),
+            ("quest_giver", getItemData(self.giver_list)[0]),
+            ("quest_completer", getItemData(self.completer_list)[0])
         ])
-        quest_giver = self.giver_list.item(0)
-        quest_completer = self.completer_list.item(0)
-        if quest_giver != None:
-            payload["quest_giver"] = quest_giver.text()
-            payload["quest_giver_icon"] = \
-                self.db_list.getEntryIconSource(payload["quest_giver"])
-        if quest_completer != None:
-            payload["quest_completer"] = quest_completer.text()
-            payload["quest_completer_icon"] = \
-                self.db_list.getEntryIconSource(payload["quest_completer"])
-
+ 
         giver_dialogue = OrderedDict([
             ("start", self.start_entry.toPlainText()),
             ("active", self.active_entry.toPlainText()),
@@ -218,25 +217,29 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         return payload
 
     def unserialize(self, data):
-        """
-        Unserialize:
-            - Quest name
-            - Quest Giver
-            - Quest Completer
-            - Dialogues for Quest Giver
-            - Objectives
-        """
         icon_generator = IconGenerator()
+        def unpackItemData(list_widget, serialized_list_data):
+            icon = icon_generator.getIcon(serialized_list_data[1])
+            list_widget.addItem(QListWidgetItem(icon, serialized_list_data[0]))
+
         # set quest name
         self.name_entry.setText(data["quest_name"])
+        # set next quest
+        for quest in data["next_quest"]:
+            unpackItemData(self.next_quest_list, data["next_quest"][quest])
+        # set rewards
+        for reward in data["rewards"]:
+            unpackItemData(self.reward_list, data["rewards"][reward])
+        # set keep reward items
+        self.reward_keep.setChecked(bool(data["keep_reward_items"]))
+        # set gold reward
+        self.gold_reward_amount.setValue(int(data["gold_reward"]))
         # set quest giver
-        if data["quest_giver"] != "":
-            icon = icon_generator.getIcon(data["quest_giver_icon"])
-            self.giver_list.addItem(QListWidgetItem(icon, data["quest_giver"]))
+        if data["quest_giver"][0] != "":
+            unpackItemData(self.giver_list, data["quest_giver"])
         # set quest completer
-        if data["quest_completer"] != "":
-            icon = icon_generator.getIcon(data["quest_completer_icon"])
-            self.completer_list.addItem(QListWidgetItem(icon, data["quest_completer"]))
+        if data["quest_completer"][0] != "":
+            unpackItemData(self.completer_list, data["quest_completer"])
         # set quest giver dialogues
         self.start_entry.setText(data["giver_dialogue"]["start"])
         self.active_entry.setText(data["giver_dialogue"]["active"])

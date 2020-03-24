@@ -59,14 +59,21 @@
       </item>
       <item>
        <layout class="QGridLayout" name="grid_layout">
+        <item row="5" column="1">
+         <widget class="QCheckBox" name="reward_keep">
+          <property name="text">
+           <string>Keep all items?</string>
+          </property>
+         </widget>
+        </item>
         <item row="3" column="0">
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="nest_quest_lbl">
           <property name="text">
            <string>Next Quest</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="7" column="1">
          <widget class="QListWidget" name="giver_list">
           <property name="maximumSize">
            <size>
@@ -101,14 +108,14 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="0">
+        <item row="9" column="0">
          <widget class="QLabel" name="completer_lbl">
           <property name="text">
            <string>Quest Completer</string>
           </property>
          </widget>
         </item>
-        <item row="7" column="1">
+        <item row="9" column="1">
          <widget class="QListWidget" name="completer_list">
           <property name="minimumSize">
            <size>
@@ -139,7 +146,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="giver_lbl">
           <property name="text">
            <string>Quest Giver</string>
@@ -147,7 +154,7 @@
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QListWidget" name="listWidget">
+         <widget class="QListWidget" name="next_quest_list">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -175,6 +182,43 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="1">
+         <widget class="QListWidget" name="reward_list">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>64</height>
+           </size>
+          </property>
+          <property name="acceptDrops">
+           <bool>true</bool>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="reward_lbl">
+          <property name="text">
+           <string>Reward</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QSpinBox" name="gold_reward_amount">
+          <property name="maximum">
+           <number>10000</number>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="gold_reward_lbl">
+          <property name="text">
+           <string>Gold Reward</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -183,7 +227,7 @@
          <enum>QTabWidget::North</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="dialogue_tab">
          <attribute name="title">
@@ -285,6 +329,15 @@
             <property name="alternatingRowColors">
              <bool>true</bool>
             </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+            <property name="verticalScrollMode">
+             <enum>QAbstractItemView::ScrollPerPixel</enum>
+            </property>
+            <property name="horizontalScrollMode">
+             <enum>QAbstractItemView::ScrollPerPixel</enum>
+            </property>
             <property name="uniformItemSizes">
              <bool>true</bool>
             </property>
@@ -299,6 +352,19 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>move_node_left_bttn</tabstop>
+  <tabstop>delete_node_bttn</tabstop>
+  <tabstop>move_node_right_bttn</tabstop>
+  <tabstop>name_entry</tabstop>
+  <tabstop>next_quest_list</tabstop>
+  <tabstop>tabs</tabstop>
+  <tabstop>start_entry</tabstop>
+  <tabstop>active_entry</tabstop>
+  <tabstop>completed_entry</tabstop>
+  <tabstop>delivered_entry</tabstop>
+  <tabstop>objective_list</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

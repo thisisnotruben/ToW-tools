@@ -81,7 +81,7 @@ class DataView(QListWidget):
 
         # clear out database before inserting
         while self.count() != 0:
-            self.takeItem(self.item(0))
+            self.takeItem(0)
 
         merged_data = {**item_data, **spell_data}
         for item_name in merged_data:

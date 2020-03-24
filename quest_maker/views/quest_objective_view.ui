@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>185</width>
-    <height>112</height>
+    <width>200</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,6 +37,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="world_object_keep">
+     <property name="text">
+      <string>Keep world object?</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QComboBox" name="quest_type"/>
    </item>
    <item>
@@ -46,6 +53,13 @@
      </property>
      <property name="maximum">
       <number>100</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="extra_content_bttn">
+     <property name="text">
+      <string>Extra Content</string>
      </property>
     </widget>
    </item>
