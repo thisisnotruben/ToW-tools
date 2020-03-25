@@ -79,9 +79,7 @@ class DataView(QListWidget):
         self.sub_type_tags[self.character_tag] = list(self.sub_type_tags[self.character_tag])
         self.sub_type_tags[self.character_tag].sort()
 
-        # clear out database before inserting
-        while self.count() != 0:
-            self.takeItem(0)
+        self.clearDatabase()
 
         merged_data = {**item_data, **spell_data}
         for item_name in merged_data:
@@ -104,6 +102,11 @@ class DataView(QListWidget):
         entry.setData(Qt.UserRole + 1, icon_data)
         super().addItem(entry)
         self.all_items.add(entry)
+
+    def clearDatabase(self):
+        self.all_items = set()
+        while self.count() != 0:
+            self.takeItem(0)
 
     def isCharacter(self, entry_name):
         """check if entry is a character. returns `bool`"""

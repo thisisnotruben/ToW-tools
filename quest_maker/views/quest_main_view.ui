@@ -99,6 +99,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="quest_nodes_total_lbl">
+          <property name="text">
+           <string>Quest Nodes: </string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>

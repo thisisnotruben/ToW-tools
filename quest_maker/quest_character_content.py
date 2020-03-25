@@ -3,6 +3,7 @@
 Ruben Alvarez Reyes
 """
 
+import os
 from types import MethodType
 from collections import OrderedDict
 from PyQt5.QtWidgets import QAction, QListWidgetItem, QWidget, QMenu
@@ -26,6 +27,11 @@ class QuestCharacterContent(Ui_quest_character_content, QWidget, ISerializable, 
         # route context menu & drop events
         self.reward.itemChanged.connect(self.onRewardItemChanged)
         self.reward.contextMenuEvent = MethodType(self.onRewardContextMenuEvent, self.reward)
+        # set stylesheet
+        root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+        path = os.path.join(root_dir, "QTDark-master", "QTDark.stylesheet")
+        with open(path, "r") as f:
+            self.setStyleSheet(f.read())
 
     def onRewardContextMenuEvent(self, list_widget, QContextMenuEvent):
        # get select item

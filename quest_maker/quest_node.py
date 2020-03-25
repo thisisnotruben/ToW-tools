@@ -27,6 +27,10 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
     def setupUi(self, quest_node):
         super().setupUi(quest_node)
         # map character lists drop events and contxt menus
+        self.reward_list.contextMenuEvent = MethodType(self.onListContextMenu, self.reward_list)
+        self.reward_list.itemChanged.connect(self.onRewardListItemChanged)
+        self.next_quest_list.contextMenuEvent = MethodType(self.onListContextMenu, self.next_quest_list)
+        self.next_quest_list.setDisabled(True) # TODO: need to setup database first to support this drop
         for list_widget in [self.giver_list, self.completer_list]:
             self.dropEventMap[list_widget] = list_widget.dropEvent
             list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
@@ -37,6 +41,11 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         # map objective list drop events
         self.objective_list.dropEvent = MethodType(
             self.onObjectiveListDropEvent, self.objective_list)
+
+    def onRewardListItemChanged(self, listWidgetItem):
+        # no characters allowed
+        if self.db_list.isCharacter(listWidgetItem.text()):
+            self.reward_list.takeItem(self.reward_list.count() - 1)
 
     def onCharacterDropEvent(self, list_widget, event):
         self.dropEventMap[list_widget](event)
@@ -54,8 +63,17 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         # create context menu
         menu = QMenu(self)
         # create actions
+        move_up_action = QAction("Move Up",
+            triggered=lambda: list_widget.insertItem(row - 1, list_widget.takeItem(row)))
+        move_down_action = QAction("Move Down",
+            triggered=lambda: list_widget.insertItem(row + 1, list_widget.takeItem(row)))
         delete_action = QAction("Delete",
             triggered=lambda: list_widget.takeItem(row))
+        if row > 0:
+            menu.addAction(move_up_action)
+        if row < list_widget.count() - 1:
+            menu.addAction(move_down_action)
+        menu.addSeparator()
         menu.addAction(delete_action)
         # exec actionrow
         action = menu.exec_(QContextMenuEvent.globalPos())
@@ -226,10 +244,10 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         self.name_entry.setText(data["quest_name"])
         # set next quest
         for quest in data["next_quest"]:
-            unpackItemData(self.next_quest_list, data["next_quest"][quest])
+            unpackItemData(self.next_quest_list, quest)
         # set rewards
-        for reward in data["rewards"]:
-            unpackItemData(self.reward_list, data["rewards"][reward])
+        for reward in data["reward"]:
+            unpackItemData(self.reward_list, reward)
         # set keep reward items
         self.reward_keep.setChecked(bool(data["keep_reward_items"]))
         # set gold reward

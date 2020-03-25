@@ -110,6 +110,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         # add widget
         self.scroll_layout.insertWidget(index, node)
         self.quest_nodes.insert(index, node)
+        self.quest_nodes_total_lbl.setText("Quest Nodes: %d" % len(self.quest_nodes))
         # name all quest node headers
         for i, n in enumerate(self.quest_nodes):
             n.group_box.setTitle("Quest Node %d" % i)
@@ -144,6 +145,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.setDirty([])
         index = self.quest_nodes.index(quest_node)
         self.quest_nodes.remove(quest_node)
+        self.quest_nodes_total_lbl.setText("Quest Nodes: %d" % len(self.quest_nodes))
         self.scroll_layout.removeWidget(quest_node)
         # possibly disable move buttons
         # for node and neighbor nodes
@@ -336,6 +338,12 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
 
 
 if __name__ == "__main__":
+    # make app
     app = QApplication(sys.argv)
     ui = MainWindow(app)
+    # set style sheet
+    path = os.path.join(root_dir, "QTDark-master", "QTDark.stylesheet")
+    with open(path, "r") as f:
+        ui.setStyleSheet(f.read())
+    # exec app
     sys.exit(app.exec_())

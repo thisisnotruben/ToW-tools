@@ -47,7 +47,11 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         if list_widget.count() > 1:
             list_widget.takeItem(0)
         # add ability for more content
-        self.extra_content_bttn.setDisabled(not self.db_list.isCharacter(self.getWorldObjectName()))
+        is_character = self.db_list.isCharacter(self.getWorldObjectName())
+        self.extra_content_bttn.setDisabled(not is_character)
+        self.world_object_keep.setDisabled(is_character)
+        if is_character:
+            self.world_object_keep.setChecked(False)
         # util function
         def reset():
             self.wildcard["active"] = False
@@ -131,6 +135,7 @@ class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
         if data["world_object"][0] != "":
             icon = IconGenerator().getIcon(data["world_object"][1])
             self.world_object.addItem(QListWidgetItem(icon, data["world_object"][0]))
+            self.world_object_keep.setDisabled(self.db_list.isCharacter(data["world_object"][0]))
         # set keep world object
         self.world_object_keep.setChecked(bool(data["keep_world_object"]))
         # set quest type
