@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './quest_maker/views/main_view.ui'
+# Form implementation generated from reading ui file './content_maker/views/main_view.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -139,10 +139,10 @@ class Ui_content_maker_main(object):
         _translate = QtCore.QCoreApplication.translate
         content_maker_main.setWindowTitle(_translate("content_maker_main", "Tides of War Quest Maker"))
         self.search.setPlaceholderText(_translate("content_maker_main", "Find"))
-        self.add_node_bttn.setText(_translate("content_maker_main", "Add Node Node"))
+        self.add_node_bttn.setText(_translate("content_maker_main", "Add Node"))
         self.undo_save_bttn.setText(_translate("content_maker_main", "Undo Save"))
         self.redo_save_bttn.setText(_translate("content_maker_main", "Redo Save"))
-        self.nodes_total_lbl.setText(_translate("content_maker_main", "Quest Nodes: "))
+        self.nodes_total_lbl.setText(_translate("content_maker_main", "Nodes: 0"))
         self.reload_database_bttn.setText(_translate("content_maker_main", "Reload Database"))
         self.menu_file.setTitle(_translate("content_maker_main", "File"))
         self.menu_help.setTitle(_translate("content_maker_main", "Help"))

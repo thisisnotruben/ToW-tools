@@ -84,8 +84,8 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             self.on_delete_confirm.trigger()
             self.close()
         else:
-            reply = QMessageBox.question(self, "Delete Quest Node",
-                "Delete?", QMessageBox.Yes | QMessageBox.No)
+            reply = QMessageBox.question(self, "Delete Node",
+                "Delete Node?", QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.on_delete_confirm.trigger()
                 self.close()
@@ -198,15 +198,16 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
     def serialize(self):
         self.dirty = False
 
-        def getItemData(list_widget):
+        def getItemData(list_widget, singular=False):
             itemData = []
             for i in range(list_widget.count()):
                 entry_text = list_widget.item(i).text()
                 itemData.append([entry_text, \
                     self.db_list.getEntryIconSource(entry_text)])
-            if len(itemData) == 0:
-                itemData.append(["", -1])
+            if singular and len(itemData) > 0:
+                return itemData[0]
             return itemData
+
 
         payload = OrderedDict([
             ("quest_name", self.name_entry.text()),
@@ -214,8 +215,8 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             ("reward", getItemData(self.reward_list)),
             ("keep_reward_items", self.reward_keep.isChecked()),
             ("gold_reward", self.gold_reward_amount.value()),
-            ("quest_giver", getItemData(self.giver_list)[0]),
-            ("quest_completer", getItemData(self.completer_list)[0])
+            ("quest_giver", getItemData(self.giver_list, True)),
+            ("quest_completer", getItemData(self.completer_list, True))
         ])
  
         giver_dialogue = OrderedDict([
@@ -253,10 +254,10 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
         # set gold reward
         self.gold_reward_amount.setValue(int(data["gold_reward"]))
         # set quest giver
-        if data["quest_giver"][0] != "":
+        if len(data["quest_giver"]) != 0:
             unpackItemData(self.giver_list, data["quest_giver"])
         # set quest completer
-        if data["quest_completer"][0] != "":
+        if len(data["quest_completer"]) != 0:
             unpackItemData(self.completer_list, data["quest_completer"])
         # set quest giver dialogues
         self.start_entry.setText(data["giver_dialogue"]["start"])

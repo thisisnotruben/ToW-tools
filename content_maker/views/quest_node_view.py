@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './quest_maker/views/quest_node_view.ui'
+# Form implementation generated from reading ui file './content_maker/views/quest_node_view.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -14,6 +14,7 @@ class Ui_quest_node_view(object):
     def setupUi(self, quest_node_view):
         quest_node_view.setObjectName("quest_node_view")
         quest_node_view.resize(320, 1000)
+        quest_node_view.setMinimumSize(QtCore.QSize(320, 0))
         quest_node_view.setMaximumSize(QtCore.QSize(320, 1000))
         quest_node_view.setAcceptDrops(False)
         self.verticalLayout = QtWidgets.QVBoxLayout(quest_node_view)

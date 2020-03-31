@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './quest_maker/views/character_content_node_view.ui'
+# Form implementation generated from reading ui file './content_maker/views/character_content_node_view.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -13,7 +13,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_character_content_node(object):
     def setupUi(self, character_content_node):
         character_content_node.setObjectName("character_content_node")
-        character_content_node.resize(315, 625)
+        character_content_node.resize(320, 625)
+        character_content_node.setMinimumSize(QtCore.QSize(320, 0))
+        character_content_node.setMaximumSize(QtCore.QSize(320, 1000))
         self.verticalLayout = QtWidgets.QVBoxLayout(character_content_node)
         self.verticalLayout.setObjectName("verticalLayout")
         self.group_box = QtWidgets.QGroupBox(character_content_node)
@@ -91,6 +93,7 @@ class Ui_character_content_node(object):
         self.healer.setObjectName("healer")
         self.horizontalLayout.addWidget(self.healer)
         self.healer_gold_amount = QtWidgets.QSpinBox(self.group_box)
+        self.healer_gold_amount.setMaximum(10000)
         self.healer_gold_amount.setObjectName("healer_gold_amount")
         self.horizontalLayout.addWidget(self.healer_gold_amount)
         self.grid_layout.addLayout(self.horizontalLayout, 3, 1, 1, 1)

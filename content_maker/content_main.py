@@ -7,7 +7,7 @@ import os
 import sys
 import json
 from collections import OrderedDict
-from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMessageBox, QMainWindow, QAction, QFileDialog, QPushButton
 from PyQt5.QtGui import QIcon, QCloseEvent
 from PyQt5.QtCore import Qt, QDir
 
@@ -17,6 +17,7 @@ sys.path.insert(0, root_dir)
 from content_maker.views.main_view import Ui_content_maker_main
 from content_maker.content_database import DataView
 from content_maker.quest_node import QuestNode
+from content_maker.content_node import CharacterContentNode
 from content_maker.metas import ISerializable, Dirty
 from content_maker.clipboard import Clipboard
 
@@ -29,6 +30,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         Dirty.__init__(self)
 
         self.clipboard = Clipboard()
+        self.node = None
         self.nodes = []
         self.current_file = ""
 
@@ -81,7 +83,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         self.filter_sub_type.currentTextChanged.connect(
             lambda: self.onSearch(self.search.text()))
         # route clicked function
-        self.add_node_bttn.clicked.connect(self.insertNode)
+        self.add_node_bttn.clicked.connect(self.onNewFile)
 
     def setTitle(self):
         modified = self.isModified()
@@ -98,7 +100,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
     def insertNode(self, index=0):
         self.setDirty([])
         # init widget 
-        node = QuestNode(self.list_view)
+        node = self.node(self.list_view)
         node.routeDirtiables(self)
         # route button connections
         node.on_delete_confirm = QAction(
@@ -232,12 +234,38 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
     def onNewFile(self):
         if not (self.isModified() \
         and self.getFileChangeDialogue() == QMessageBox.Cancel):
+            # bool used to route connection
+            app_first_opened = self.node == None
+            # ask which kind of work you want to do
+            msgBox = QMessageBox(QMessageBox.Question, self.title,
+                "Which Node do you want to work on?", parent=self)
+            # make buttons
+            cancel_bttn = QPushButton('Cancel')
+            quest_node_bttn = QPushButton('Quest Node')
+            content_node_bttn = QPushButton('Content Node')
+            # add buttons
+            msgBox.addButton(cancel_bttn, QMessageBox.RejectRole)
+            msgBox.addButton(quest_node_bttn, QMessageBox.YesRole)
+            msgBox.addButton(content_node_bttn, QMessageBox.NoRole)
+            # exec and route reply
+            msgBox.exec_()
+            if msgBox.clickedButton() == quest_node_bttn:
+                self.node = QuestNode
+            elif msgBox.clickedButton() == content_node_bttn:
+                self.node = CharacterContentNode
+            elif msgBox.clickedButton() == cancel_bttn:
+                return
+            # route (add_node_bttn) signal
+            if app_first_opened:
+                self.add_node_bttn.clicked.disconnect(self.onNewFile)
+                self.add_node_bttn.clicked.connect(self.insertNode)
             # clear work area
             self.clearWorkspace()
             self.clipboard.clearHistoryStack()
             self.current_file = ""
             self.dirty = False
             self.setTitle()
+            self.insertNode()
 
     def onOpenFile(self):
         if not (self.isModified() \
@@ -316,8 +344,11 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 
     def serialize(self):
         payload = OrderedDict([
-            ("node_%d" % i, node.serialize())
-                for i, node in enumerate(self.nodes)])
+            ("node_type", self.node.__name__),
+            ("nodes", OrderedDict([
+                ("node_%d" % i, node.serialize())
+                for i, node in enumerate(self.nodes)]))
+        ])
         if self.dirty:
             # add a stamp of history if changes were made
             # else, it's just a duplicate of history
@@ -328,8 +359,9 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         return payload
 
     def unserialize(self, data):
-        for i, node_data in enumerate(data):
-            self.insertNode(i).unserialize(data[node_data])
+        self.node = getattr(sys.modules[__name__], data["node_type"])
+        for i, node_data in enumerate(data["nodes"]):
+            self.insertNode(i).unserialize(data["nodes"][node_data])
 
 
 if __name__ == "__main__":

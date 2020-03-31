@@ -20,6 +20,9 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
         self.db_list = db_list
         self.setupUi(self)
 
+    def __str__(self):
+        return "content_node"
+
     def setupUi(self, character_content_node):
         super().setupUi(character_content_node)
         # route drops signals
@@ -37,8 +40,8 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
             self.on_delete_confirm.trigger()
             self.close()
         else:
-            reply = QMessageBox.question(self, "Delete Quest Node",
-                "Delete?", QMessageBox.Yes | QMessageBox.No)
+            reply = QMessageBox.question(self, "Delete Node",
+                "Delete Node?", QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.on_delete_confirm.trigger()
                 self.close()
@@ -86,18 +89,18 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
 
     def serialize(self):
 
-        def getItemData(list_widget):
+        def getItemData(list_widget, singular=False):
             itemData = []
             for i in range(list_widget.count()):
                 entry_text = list_widget.item(i).text()
                 itemData.append([entry_text, \
                     self.db_list.getEntryIconSource(entry_text)])
-            if len(itemData) == 0:
-                itemData.append(["", -1])
+            if singular and len(itemData) > 0:
+                return itemData[0]
             return itemData
 
         payload = OrderedDict([
-            ("character", getItemData(self.character_list)[0]),
+            ("character", getItemData(self.character_list, True)),
             ("level", self.level.value()),
             ("enemy", self.enemy.isChecked()),
             ("healer", self.healer.isChecked()),
@@ -107,6 +110,7 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
             ("spells", getItemData(self.spells_list)),
             ("merchandise", getItemData(self.merchandise_list))
         ])
+    
         return payload
 
     def unserialize(self, data):
@@ -116,7 +120,7 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
             icon = icon_generator.getIcon(serialized_list_data[1])
             list_widget.addItem(QListWidgetItem(icon, serialized_list_data[0]))
 
-        if data["character"][0] != "":
+        if len(data["character"]) != 0:
             unpackItemData(self.character_list, data["character"])
 
         self.level.setValue(int(data["level"]))
@@ -125,12 +129,12 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
         self.healer_gold_amount.setValue(int(data["healer_gold_amount"]))
         self.dialogue.setText(data["dialogue"])
 
-        if data["drops"][0] != "":
-            unpackItemData(self.drops_list, data["drops"])
+        for drop in data["drops"]:
+            unpackItemData(self.drops_list, drop)
 
-        if data["spells"][0] != "":
-            unpackItemData(self.spells_list, data["spells"])
+        for spell in data["spells"]:
+            unpackItemData(self.spells_list, spell)
 
-        if data["merchandise"][0] != "":
-            unpackItemData(self.merchandise_list, data["merchandise"])
+        for merchandise in data["merchandise"]:
+            unpackItemData(self.merchandise_list, merchandise)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './quest_maker/views/quest_node_objective_content_view.ui'
+# Form implementation generated from reading ui file './content_maker/views/quest_node_objective_content_view.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -17,7 +17,7 @@ class Ui_objective_content_view(object):
         objective_content_view.setMinimumSize(QtCore.QSize(300, 250))
         objective_content_view.setMaximumSize(QtCore.QSize(16777215, 350))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("./quest_maker/views/../../icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("./content_maker/views/../../icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         objective_content_view.setWindowIcon(icon)
         self.verticalLayout = QtWidgets.QVBoxLayout(objective_content_view)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -38,7 +38,7 @@ class Ui_objective_content_view(object):
         self.gold_amount_lbl.setObjectName("gold_amount_lbl")
         self.verticalLayout.addWidget(self.gold_amount_lbl)
         self.gold_amount = QtWidgets.QSpinBox(objective_content_view)
-        self.gold_amount.setMaximum(1000)
+        self.gold_amount.setMaximum(10000)
         self.gold_amount.setObjectName("gold_amount")
         self.verticalLayout.addWidget(self.gold_amount)
 

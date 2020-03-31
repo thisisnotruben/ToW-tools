@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Tides of War Quest Maker
+Name=Tides of War Content Maker
 Comment=Tool to help with the development of Tides Tides of War
 Exec=/home/rubsz/tiled/Tides_of_War/non_map/scripts/main_content_maker.sh
 Icon=/home/rubsz/tiled/Tides_of_War/non_map/scripts/icon.png

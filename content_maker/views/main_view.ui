@@ -80,7 +80,7 @@
         <item>
          <widget class="QPushButton" name="add_node_bttn">
           <property name="text">
-           <string>Add Node Node</string>
+           <string>Add Node</string>
           </property>
          </widget>
         </item>
@@ -101,7 +101,7 @@
         <item>
          <widget class="QLabel" name="nodes_total_lbl">
           <property name="text">
-           <string>Quest Nodes: </string>
+           <string>Nodes: 0</string>
           </property>
          </widget>
         </item>
