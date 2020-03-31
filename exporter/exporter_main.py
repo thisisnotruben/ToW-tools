@@ -52,6 +52,12 @@ class MainWindow(Ui_MainWindow):
         about_popup = lambda: QMessageBox.about(self.main_window, "About", self.about)
         self.action_about.triggered.connect(about_popup)
 
+        # set style sheet
+        root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+        path = os.path.join(root_dir, "QTDark-master", "QTDark.stylesheet")
+        with open(path, "r") as f:
+            MainWindow.setStyleSheet(f.read())
+
     def setup_tool(self):
         self.buttons = [self.make_sprite_icons, self.make_sprite_deaths, self.make_sym_links, 
             self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map]
@@ -92,7 +98,10 @@ class MainWindow(Ui_MainWindow):
 
 
 if __name__ == "__main__":
+    # make app
     app = QApplication(sys.argv)
     ui = MainWindow()
+
+    # exec app
     sys.exit(app.exec_())
     

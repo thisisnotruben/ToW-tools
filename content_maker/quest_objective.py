@@ -9,13 +9,13 @@ from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QAction, QMessageBox
 from PyQt5.QtGui import QIcon
 
-from quest_maker.views.quest_objective_view import Ui_quest_objective
-from quest_maker.metas import ISerializable, Dirty
-from quest_maker.icon_generator import IconGenerator
-from quest_maker.quest_character_content import QuestCharacterContent
+from content_maker.views.quest_node_objective_view import Ui_quest_objective_view
+from content_maker.metas import ISerializable, Dirty
+from content_maker.icon_generator import IconGenerator
+from content_maker.quest_character_content import QuestCharacterContent
 
 
-class QuestObjective(Ui_quest_objective, QWidget, ISerializable, Dirty):
+class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
     def __init__(self, parent, db_list, data={}):
         super().__init__()
         Dirty.__init__(self)

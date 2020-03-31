@@ -14,25 +14,25 @@ from PyQt5.QtCore import Qt, QDir
 root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.insert(0, root_dir)
 
-from quest_maker.views.quest_main_view import Ui_quest_maker_main
-from quest_maker.game_database import DataView
-from quest_maker.quest_node import QuestNode
-from quest_maker.metas import ISerializable, Dirty
-from quest_maker.clipboard import Clipboard
+from content_maker.views.main_view import Ui_content_maker_main
+from content_maker.content_database import DataView
+from content_maker.quest_node import QuestNode
+from content_maker.metas import ISerializable, Dirty
+from content_maker.clipboard import Clipboard
 
 from core.game_db import DataBases
 
 
-class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
+class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
     def __init__(self, app):
         super().__init__()
         Dirty.__init__(self)
 
         self.clipboard = Clipboard()
-        self.quest_nodes = []
+        self.nodes = []
         self.current_file = ""
 
-        self.title = "Tides of War Quest Maker"
+        self.title = "Tides of War Content Maker"
         self.about = "Author: Ruben Alvarez Reyes<br/>Source: " \
             "<a href=\"https://github.com/thisisnotruben/ToW-tools/\">Github</a>"
 
@@ -81,7 +81,7 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.filter_sub_type.currentTextChanged.connect(
             lambda: self.onSearch(self.search.text()))
         # route clicked function
-        self.add_quest_node_bttn.clicked.connect(self.insertQuestNode)
+        self.add_node_bttn.clicked.connect(self.insertNode)
 
     def setTitle(self):
         modified = self.isModified()
@@ -95,34 +95,34 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
     def isModified(self):
         return not self.clipboard.isHistoryCurrent() or self.dirty
 
-    def insertQuestNode(self, index=0):
+    def insertNode(self, index=0):
         self.setDirty([])
         # init widget 
         node = QuestNode(self.list_view)
         node.routeDirtiables(self)
         # route button connections
         node.on_delete_confirm = QAction(
-            triggered=lambda: self.onDeleteQuestNodeConfirm(node))
+            triggered=lambda: self.onDeleteNodeConfirm(node))
         node.move_node_left_bttn.clicked.connect(
-            lambda: self.onMoveQuestNode(node, -1))
+            lambda: self.onMoveNode(node, -1))
         node.move_node_right_bttn.clicked.connect(
-            lambda: self.onMoveQuestNode(node, 1))
+            lambda: self.onMoveNode(node, 1))
         # add widget
         self.scroll_layout.insertWidget(index, node)
-        self.quest_nodes.insert(index, node)
-        self.quest_nodes_total_lbl.setText("Quest Nodes: %d" % len(self.quest_nodes))
-        # name all quest node headers
-        for i, n in enumerate(self.quest_nodes):
-            n.group_box.setTitle("Quest Node %d" % i)
+        self.nodes.insert(index, node)
+        # name all node headers
+        self.nodes_total_lbl.setText("Nodes: %d" % len(self.nodes))
+        for i, n in enumerate(self.nodes):
+            n.group_box.setTitle("Node %d" % i)
         # possibly disable move buttons
         # for node and neighbor nodes
-        self.disableQuestNodeMoveButtons(index)
-        self.disableQuestNodeMoveButtons(index - 1)
-        self.disableQuestNodeMoveButtons(index + 1)
+        self.disableNodeMoveButtons(index)
+        self.disableNodeMoveButtons(index - 1)
+        self.disableNodeMoveButtons(index + 1)
         return node
 
-    def deleteQuestNode(self, quest_node):
-        quest_node.deleteQuestNode(True)
+    def deleteNode(self, node):
+        node.deleteNode(True)
 
     def disableUndoRedoActions(self):
         # check index of buttons and 
@@ -133,35 +133,38 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.undo_save_bttn.setDisabled(reached_end[0])
         self.redo_save_bttn.setDisabled(reached_end[1])
 
-    def disableQuestNodeMoveButtons(self, index):
+    def disableNodeMoveButtons(self, index):
         # disable move left/right buttons based on first/last index
-        if index >= 0 and index < len(self.quest_nodes):
-            self.quest_nodes[index].move_node_left_bttn.setDisabled( \
+        if index >= 0 and index < len(self.nodes):
+            self.nodes[index].move_node_left_bttn.setDisabled( \
                 index == 0)
-            self.quest_nodes[index].move_node_right_bttn.setDisabled( \
-                index == len(self.quest_nodes) - 1)
+            self.nodes[index].move_node_right_bttn.setDisabled( \
+                index == len(self.nodes) - 1)
 
-    def onDeleteQuestNodeConfirm(self, quest_node):
+    def onDeleteNodeConfirm(self, node):
         self.setDirty([])
-        index = self.quest_nodes.index(quest_node)
-        self.quest_nodes.remove(quest_node)
-        self.quest_nodes_total_lbl.setText("Quest Nodes: %d" % len(self.quest_nodes))
-        self.scroll_layout.removeWidget(quest_node)
+        index = self.nodes.index(node)
+        self.nodes.remove(node)
+        # name all node headers
+        self.nodes_total_lbl.setText("Nodes: %d" % len(self.nodes))
+        for i, n in enumerate(self.nodes):
+            n.group_box.setTitle("Node %d" % i)
+        self.scroll_layout.removeWidget(node)
         # possibly disable move buttons
         # for node and neighbor nodes
-        self.disableQuestNodeMoveButtons(index)
-        self.disableQuestNodeMoveButtons(index - 1)
-        self.disableQuestNodeMoveButtons(index + 1)
+        self.disableNodeMoveButtons(index)
+        self.disableNodeMoveButtons(index - 1)
+        self.disableNodeMoveButtons(index + 1)
 
-    def onMoveQuestNode(self, quest_node, by):
+    def onMoveNode(self, node, by):
         # get node data
-        serialized_data = quest_node.serialize()
+        serialized_data = node.serialize()
         # get current node index
-        node_curr_index = self.quest_nodes.index(quest_node)
+        node_curr_index = self.nodes.index(node)
         # delete node
-        self.deleteQuestNode(quest_node)
+        self.deleteNode(node)
         # insert node new at index and set data
-        self.insertQuestNode(node_curr_index + by).unserialize(serialized_data)
+        self.insertNode(node_curr_index + by).unserialize(serialized_data)
   
     def onSearch(self, current_text):
         founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
@@ -207,16 +210,16 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         self.onSearch(self.search.text())
 
     def clearWorkspace(self):
-        while len(self.quest_nodes) != 0:
-            self.deleteQuestNode(self.quest_nodes[0])
+        while len(self.nodes) != 0:
+            self.deleteNode(self.nodes[0])
 
     def getFileOpenDialogue(self, save_prompt=False):
         self.recent_dir = os.path.dirname(self.current_file) \
             if os.path.isabs(self.current_file) else QDir().homePath()
         file_filter = "json (*.json)"
         if save_prompt:
-            return QFileDialog.getSaveFileName(self, "Save Quest File", self.recent_dir, file_filter)[0]
-        return QFileDialog.getOpenFileName(self, "Open Quest File", self.recent_dir, file_filter)[0]
+            return QFileDialog.getSaveFileName(self, "Save Node File", self.recent_dir, file_filter)[0]
+        return QFileDialog.getOpenFileName(self, "Open Node File", self.recent_dir, file_filter)[0]
 
     def getFileChangeDialogue(self):
         reply = QMessageBox.warning(self, "Unsaved Changes \u2015 %s" % self.title, \
@@ -312,13 +315,9 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         pass
 
     def serialize(self):
-        """
-        Serialize:
-            - Quest Nodes
-        """
         payload = OrderedDict([
-            ("quest_node_%d" % i, node.serialize())
-                for i, node in enumerate(self.quest_nodes)])
+            ("node_%d" % i, node.serialize())
+                for i, node in enumerate(self.nodes)])
         if self.dirty:
             # add a stamp of history if changes were made
             # else, it's just a duplicate of history
@@ -329,12 +328,8 @@ class MainWindow(Ui_quest_maker_main, QMainWindow, ISerializable, Dirty):
         return payload
 
     def unserialize(self, data):
-        """
-        Unserialize:
-            - Quest Nodes
-        """
-        for i, quest_node_data in enumerate(data):
-            self.insertQuestNode(i).unserialize(data[quest_node_data])
+        for i, node_data in enumerate(data):
+            self.insertNode(i).unserialize(data[node_data])
 
 
 if __name__ == "__main__":

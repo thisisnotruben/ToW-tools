@@ -8,13 +8,13 @@ from collections import OrderedDict
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction, QMessageBox
 from PyQt5.QtCore import Qt
 
-from quest_maker.views.quest_node_view import Ui_quest_node
-from quest_maker.quest_objective import QuestObjective
-from quest_maker.metas import ISerializable, Dirty
-from quest_maker.icon_generator import IconGenerator
+from content_maker.views.quest_node_view import Ui_quest_node_view
+from content_maker.quest_objective import QuestObjective
+from content_maker.metas import ISerializable, Dirty
+from content_maker.icon_generator import IconGenerator
 
 
-class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
+class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
     def __init__(self, db_list):
         super().__init__()
         Dirty.__init__(self)
@@ -36,7 +36,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
             list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
             list_widget.contextMenuEvent = MethodType(self.onListContextMenu, list_widget)
         # setup delete button function
-        self.delete_node_bttn.clicked.connect(self.deleteQuestNode)
+        self.delete_node_bttn.clicked.connect(self.deleteNode)
         self.on_delete_confirm = QAction()
         # map objective list drop events
         self.objective_list.dropEvent = MethodType(
@@ -78,7 +78,7 @@ class QuestNode(Ui_quest_node, QWidget, ISerializable, Dirty):
         # exec actionrow
         action = menu.exec_(QContextMenuEvent.globalPos())
 
-    def deleteQuestNode(self, bypass_prompt=False):
+    def deleteNode(self, bypass_prompt=False):
         self.setAttribute(Qt.WA_DeleteOnClose)
         if bypass_prompt:
             self.on_delete_confirm.trigger()

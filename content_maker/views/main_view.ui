@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>quest_maker_main</class>
- <widget class="QMainWindow" name="quest_maker_main">
+ <class>content_maker_main</class>
+ <widget class="QMainWindow" name="content_maker_main">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -78,9 +78,9 @@
       <item>
        <layout class="QHBoxLayout" name="controls">
         <item>
-         <widget class="QPushButton" name="add_quest_node_bttn">
+         <widget class="QPushButton" name="add_node_bttn">
           <property name="text">
-           <string>Add Quest Node</string>
+           <string>Add Node Node</string>
           </property>
          </widget>
         </item>
@@ -99,7 +99,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="quest_nodes_total_lbl">
+         <widget class="QLabel" name="nodes_total_lbl">
           <property name="text">
            <string>Quest Nodes: </string>
           </property>

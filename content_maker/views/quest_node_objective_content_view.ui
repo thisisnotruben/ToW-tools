@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>quest_character_content</class>
- <widget class="QWidget" name="quest_character_content">
+ <class>objective_content_view</class>
+ <widget class="QWidget" name="objective_content_view">
   <property name="geometry">
    <rect>
     <x>0</x>

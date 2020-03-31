@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>quest_node</class>
- <widget class="QWidget" name="quest_node">
+ <class>quest_node_view</class>
+ <widget class="QWidget" name="quest_node_view">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -104,7 +104,7 @@
         <item row="2" column="0">
          <widget class="QLabel" name="name_lbl">
           <property name="text">
-           <string>Quset Name</string>
+           <string>Quest Name</string>
           </property>
          </widget>
         </item>

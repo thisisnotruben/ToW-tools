@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VIEW_DIRS=("./quest_maker/views/" "./exporter/views/")
+VIEW_DIRS=("./content_maker/views/" "./exporter/views/")
 QT_EXT=".ui"
 PY_EXT=".py"
 

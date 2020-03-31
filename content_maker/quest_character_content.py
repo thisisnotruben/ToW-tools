@@ -9,12 +9,12 @@ from collections import OrderedDict
 from PyQt5.QtWidgets import QAction, QListWidgetItem, QWidget, QMenu
 from PyQt5.QtCore import Qt
 
-from quest_maker.views.quest_character_content_view import Ui_quest_character_content
-from quest_maker.metas import ISerializable, Dirty
-from quest_maker.icon_generator import IconGenerator
+from content_maker.views.quest_node_objective_content_view import Ui_objective_content_view
+from content_maker.metas import ISerializable, Dirty
+from content_maker.icon_generator import IconGenerator
 
 
-class QuestCharacterContent(Ui_quest_character_content, QWidget, ISerializable, Dirty):
+class QuestCharacterContent(Ui_objective_content_view, QWidget, ISerializable, Dirty):
     def __init__(self, db_list):
         super().__init__()
         Dirty.__init__(self)

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>quest_objective</class>
- <widget class="QWidget" name="quest_objective">
+ <class>quest_objective_view</class>
+ <widget class="QWidget" name="quest_objective_view">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>200</width>
-    <height>150</height>
+    <height>173</height>
    </rect>
   </property>
   <property name="windowTitle">
