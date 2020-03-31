@@ -136,17 +136,14 @@ class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
             icon = IconGenerator().getIcon(data["world_object"][1])
             self.world_object.addItem(QListWidgetItem(icon, data["world_object"][0]))
             self.world_object_keep.setDisabled(self.db_list.isCharacter(data["world_object"][0]))
+            # set quest type
+            self.quest_type.addItems([
+                    tag.capitalize()
+                    for tag in self.db_list.getQuestTypeTags(data["world_object"][0])
+            ])
+            self.quest_type.setCurrentText(data["quest_type"].capitalize())
         # set keep world object
         self.world_object_keep.setChecked(bool(data["keep_world_object"]))
-        # set quest type
-        if data["quest_type"][0] != "":
-            self.quest_type.addItems(
-                [
-                    tag.capitalize()
-                    for tag in self.db_list.getQuestTypeTags(data["world_object"])
-                ]
-            )
-        self.quest_type.setCurrentText(data["quest_type"].capitalize())
         # set amount
         self.amount.setValue(int(data["amount"]))
         # set generic data

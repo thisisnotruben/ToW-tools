@@ -64,7 +64,7 @@ class QuestCharacterContent(Ui_objective_content_view, QWidget, ISerializable, D
         self.dirty = False
         payload = OrderedDict([
             ("dialogue", self.dialogue.toPlainText()),
-            ("reward", ["", -1]),
+            ("reward", []),
             ("gold", self.gold_amount.value())
         ])
         reward = self.reward.item(0)
@@ -76,7 +76,7 @@ class QuestCharacterContent(Ui_objective_content_view, QWidget, ISerializable, D
     def unserialize(self, data):
         icon_generator = IconGenerator()
         self.dialogue.setText(data["dialogue"])
-        if data["reward"][0] != "":
+        if len(data["reward"]) != 0:
             icon = icon_generator.getIcon(data["reward"][1])
             self.reward.addItem(QListWidgetItem(icon, data["reward"][0]))
         self.gold_amount.setValue(int(data["gold"]))
