@@ -153,6 +153,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="make_tilesets">
+          <property name="toolTip">
+           <string>MAKE_32_DEBUG_TILESETS</string>
+          </property>
+          <property name="text">
+           <string>Make Tilesets</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="asset_layout_spacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

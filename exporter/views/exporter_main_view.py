@@ -65,6 +65,9 @@ class Ui_MainWindow(object):
         self.debug_map = QtWidgets.QPushButton(self.centralwidget)
         self.debug_map.setObjectName("debug_map")
         self.asset_layout.addWidget(self.debug_map)
+        self.make_tilesets = QtWidgets.QPushButton(self.centralwidget)
+        self.make_tilesets.setObjectName("make_tilesets")
+        self.asset_layout.addWidget(self.make_tilesets)
         spacerItem1 = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.asset_layout.addItem(spacerItem1)
         self.main_layout.addLayout(self.asset_layout)
@@ -121,6 +124,8 @@ class Ui_MainWindow(object):
         self.export_db.setText(_translate("MainWindow", "Export Databases"))
         self.debug_map.setToolTip(_translate("MainWindow", "DEBUG_MAP"))
         self.debug_map.setText(_translate("MainWindow", "Debug Map"))
+        self.make_tilesets.setToolTip(_translate("MainWindow", "MAKE_32_DEBUG_TILESETS"))
+        self.make_tilesets.setText(_translate("MainWindow", "Make Tilesets"))
         self.terminal_output.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

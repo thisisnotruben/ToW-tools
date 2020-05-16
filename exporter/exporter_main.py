@@ -60,7 +60,7 @@ class MainWindow(Ui_MainWindow):
 
     def setup_tool(self):
         self.buttons = [self.make_sprite_icons, self.make_sprite_deaths, self.make_sym_links, 
-            self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map]
+            self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map, self.make_tilesets]
 
         self.make_sprite_icons.clicked.connect(lambda: self.onClick(self.make_sprite_icons.toolTip()))
         self.make_sprite_deaths.clicked.connect(lambda : self.onMakeSpriteDeaths(self.make_sprite_deaths.toolTip()))
@@ -70,6 +70,7 @@ class MainWindow(Ui_MainWindow):
         self.export_map.clicked.connect(lambda : self.onClick(self.export_map.toolTip()))
         self.export_db.clicked.connect(lambda : self.onClick(self.export_db.toolTip()))
         self.debug_map.clicked.connect(lambda : self.onClick(self.debug_map.toolTip()))
+        self.make_tilesets.clicked.connect(lambda : self.onClick(self.make_tilesets.toolTip()))
 
         self.thread = Thread(self.main_window)
         self.thread.finished.connect(self.onCommandFinished)

@@ -66,11 +66,19 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
                 list_widget.takeItem(list_widget.count() - 1)
         deleteCharacter(self.drops_list, listWidgetItem)
         deleteCharacter(self.merchandise_list, listWidgetItem)
+        self.removeDuplicates(self.merchandise_list)
+        self.removeDuplicates(self.drops_list)
 
     def onSpellsDrop(self, listWidgetItem):
         # allow only spells here
         if not self.db_list.isSpell(listWidgetItem.text()):
             self.spells_list.takeItem(self.spells_list.count() - 1)
+        self.removeDuplicates(self.spells_list)
+
+    def removeDuplicates(self, list_widget):
+        entryNames = [list_widget.item(i).text() for i in range(list_widget.count())]
+        if len(entryNames) != len(set(entryNames)):
+            list_widget.takeItem(list_widget.count() - 1)
 
     def routeDirtiables(self, parent):
         self.onDirty = QAction(triggered=lambda: parent.setDirty([]))
@@ -104,7 +112,7 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
             ("level", self.level.value()),
             ("enemy", self.enemy.isChecked()),
             ("healer", self.healer.isChecked()),
-            ("healer_gold_amount", self.healer_gold_amount.value()),
+            ("healerCost", self.healer_gold_amount.value()),
             ("dialogue", self.dialogue.toPlainText()),
             ("drops", getItemData(self.drops_list)),
             ("spells", getItemData(self.spells_list)),
@@ -126,7 +134,7 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
         self.level.setValue(int(data["level"]))
         self.enemy.setChecked(bool(data["enemy"]))
         self.healer.setChecked(bool(data["healer"]))
-        self.healer_gold_amount.setValue(int(data["healer_gold_amount"]))
+        self.healer_gold_amount.setValue(int(data["healerCost"]))
         self.dialogue.setText(data["dialogue"])
 
         for drop in data["drops"]:

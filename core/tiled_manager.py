@@ -5,8 +5,10 @@ Tiled version tested on: 1.3.1
 """
 
 import os
+import json
 import shutil
 import xml.etree.ElementTree as ET
+from distutils.util import strtobool
 
 from core.game_db import GameDB, DataBases
 from core.image_editor import ImageEditor, Color
@@ -37,8 +39,6 @@ class Tiled:
         self.game = data["game"]
         self.debug = data["debug"]
         self.tilesets_32 = data["32"]
-        # parse file name
-        self.file_name = os.path.split(self.tiled["map_file"])[-1]
         # add all tags
         Tiled.all_tags = Tiled.tags_single + Tiled.tags_multiple
 
@@ -306,7 +306,8 @@ class Tiled:
                     "editorName": editor_names[unit_ID],
                     "name": game_names[unit_ID].strip(),
                     "img": os.path.splitext(unit_meta[unit_ID]["img"])[0],
-                    "enemy": unit_meta[unit_ID]["enemy"],
+                    "enemy": bool(strtobool(unit_meta[unit_ID]["enemy"])),
+                    Tiled.tag_path: [],
                     Tiled.tag_spawn: spawn_locs[unit_ID]
                 }
                 if unit_ID in unit_patrol_paths:
@@ -327,6 +328,7 @@ class Tiled:
         return master_dict
 
     def export_tilesets(self):
+        return # TODO: error given here
         print("--> EXPORTING TILESETS")
         if os.path.exists(self.game["tileset_dir"]):
             shutil.rmtree(self.game["tileset_dir"])
@@ -339,7 +341,7 @@ class Tiled:
                 print(" |-> TILESET EXPORTED: (%s)" % dest)
         print("--> ALL TILESETS EXPORTED")
 
-    def export_map(self):
+    def _export_map(self):
         tree = ET.parse(self.tiled["map_file"])
         root = tree.getroot()
         group_index, layer_index = self._get_map_character_layer()
@@ -391,9 +393,9 @@ class Tiled:
         Tiled._write_xml(tree, dest)
         print("--> MAP: (%s) EXPORTED" % self.file_name)
 
-    def export_meta(self):
+    def _export_meta(self):
         master_dict = self.get_character_map_data()
-        # clean data
+        # reformat data
         clean_dict = {}
         for unit_ID in master_dict:
             if "editorName" in master_dict[unit_ID]:
@@ -403,34 +405,20 @@ class Tiled:
                         and len(master_dict[unit_ID]) == 1):
                     clean_dict[unit_editor_name] = master_dict[unit_ID]
         master_dict = clean_dict
-        # make xml file from dict
-        file_name = os.path.splitext(self.file_name)[0]
-        root = ET.Element(file_name)
-        for unit in master_dict:
-            unit_root = ET.SubElement(root, "unit", {"name":master_dict[unit]["name"], "editorName": unit, "img":master_dict[unit]["img"], \
-                "enemy":master_dict[unit]["enemy"], "x":str(master_dict[unit][Tiled.tag_spawn][0]), \
-                "y":str(master_dict[unit][Tiled.tag_spawn][1])})
-            for tag in Tiled.tags_single:
-                if tag in master_dict[unit]:
-                    ET.SubElement(unit_root,
-                                  tag).text = str(master_dict[unit][tag])
-            for attribute_name in Tiled.tags_multiple:
-                if attribute_name in master_dict[unit]:
-                    attr_root = ET.SubElement(unit_root, attribute_name + "s")
-                    for attribute in master_dict[unit]:
-                        if attribute_name in attribute:
-                            ET.SubElement(
-                                attr_root, attribute_name,
-                                {"name": str(master_dict[unit][attribute])})
-            if Tiled.tag_path in master_dict[unit]:
-                path_root = ET.SubElement(unit_root, Tiled.tag_path)
-                for point in master_dict[unit][Tiled.tag_path]:
-                    ET.SubElement(path_root, "point", {
-                        "x": str(point[0]),
-                        "y": str(point[1])
-                    })
-        # write xml to dest
-        tree = ET.ElementTree(root)
-        dest = os.path.join(self.game["meta_dir"], file_name + "DB.xml")
-        Tiled._write_xml(tree, dest)
+        # write json
+        dest = os.path.join(self.game["meta_dir"], "%s.json" % os.path.splitext(self.file_name)[0])
+        with open(dest, "w") as outfile:
+            json.dump(master_dict, outfile, indent=4)
         print("--> META: (%s) EXPORTED" % self.file_name)
+
+    def export_all_maps(self):
+        # loop through all map files in dir
+        for map_file in os.listdir(self.tiled["map_dir"]):
+            if map_file.endswith(Tiled.map_ext):
+                # extract file paths
+                self.tiled["map_file"] = os.path.join(self.tiled["map_dir"], map_file)
+                self.file_name = os.path.splitext(map_file)[0]
+                # export
+                self._export_map()
+                self._export_meta()
+

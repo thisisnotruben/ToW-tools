@@ -17,9 +17,7 @@ from core.archive_manager import Archiver
 
 
 class Commands(enum.Enum):
-    EXPORT_MAP = enum.auto()
-    EXPORT_META = enum.auto()
-    EXPORT_MAP_META = enum.auto()
+    EXPORT_MAPS = enum.auto()
     EXPORT_TILESETS = enum.auto()
     EXPORT_ALL_TILED = enum.auto()
     EXPORT_DATABASES = enum.auto()
@@ -67,15 +65,8 @@ class Main:
 
         command = Commands[command]
 
-        if command == Commands.EXPORT_MAP:
-            self.tiled.export_map()
-
-        elif command == Commands.EXPORT_META:
-            self.tiled.export_meta()
-
-        elif command == Commands.EXPORT_MAP_META:
-            self.tiled.export_map()
-            self.tiled.export_meta()
+        if command == Commands.EXPORT_MAPS:
+            self.tiled.export_all_maps()
 
         elif command == Commands.EXPORT_TILESETS:
             if self.tiled.is_debugging():
@@ -86,11 +77,12 @@ class Main:
             if self.tiled.is_debugging():
                 self.tiled.debug_map()
             self.tiled.export_tilesets()
-            self.tiled.export_map()
-            self.tiled.export_meta()
+            self.tiled.export_all_maps()
 
         elif command == Commands.EXPORT_DATABASES:
             self.db.export_databases()
+            self.db.export_character_content()
+            self.db.export_quest_content()
 
         elif command == Commands.EXPORT_ALL:
             if self.tiled.is_debugging():
@@ -99,6 +91,8 @@ class Main:
             self.tiled.export_map()
             self.tiled.export_meta()
             self.db.export_databases()
+            self.db.export_character_content()
+            self.db.export_quest_content()
 
         elif command == Commands.DEBUG_MAP:
             self.tiled.debug_map()

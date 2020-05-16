@@ -7,42 +7,35 @@ import os
 import enum
 import json
 import pyexcel_ods
-import xml.etree.ElementTree as ET
+from distutils.util import strtobool
 
 from core.path_manager import PathManager
 
 
 class DataBases(enum.Enum):
-    IMAGEDB = "Image"
-    ITEMDB = "Item"
-    QUESTDB = "Quest"
-    SPELLDB = "Spell"
+    IMAGEDB = "image"
+    ITEMDB = "item"
+    SPELLDB = "spell"
 
 
 class GameDB:
 
-    defined_text_tags = [
-        "description", "start", "active", "completed", "delivered",
-        "receiver_completed", "receiver_delivered"
-    ]
-    repeated_tags = {
-        DataBases.IMAGEDB: "img",
-        DataBases.ITEMDB: "item",
-        DataBases.QUESTDB: "quest",
-        DataBases.SPELLDB: "spell"
-    }
     db_ext = ".ods"
+    content_ext = ".json"
 
     def __init__(self):
-        self.paths = {}
         paths = PathManager.get_paths()
-        self.paths["db_dir"] = paths["db_dir"]
-        self.paths["db_export_path"] = paths["db_export_path"]
+        self.paths = {
+            "db_dir": paths["db_dir"],
+            "db_export_path": paths["db_export_path"],
+            "character_content_dir": paths["character_content_dir"],
+            "quest_content_dir": paths["quest_content_dir"]
+        }
         self.data = {}
         self.load_db()
 
     def get_database(self, database):
-        return self.data[database]["data"]
+        return self.data[database]
 
     def load_db(self):
         for db in os.listdir(self.paths["db_dir"]):
@@ -78,8 +71,10 @@ class GameDB:
                             matrix[row] = matrix[row][:header_size]
                         # normalize all data
                         for column in range(len(matrix[row])):
-                            matrix[row][column] = str(
-                                matrix[row][column]).strip()
+                            if type(matrix[row][column]) == str:
+                                matrix[row][column] = matrix[row][column].strip()
+                                if matrix[row][column].lower() in ["true", "false"]:
+                                    matrix[row][column] = bool(strtobool(matrix[row][column]))
                             # select empty rows to delete
                             if matrix[row][0] == "":
                                 rows_to_delete.append(matrix[row])
@@ -95,58 +90,92 @@ class GameDB:
                             temp[headers[column]] = matrix[row][column]
                         data[matrix[row][0]] = temp
                     # set data
-                    self.data[DataBases[db_file_name]] = {
-                        "data": data,
-                        "tag": GameDB.repeated_tags[DataBases[db_file_name]]
-                    }
+                    self.data[DataBases[db_file_name]] = data
 
     def export_databases(self):
-        # TODO doesn't work due to new database structure change
-        print("--> !!!NOT IMPLEMENTED!!!")
-        return
         print("--> EXPORTING DATABASES")
-        for sheet in self.data:
-            data = self.get_database(sheet)
-            sheet_name = sheet.name
-            # make xml
-            root = ET.Element(sheet_name)
-            for row in range(1, len(data)):
-                defined_sub_tags = {}
-                attributes = {}
-                objectives = {}
-                objective_key = ""
-                for column in range(len(data[0])):
-                    header = data[0][column].strip()
-                    value = data[row][column].strip()
-                    if header in GameDB.defined_text_tags:
-                        defined_sub_tags[header] = value
-                    elif header == "":
-                        if value != "":
-                            if objective_key == "":
-                                objective_key = value
-                            elif not value.isnumeric():
-                                print("--> ERROR PARSING DATABASE: (%s)" % sheet_name, \
-                                    "\n--> OBJECTIVE NOT SET RIGHT IN [ROW][COLUMN]: [%s][%s]" % (row, column))
-                                exit(1)
-                            else:
-                                objectives[objective_key] = value
-                                objective_key = ""
-                    else:
-                        attributes[header] = value
-                element = ET.SubElement(root, self.data[sheet_name]["tag"],
-                                        attributes)
-                for sub_tag in defined_sub_tags:
-                    ET.SubElement(element,
-                                  sub_tag).text = defined_sub_tags[sub_tag]
-                for objective in objectives:
-                    ET.SubElement(element, "objective", {
-                        "name": objective,
-                        "amount": objectives[objective]
-                    })
-            # make path
-            dest = os.path.join(self.paths["db_export_path"], sheet_name + ".xml")
-            # write xml
-            tree = ET.ElementTree(root)
-            tree.write(dest, encoding="UTF-8", xml_declaration=True)
-            print(" |-> DATABASE EXPORTED: (%s)" % sheet_name)
+        for database in self.data.keys():
+            dest = os.path.join(self.paths["db_export_path"], "%s.json" % database.value)
+            print(" |-> DATABASE EXPORTED: (%s)" % dest)
+            with open(dest, "w") as outfile:
+                json.dump(self.get_database(database), outfile, indent=4)
         print("--> ALL DATABASES EXPORTED")
+
+    def export_character_content(self):
+        # util function
+        get_world_name = lambda world_packet: world_packet[0] if len(world_packet) > 0 else ""
+        # start main function
+        print("--> EXPORTING CHARACTER CONTENT")
+        for content_file in os.listdir(self.paths["character_content_dir"]):
+            if content_file.endswith(GameDB.content_ext):
+                # make path and load file
+                src = os.path.join(self.paths["character_content_dir"], content_file)
+                with open(src, "r") as infile:
+                    content = json.load(infile)
+                    # reformat json
+                    reformatted_dict = {}
+                    for node in content["nodes"].keys():
+                        node_dict = content["nodes"][node]
+                        if len(node_dict["character"]) == 0:
+                            print(" |-> CHARACTER CONTENT NOT EXPORTED: (%s)" \
+                                % node_dict)
+                            continue
+                        character_name = get_world_name(node_dict.pop("character"))
+                        node_dict["drops"] = list(map(get_world_name, node_dict["drops"]))
+                        node_dict["spells"] = list(map(get_world_name, node_dict["spells"]))
+                        node_dict["merchandise"] = list(map(get_world_name, node_dict["merchandise"]))
+                        # add to main dict
+                        reformatted_dict[character_name] = node_dict
+                    # export json
+                    dest = os.path.join(self.paths["db_export_path"], content_file)
+                    with open(dest, "w") as outfile:
+                        print(" |-> CHARACTER CONTENT EXPORTED: (%s)" % dest)
+                        json.dump(reformatted_dict, outfile, indent=4)
+        print("--> ALL CHARACTER CONTENT EXPORTED")
+
+    def export_quest_content(self):
+        # util function
+        get_world_name = lambda world_packet: world_packet[0] if len(world_packet) > 0 else ""
+        # start main function
+        print("--> EXPORTING QUEST CONTENT")
+        for content_file in os.listdir(self.paths["quest_content_dir"]):
+            if content_file.endswith(GameDB.content_ext):
+                # make path and load file
+                src = os.path.join(self.paths["quest_content_dir"], content_file)
+                with open(src, "r") as infile:
+                    content = json.load(infile)
+                    # reformat json
+                    reformatted_dict = {}
+                    for node in content["nodes"].keys():
+                        # quest needs to have: 
+                        # name, at least one objective, and quest giver/completer
+                        node_dict = content["nodes"][node]
+                        if node_dict["quest_name"].strip() == "" \
+                        or len(node_dict["quest_giver"]) == 0 \
+                        or len(node_dict["quest_completer"]) == 0 \
+                        or len(node_dict["objectives"].keys()) == 0:
+                            continue
+                        # parse main
+                        quest_giver = get_world_name(node_dict.pop("quest_giver"))
+                        node_dict["next_quest"] = list(map(get_world_name, node_dict["next_quest"]))
+                        node_dict["reward"] = list(map(get_world_name, node_dict["reward"]))
+                        node_dict["quest_completer"] = get_world_name(node_dict["quest_completer"])
+                        # parse objective
+                        objectives = {}
+                        for objective in node_dict["objectives"].keys():
+                            world_object_name = get_world_name(node_dict["objectives"][objective].pop("world_object"))
+                            del node_dict["objectives"][objective]["wildcard"]
+                            node_dict["objectives"][objective]["extra_content"]["reward"] = \
+                                get_world_name(node_dict["objectives"][objective]["extra_content"]["reward"])
+                            objectives[world_object_name] = node_dict["objectives"][objective]
+                        del node_dict["objectives"]
+                        node_dict["objectives"] = objectives
+                        # export json
+                        reformatted_dict[quest_giver] = node_dict
+                    # export json
+                    dest = os.path.join(self.paths["db_export_path"], content_file)
+                    with open(dest, "w") as outfile:
+                        print(" |-> CHARACTER CONTENT EXPORTED: (%s)" % dest)
+                        json.dump(reformatted_dict, outfile, indent=4)
+        print("--> ALL CHARACTER CONTENT EXPORTED")
+                    

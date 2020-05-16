@@ -359,6 +359,9 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         return payload
 
     def unserialize(self, data):
+        if self.node == None:
+            self.add_node_bttn.clicked.disconnect(self.onNewFile)
+            self.add_node_bttn.clicked.connect(self.insertNode)
         self.node = getattr(sys.modules[__name__], data["node_type"])
         for i, node_data in enumerate(data["nodes"]):
             self.insertNode(i).unserialize(data["nodes"][node_data])

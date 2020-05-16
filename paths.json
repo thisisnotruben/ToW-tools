@@ -5,8 +5,7 @@
                 "tileset_dir": "map/tilesets",
                 "debug_dir": "map/debug",
                 "character_dir": "character",
-                "template_dir": "map/tilesets/templates",
-                "map_file": "map/zone_4.tmx"
+                "template_dir": "map/tilesets/templates"
         },
         "game": {
                 "root": "/home/rubsz/godot/my_games/Tides_of_War",
@@ -35,11 +34,13 @@
                 "/home/rubsz/tiled/Tides_of_War"
         ],
         "archive_backup_dir": "/home/rubsz/ToW_backups",
-        "db_dir": "/home/rubsz/tiled/Tides_of_War/non_map/scripts/db/game",
+        "db_dir": "/home/rubsz/tiled/Tides_of_War/dev/database",
         "db_export_path": "/home/rubsz/godot/my_games/Tides_of_War/data",
-        "dev_character_dir": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_character",
+        "character_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/character",
+        "quest_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/quest",
+        "dev_character_dir": "/home/rubsz/tiled/Tides_of_War/dev/asset/dev_character",
         "icon_atlas_data": {
-                "path": "/home/rubsz/tiled/Tides_of_War/non_map/assets/dev_icon/icons.png",
+                "path": "/home/rubsz/tiled/Tides_of_War/dev/asset/dev_icon/icons.png",
                 "atlas_name": "icon_atlas.png",
                 "size": [
                         512,
