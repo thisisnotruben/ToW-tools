@@ -328,15 +328,15 @@ class Tiled:
         return master_dict
 
     def export_tilesets(self):
-        return # TODO: error given here
         print("--> EXPORTING TILESETS")
         if os.path.exists(self.game["tileset_dir"]):
             shutil.rmtree(self.game["tileset_dir"])
         shutil.copytree(self.tiled["tileset_dir"], self.game["tileset_dir"])
+        print(" |-> DIRECTORY EXPORTED: (%s)" % self.game["tileset_dir"])
         for filename in os.listdir(self.tiled["character_dir"]):
             if filename.endswith(Tiled.tileset_ext):
                 src = os.path.join(self.tiled["character_dir"], filename)
-                dest = self.game["character_dir"]
+                dest = os.path.join(self.game["character_dir"], filename)
                 shutil.copy(src, dest)
                 print(" |-> TILESET EXPORTED: (%s)" % dest)
         print("--> ALL TILESETS EXPORTED")
