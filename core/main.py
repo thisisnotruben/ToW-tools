@@ -21,6 +21,7 @@ class Commands(enum.Enum):
     EXPORT_TILESETS = enum.auto()
     EXPORT_ALL_TILED = enum.auto()
     EXPORT_DATABASES = enum.auto()
+    EXPORT_CONTENT = enum.auto()
     EXPORT_ALL = enum.auto()
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
@@ -82,6 +83,8 @@ class Main:
         elif command == Commands.EXPORT_DATABASES:
             self.db.export_databases()
             self.db.export_character_content()
+
+        elif command == Commands.EXPORT_CONTENT:
             self.db.export_quest_content()
 
         elif command == Commands.EXPORT_ALL:
@@ -117,7 +120,7 @@ class Main:
             self.asset.make_icon_atlas()
 
         elif command == Commands.MAKE_SPRITE_ICONS:
-            self.tiled.make_sprite_icons()
+            self.tiled.make_sprite_icons(*arg)
 
         elif command == Commands.MAKE_SPRITE_DEATHS:
             self.asset.make_sprite_deaths(*arg)
@@ -126,18 +129,19 @@ class Main:
             self.asset.make_sym_links()
 
         elif command == Commands.MAKE_LID:
-            sprites = self.asset.make_sym_links()        
-            self.tiled.make_sprite_icons()
+            sprites = self.asset.make_sym_links()
             if len(arg) > 0:
                 if arg[0] == "ALL":
                     # ALL
+                    self.tiled.make_sprite_icons()
                     self.asset.make_sprite_deaths()
                     sprites = []
                 else:
                     # FILE PATHS
                     sprites = arg
             if len(sprites) > 0:
-                self.asset.make_sprite_deaths(*sprites)            
+                self.tiled.make_sprite_icons(*sprites)
+                self.asset.make_sprite_deaths(*sprites)
 
         elif command == Commands.BACKUP:
             self.archive.backup()

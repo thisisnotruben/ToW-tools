@@ -52,6 +52,8 @@ class MainWindow(Ui_MainWindow):
         about_popup = lambda: QMessageBox.about(self.main_window, "About", self.about)
         self.action_about.triggered.connect(about_popup)
 
+        self.action_quit.triggered.connect(MainWindow.close)
+
         # set style sheet
         root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
         path = os.path.join(root_dir, "QTDark-master", "QTDark.stylesheet")
@@ -60,10 +62,12 @@ class MainWindow(Ui_MainWindow):
 
     def setup_tool(self):
         self.buttons = [self.make_sprite_icons, self.make_sprite_deaths, self.make_sym_links, 
-            self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map, self.make_tilesets]
+            self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map,
+            self.make_tilesets, self.export_content, self.make_lid]
 
-        self.make_sprite_icons.clicked.connect(lambda: self.onClick(self.make_sprite_icons.toolTip()))
-        self.make_sprite_deaths.clicked.connect(lambda : self.onMakeSpriteDeaths(self.make_sprite_deaths.toolTip()))
+        self.make_sprite_icons.clicked.connect(lambda: self.onOpenFileDialog(self.make_sprite_icons.toolTip()))
+        self.make_sprite_deaths.clicked.connect(lambda : self.onOpenFileDialog(self.make_sprite_deaths.toolTip()))
+        self.make_lid.clicked.connect(lambda : self.onOpenFileDialog(self.make_lid.toolTip()))
         self.make_sym_links.clicked.connect(lambda : self.onClick(self.make_sym_links.toolTip()))
         self.make_icon_atlas.clicked.connect(lambda : self.onClick(self.make_icon_atlas.toolTip()))
         self.archive.clicked.connect(lambda : self.onClick(self.archive.toolTip()))
@@ -71,11 +75,12 @@ class MainWindow(Ui_MainWindow):
         self.export_db.clicked.connect(lambda : self.onClick(self.export_db.toolTip()))
         self.debug_map.clicked.connect(lambda : self.onClick(self.debug_map.toolTip()))
         self.make_tilesets.clicked.connect(lambda : self.onClick(self.make_tilesets.toolTip()))
+        self.export_content.clicked.connect(lambda : self.onClick(self.export_content.toolTip()))
 
         self.thread = Thread(self.main_window)
         self.thread.finished.connect(self.onCommandFinished)
 
-    def onMakeSpriteDeaths(self, command):
+    def onOpenFileDialog(self, command):
         files = QFileDialog.getOpenFileNames(self.main_window, "Open a SpriteSheet", \
             PathManager.get_paths()["game"]["character_dir"], "png (*.png)")
         file_paths = files[0]

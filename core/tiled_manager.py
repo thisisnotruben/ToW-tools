@@ -258,18 +258,35 @@ class Tiled:
                 print(" |-> TILESET MADE: (%s)" % dest)
         print("--> ALL 32px TILESETS MADE")
 
-    def make_sprite_icons(self):
+    def make_sprite_icons(self, *sprite_paths):
+        batch_order = []
+        if len(sprite_paths) == 0:
+            # get all src img paths
+            batch_order = [
+                os.path.join(self.game["character_dir"], img)
+                for img in os.listdir(self.game["character_dir"])
+                if img.endswith(Tiled.img_ext)
+            ]
+        else:
+            batch_order = sprite_paths
+            # checking if input are valid files & images
+            for img in batch_order:
+                if not os.path.isfile(img):
+                    print(
+                        "--> ERROR: (sprite_paths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING"
+                    )
+                    return
         print("--> MAKING SPRITE ICONS")
         # load img db
         img_data = GameDB().get_database(DataBases.IMAGEDB)
         # make character icons
-        for img in os.listdir(self.game["character_dir"]):
+        for img in batch_order:
             if img.endswith(Tiled.img_ext):
                 # make paths
-                src = os.path.join(self.game["character_dir"], img)
-                dest = os.path.join(self.tiled["character_dir"], img)
+                src = img
+                dest = os.path.join(self.tiled["character_dir"], os.path.basename(img))
                 # get hv frames for current sprite
-                img_name = os.path.splitext(img)[0]
+                img_name = os.path.splitext(os.path.basename(img))[0]
                 if not img_name in img_data:
                     print(" |-> SPRITE DOESN'T HAVE FRAME DATA: (%s)" % src)
                     continue

@@ -46,6 +46,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="make_lid">
+          <property name="toolTip">
+           <string>MAKE_LID</string>
+          </property>
+          <property name="text">
+           <string>Make Sym/Icons/Deaths</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="make_sprite_icons">
           <property name="toolTip">
            <string>MAKE_SPRITE_ICONS</string>
@@ -82,6 +92,16 @@
           </property>
           <property name="text">
            <string>Make Icon Atlas</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="make_tilesets">
+          <property name="toolTip">
+           <string>MAKE_32_DEBUG_TILESETS</string>
+          </property>
+          <property name="text">
+           <string>Make Tilesets</string>
           </property>
          </widget>
         </item>
@@ -143,22 +163,22 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="export_content">
+          <property name="toolTip">
+           <string>EXPORT_CONTENT</string>
+          </property>
+          <property name="text">
+           <string>Export Content</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="debug_map">
           <property name="toolTip">
            <string>DEBUG_MAP</string>
           </property>
           <property name="text">
            <string>Debug Map</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="make_tilesets">
-          <property name="toolTip">
-           <string>MAKE_32_DEBUG_TILESETS</string>
-          </property>
-          <property name="text">
-           <string>Make Tilesets</string>
           </property>
          </widget>
         </item>
@@ -213,12 +233,27 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="action_about"/>
    </widget>
+   <widget class="QMenu" name="menuFile_2">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_quit"/>
+   </widget>
+   <addaction name="menuFile_2"/>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_about">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="action_quit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
  </widget>
