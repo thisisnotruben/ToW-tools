@@ -31,7 +31,8 @@ class DataView(QListWidget):
         super().__init__(parent=parent)
 
         self.icon_generator = IconGenerator()
-        self.all_items = set()
+        self.game_db = GameDB()
+        self.all_items = {}
         # used for the combo boxes in searching
         self.character_tag = "Character"
         self.db_tags = {}
@@ -49,21 +50,16 @@ class DataView(QListWidget):
         self.setDragEnabled(True)
         
     def load_databases(self):
-        game_db = GameDB()
-        item_data = game_db.get_database(DataBases.ITEMDB)
-        spell_data = game_db.get_database(DataBases.SPELLDB)
-
-        character_data = Tiled().get_character_data()
-
-        self.db_tags = [self.character_tag, DataBases.ITEMDB.value, DataBases.SPELLDB.value]
+        self.db_tags = [self.character_tag, "Item", "Spell"]
         self.db_tags.sort()
 
-        self.type_tags[DataBases.ITEMDB.value] = set([item_data[item_name]["type"]
-            for item_name in item_data.keys()])
-        self.type_tags[DataBases.ITEMDB.value] = [item_type.capitalize() 
-            for item_type in self.type_tags[DataBases.ITEMDB.value]]
-        self.type_tags[DataBases.ITEMDB.value].sort()
+        self.type_tags[DataBases.ITEMDB.value.capitalize()] = [itemType[0].capitalize() for itemType in
+            self.game_db.execute_query(
+                "SELECT DISTINCT type FROM worldobject, item "
+                "WHERE worldObject.name = item.name ORDER BY type;")]
+        self.type_tags[DataBases.SPELLDB.value.capitalize()] = []
         
+        character_data = Tiled().get_character_data()
         self.type_tags[self.character_tag] = set()
         self.sub_type_tags[self.character_tag] = set()
         for character_id in character_data:
@@ -80,15 +76,10 @@ class DataView(QListWidget):
         self.sub_type_tags[self.character_tag].sort()
 
         self.clearDatabase()
-
-        merged_data = {**item_data, **spell_data}
-        for item_name in merged_data:
-            merged_data[item_name]["_TYPE"] = merged_data[item_name]["type"]
-            if item_name in spell_data.keys():
-                merged_data[item_name]["_DB"] = DataBases.SPELLDB.value
-            else:
-                merged_data[item_name]["_DB"] = DataBases.ITEMDB.value
-            self.addItem(merged_data[item_name], int(merged_data[item_name]["icon"]), item_name)
+        
+        icon_data = self.game_db.execute_query("SELECT icon, name FROM worldobject")
+        for data in icon_data:
+            self.addItem({}, data[0], data[1])
         
         for character_id in character_data:
             self.addItem(character_data[character_id], character_data[character_id]["img"],
@@ -100,11 +91,11 @@ class DataView(QListWidget):
         entry.setSizeHint(QSize(32, 32))
         entry.setData(Qt.UserRole, data)
         entry.setData(Qt.UserRole + 1, icon_data)
+        self.all_items[label] = self.count() - 1
         super().addItem(entry)
-        self.all_items.add(entry)
 
     def clearDatabase(self):
-        self.all_items = set()
+        self.all_items = {}
         while self.count() != 0:
             self.takeItem(0)
 
@@ -117,9 +108,8 @@ class DataView(QListWidget):
         ]
 
     def isSpell(self, entry_name):
-        """check if entry is a spell. returns `bool`"""
-        return entry_name in [entry.text() for entry in self.all_items
-            if entry.data(Qt.UserRole)["_DB"] == DataBases.SPELLDB.value]
+        return len(self.game_db.execute_query(
+            f"SELECT name FROM spell WHERE name = '{entry_name}'")) > 0
 
     def isEntryUnique(self, entry_name):
         """is the entry mentioned more then once in Database?

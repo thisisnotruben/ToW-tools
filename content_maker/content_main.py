@@ -21,7 +21,7 @@ from content_maker.content_node import CharacterContentNode
 from content_maker.metas import ISerializable, Dirty
 from content_maker.clipboard import Clipboard
 
-from core.game_db import DataBases
+from core.game_db import GameDB, DataBases
 
 
 class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
@@ -41,6 +41,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         self.app = app
         self.setupUi(self)
         self.showMaximized()
+        self.db = GameDB()
     
     def setupUi(self, MainWindow):
         super().setupUi(MainWindow)
@@ -169,35 +170,37 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         self.insertNode(node_curr_index + by).unserialize(serialized_data)
   
     def onSearch(self, current_text):
-        founded_items = set(self.list_view.findItems(current_text, Qt.MatchContains))
-
+        founded_items = set(self.db.execute_query(
+            f"SELECT name FROM worldobject WHERE name LIKE '%{current_text}%';"))
+        
         db_filter = self.filter_db.currentText()
-        if db_filter != "All":
-            founded_items = set([entry for entry in founded_items
-                if entry.data(Qt.UserRole)["_DB"] == db_filter])
+        if db_filter != "All" \
+        and len(self.db.execute_query(f"SELECT name FROM sqlite_master WHERE name = '{db_filter}';")) > 0:
+            founded_items.intersection_update(set(self.db.execute_query(
+                f"SELECT name FROM {db_filter};")))
 
         type_filter = self.filter_type.currentText()
         if self.filter_type.isVisible() and type_filter != "All":
-            founded_items = set([entry for entry in founded_items
-                if entry.data(Qt.UserRole)["_TYPE"].capitalize() == type_filter])
-        
+            founded_items.intersection_update(set(self.db.execute_query(
+                f"SELECT name FROM worldobject WHERE type LIKE '%{type_filter}%'")))
+
+        # TODO
         sub_type_filter = self.filter_sub_type.currentText()
-        if self.filter_sub_type.isVisible() and sub_type_filter != "All":
+        if False and self.filter_sub_type.isVisible() and sub_type_filter != "All":
             founded_items = set([entry for entry in founded_items
                 if "_SUB_TYPE" in entry.data(Qt.UserRole)
                 and entry.data(Qt.UserRole)["_SUB_TYPE"] == sub_type_filter])
-        
-        for entry in founded_items:
-            entry.setHidden(False)
-        for entry in self.list_view.all_items - founded_items:
-            entry.setHidden(True)
+
+        founded_items = set([item[0] for item in founded_items])
+        for entry in self.list_view.all_items.keys():
+            self.list_view.item(self.list_view.all_items[entry]).setHidden(entry not in founded_items)
 
     def onFilterDb(self, text):
         def clear_combo_box(combo_box):
             while combo_box.count() != 1:
                 combo_box.removeItem(1)
 
-        if text == DataBases.SPELLDB.value or text == "All":
+        if text == DataBases.SPELLDB.value.capitalize() or text == "All":
             self.filter_type.hide()
             self.filter_sub_type.hide()
         else:

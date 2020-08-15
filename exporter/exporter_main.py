@@ -65,13 +65,14 @@ class MainWindow(Ui_MainWindow):
             self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map,
             self.make_tilesets, self.export_content, self.make_lid]
 
-        self.make_sprite_icons.clicked.connect(lambda: self.onOpenFileDialog(self.make_sprite_icons.toolTip()))
-        self.make_sprite_deaths.clicked.connect(lambda : self.onOpenFileDialog(self.make_sprite_deaths.toolTip()))
+        self.make_sprite_icons.clicked.connect(lambda: self.onOpenFileDialog(self.make_sprite_icons.toolTip(), True))
+        self.make_sprite_deaths.clicked.connect(lambda : self.onOpenFileDialog(self.make_sprite_deaths.toolTip(), True))
         self.make_lid.clicked.connect(lambda : self.onOpenFileDialog(self.make_lid.toolTip()))
         self.make_sym_links.clicked.connect(lambda : self.onClick(self.make_sym_links.toolTip()))
         self.make_icon_atlas.clicked.connect(lambda : self.onClick(self.make_icon_atlas.toolTip()))
         self.archive.clicked.connect(lambda : self.onClick(self.archive.toolTip()))
-        self.export_map.clicked.connect(lambda : self.onClick(self.export_map.toolTip()))
+        self.export_map.clicked.connect(lambda : self.onOpenFileDialog(self.export_map.toolTip(), False))
+        self.export_tilesets.clicked.connect(lambda : self.onClick(self.export_tilesets.toolTip()))
         self.export_db.clicked.connect(lambda : self.onClick(self.export_db.toolTip()))
         self.debug_map.clicked.connect(lambda : self.onClick(self.debug_map.toolTip()))
         self.make_tilesets.clicked.connect(lambda : self.onClick(self.make_tilesets.toolTip()))
@@ -80,9 +81,21 @@ class MainWindow(Ui_MainWindow):
         self.thread = Thread(self.main_window)
         self.thread.finished.connect(self.onCommandFinished)
 
-    def onOpenFileDialog(self, command):
-        files = QFileDialog.getOpenFileNames(self.main_window, "Open a SpriteSheet", \
-            PathManager.get_paths()["game"]["character_dir"], "png (*.png)")
+    def onOpenFileDialog(self, command: str, spriteSheet: bool):
+
+        dialogue = {
+            "header":  "Open a SpriteSheet",
+            "openPath": PathManager.get_paths()["game"]["character_dir"],
+            "fileType": "png (*.png)"
+        }
+        if not spriteSheet:
+            dialogue = {
+                "header": "Maps to export",
+                "openPath": PathManager.get_paths()["game"]["map_dir"],
+                "fileType": "tmx (*.tmx)"
+            }
+
+        files = QFileDialog.getOpenFileNames(self.main_window, dialogue["header"], dialogue["openPath"], dialogue["fileType"])
         file_paths = files[0]
         if len(file_paths) > 0:
             self.onClick(command, file_paths)

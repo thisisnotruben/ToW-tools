@@ -145,10 +145,20 @@
         <item>
          <widget class="QPushButton" name="export_map">
           <property name="toolTip">
-           <string>EXPORT_ALL_TILED</string>
+           <string>EXPORT_MAPS</string>
           </property>
           <property name="text">
-           <string>Export Map</string>
+           <string>Export Maps</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="export_tilesets">
+          <property name="toolTip">
+           <string>EXPORT_TILESETS</string>
+          </property>
+          <property name="text">
+           <string>Export Tilesets</string>
           </property>
          </widget>
         </item>

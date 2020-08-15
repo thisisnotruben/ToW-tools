@@ -6,6 +6,7 @@ Ruben Alvarez Reyes
 import os
 import enum
 import json
+import sqlite3
 import pyexcel_ods
 from distutils.util import strtobool
 
@@ -31,11 +32,37 @@ class GameDB:
             "character_content_dir": paths["character_content_dir"],
             "quest_content_dir": paths["quest_content_dir"]
         }
+        self.database_path = paths["database"]
+        self._load_db()
         self.data = {}
         self.load_db()
 
+    def __del__(self):
+        self.conn.close()
+
     def get_database(self, database):
         return self.data[database]
+
+    def _load_db(self):
+        self.conn = sqlite3.connect(self.database_path)
+        self.cursor = self.conn.cursor()
+
+    def get_frame_data(self) -> dict:
+        master = {}
+        self.cursor.execute("SELECT * FROM ImageFrames")
+        for row in self.cursor.fetchall():
+            master[row[0]] = {
+                "total": row[1],
+                "moving": row[2],
+                "dying": row[3],
+                "attacking": row[4]
+            }
+        return master
+
+    def execute_query(self, query: str) -> list:
+        master = []
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
 
     def load_db(self):
         for db in os.listdir(self.paths["db_dir"]):

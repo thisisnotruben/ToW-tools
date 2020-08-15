@@ -65,7 +65,7 @@ class Tiled:
         tree.write(dest, encoding="UTF-8", xml_declaration=True)
 
     @staticmethod
-    def _format_name(unit_meta, unit_atts):
+    def _format_name(unit_meta, unit_atts) -> str:
         base_name = ""
         if "name" in unit_atts:
             base_name = unit_atts["name"]
@@ -99,7 +99,7 @@ class Tiled:
                     child.attrib["firstgid"])] = child.attrib["source"]
         return tilesets
 
-    def _get_character_attributes(self):
+    def _get_character_attributes(self) -> {}:
         master_dict = {}
         tilesets = self._get_map_character_tilesets()
         root = ET.parse(self.tiled["map_file"]).getroot()
@@ -107,7 +107,7 @@ class Tiled:
         os.chdir(self.tiled["map_dir"])
         for child in root[group_index][layer_index]:
             unit_attr = child.attrib
-            if "player" in unit_attr.values():
+            if "template" in unit_attr:
                 continue
             ID = int(unit_attr["gid"])
             tile_id = -1
@@ -132,7 +132,7 @@ class Tiled:
                 id_idx += 1
         return master_dict
 
-    def _get_character_names(self, editor_names):
+    def _get_character_names(self, editor_names: bool) -> {}:
         names = {}
         unit_meta = self._get_character_attributes()
         group_index, layer_index = self._get_map_character_layer()
@@ -140,12 +140,11 @@ class Tiled:
         for child in root[group_index][layer_index]:
             unit_atts = child.attrib
             if editor_names:
-                names[unit_atts["id"]] = Tiled._format_name(
-                    unit_meta, unit_atts)
+                names[unit_atts["id"]] = Tiled._format_name(unit_meta, unit_atts)
             elif "name" in unit_atts:
                 names[unit_atts["id"]] = unit_atts["name"]
-            else:
-                names[unit_atts["id"]] = unit_meta[unit_atts["id"]]["name"]
+            elif "template" not in unit_atts:
+                names[unit_atts["id"]] = unit_meta[unit_atts["id"]]["defaultName"]
         return names
 
     def _get_unit_paths(self):
@@ -278,7 +277,7 @@ class Tiled:
                     return
         print("--> MAKING SPRITE ICONS")
         # load img db
-        img_data = GameDB().get_database(DataBases.IMAGEDB)
+        img_data = GameDB().get_frame_data()
         # make character icons
         for img in batch_order:
             if img.endswith(Tiled.img_ext):
@@ -290,20 +289,28 @@ class Tiled:
                 if not img_name in img_data:
                     print(" |-> SPRITE DOESN'T HAVE FRAME DATA: (%s)" % src)
                     continue
-                character_hv_frames = (int(img_data[img_name]["total"]), 1)
+                character_hv_frames = (img_data[img_name]["total"], 1)
                 # write image
                 ImageEditor.crop_frame(
                     src, dest, character_hv_frames, (0, 0))
         print("--> ALL SPRITE ICONS MADE")
 
     def get_character_data(self):
-        unit_data = self.get_character_map_data()
-        for unit_id in unit_data:
-            unit_data[unit_id]["img"] = os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext)
-            unit_data[unit_id]["map"] = os.path.splitext(os.path.basename(self.tiled["map_file"]))[0]
+        return {} # TODO
+        # loop through all map files in dir
+        for map_file in os.listdir(self.tiled["map_dir"]):
+            if map_file.endswith(Tiled.map_ext):
+                # extract file paths
+                self.tiled["map_file"] = os.path.join(self.tiled["map_dir"], map_file)
+                self.file_name = os.path.splitext(map_file)[0]
+                # get character data
+                unit_data = self._get_character_map_data()
+                for unit_id in unit_data:
+                    unit_data[unit_id]["img"] = os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext)
+                    unit_data[unit_id]["map"] = os.path.splitext(os.path.basename(self.tiled["map_file"]))[0]
         return unit_data
 
-    def get_character_map_data(self):
+    def _get_character_map_data(self):
         master_dict = {}
         root = ET.parse(self.tiled["map_file"]).getroot()    
         # get unit attributes
@@ -318,7 +325,7 @@ class Tiled:
         for unit_index in range(len(layer)):
             unit_atts = layer[unit_index].attrib
             unit_ID = layer[unit_index].attrib["id"]
-            if not "player" in unit_atts.values():
+            if not "template" in unit_atts:
                 master_dict[unit_ID] = {
                     "editorName": editor_names[unit_ID],
                     "name": game_names[unit_ID].strip(),
@@ -406,12 +413,12 @@ class Tiled:
                                 thing.set("name",
                                           Tiled._format_name({}, thing.attrib))
         # write to map
-        dest = os.path.join(self.game["map_dir"], self.file_name)
+        dest = os.path.join(self.game["map_dir"], self.file_name + Tiled.map_ext)
         Tiled._write_xml(tree, dest)
-        print("--> MAP: (%s) EXPORTED" % self.file_name)
+        print("--> MAP: (%s) EXPORTED -> (%s)" % (self.file_name, dest))
 
     def _export_meta(self):
-        master_dict = self.get_character_map_data()
+        master_dict = self._get_character_map_data()
         # reformat data
         clean_dict = {}
         for unit_ID in master_dict:
@@ -428,14 +435,18 @@ class Tiled:
             json.dump(master_dict, outfile, indent=4)
         print("--> META: (%s) EXPORTED" % self.file_name)
 
-    def export_all_maps(self):
-        # loop through all map files in dir
-        for map_file in os.listdir(self.tiled["map_dir"]):
-            if map_file.endswith(Tiled.map_ext):
-                # extract file paths
-                self.tiled["map_file"] = os.path.join(self.tiled["map_dir"], map_file)
-                self.file_name = os.path.splitext(map_file)[0]
-                # export
-                self._export_map()
-                self._export_meta()
+    def export_all_maps(self, *map_paths):
+        if len(map_paths) == 0:
+            # if no args, then export all maps
+            map_paths = [
+                os.path.join(self.tiled["map_dir"], map_file)
+                for map_file in os.listdir(self.tiled["map_dir"])
+                if map_file.endswith(Tiled.map_ext)
+                ]
+        for map_file in map_paths:
+            self.tiled["map_file"] = map_file
+            self.file_name = os.path.splitext(os.path.basename(map_file))[0]
+            # export
+            self._export_map()
+            self._export_meta()
 

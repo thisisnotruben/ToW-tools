@@ -70,7 +70,7 @@ class AssetManager:
 
     def make_sprite_deaths(self, *order_paths):
         # load img db
-        img_data = GameDB().get_database(DataBases.IMAGEDB)
+        img_data = GameDB().get_frame_data()
         # determine order
         batch_order = []
         if len(order_paths) == 0:
@@ -100,9 +100,8 @@ class AssetManager:
                         " |-> SPRITE DOESN'T HAVE FRAME DATA, SKIPPING: (%s)" %
                         src)
                     continue
-                h_frames = int(img_data[img_name]["total"])
-                death_frame_start = h_frames - int(
-                    img_data[img_name]["attacking"]) - 4
+                h_frames = img_data[img_name]["total"]
+                death_frame_start = h_frames - img_data[img_name]["attacking"] - 4
                 # append arg
                 command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (
                     src, dest, h_frames, death_frame_start)
