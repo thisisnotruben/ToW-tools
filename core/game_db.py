@@ -34,14 +34,9 @@ class GameDB:
         }
         self.database_path = paths["database"]
         self._load_db()
-        self.data = {}
-        self.load_db()
 
     def __del__(self):
         self.conn.close()
-
-    def get_database(self, database):
-        return self.data[database]
 
     def _load_db(self):
         self.conn = sqlite3.connect(self.database_path)
@@ -60,72 +55,26 @@ class GameDB:
         return master
 
     def execute_query(self, query: str) -> list:
-        master = []
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def load_db(self):
-        for db in os.listdir(self.paths["db_dir"]):
-            db_file_name = os.path.splitext(db)[0].upper()
-            if db.endswith(GameDB.db_ext) and db_file_name in [
-                    d.name for d in DataBases
-            ]:
-                # load db
-                workbook = pyexcel_ods.get_data(
-                    os.path.join(self.paths["db_dir"], db))
-                sheets = json.loads(json.dumps(workbook))
-                # loop through all sheets in file
-                for sheet_name in sheets:
-                    matrix = sheets[sheet_name]
-                    # get all header names
-                    headers = []
-                    for header in matrix[0]:
-                        header = str(header).strip()
-                        if header != "":
-                            headers.append(header)
-                    # clean data
-                    rows_to_delete = []
-                    for row in range(1, len(matrix)):
-                        # resize row
-                        header_size = len(headers)
-                        row_size = len(matrix[row])
-                        if row_size < header_size:
-                            # pads row
-                            for i in range(header_size - row_size):
-                                matrix[row].append("")
-                        else:
-                            # crops row
-                            matrix[row] = matrix[row][:header_size]
-                        # normalize all data
-                        for column in range(len(matrix[row])):
-                            if type(matrix[row][column]) == str:
-                                matrix[row][column] = matrix[row][column].strip()
-                                if matrix[row][column].lower() in ["true", "false"]:
-                                    matrix[row][column] = bool(strtobool(matrix[row][column]))
-                            # select empty rows to delete
-                            if matrix[row][0] == "":
-                                rows_to_delete.append(matrix[row])
-                                break
-                    # delete empty rows
-                    for row in rows_to_delete:
-                        matrix.remove(row)
-                    # matrix -> dict
-                    data = {}
-                    for row in range(1, len(matrix)):
-                        temp = {}
-                        for column in range(1, len(matrix[row])):
-                            temp[headers[column]] = matrix[row][column]
-                        data[matrix[row][0]] = temp
-                    # set data
-                    self.data[DataBases[db_file_name]] = data
-
     def export_databases(self):
         print("--> EXPORTING DATABASES")
-        for database in self.data.keys():
-            dest = os.path.join(self.paths["db_export_path"], "%s.json" % database.value)
-            print(" |-> DATABASE EXPORTED: (%s)" % dest)
+        for database in [DataBases.ITEMDB.value, DataBases.SPELLDB.value, DataBases.IMAGEDB.value]:
+            # gather
+            query = "SELECT * FROM image;" if database == DataBases.IMAGEDB.value \
+                else "SELECT * FROM WorldObject natural join %s;" % database
+            tuples = self.execute_query(query)
+            attribute_names = [attName[0] for attName in self.cursor.description]
+            data = {
+                t[0]: dict(zip(attribute_names[1:], t[1:]))
+                for t in tuples
+            }
+            # export
+            dest = os.path.join(self.paths["db_export_path"], "%s.json" % database)
             with open(dest, "w") as outfile:
-                json.dump(self.get_database(database), outfile, indent=4)
+                json.dump(data, outfile, indent=4)
+                print(" |-> DATABASE EXPORTED: (%s)" % dest)
         print("--> ALL DATABASES EXPORTED")
 
     def export_character_content(self):

@@ -17,7 +17,7 @@ from core.archive_manager import Archiver
 
 
 class Commands(enum.Enum):
-    EXPORT_MAPS = enum.auto()
+    EXPORT_MAPS = "OPTIONAL ARG: (FILE_PATH: *.tmx files) || NONE: ALL MAPS"
     EXPORT_TILESETS = enum.auto()
     EXPORT_ALL_TILED = enum.auto()
     EXPORT_DATABASES = enum.auto()
@@ -78,7 +78,7 @@ class Main:
             if self.tiled.is_debugging():
                 self.tiled.debug_map()
             self.tiled.export_tilesets()
-            self.tiled.export_all_maps(*arg)
+            self.tiled.export_all_maps()
 
         elif command == Commands.EXPORT_DATABASES:
             self.db.export_databases()

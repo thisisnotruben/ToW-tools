@@ -91,7 +91,7 @@ class MainWindow(Ui_MainWindow):
         if not spriteSheet:
             dialogue = {
                 "header": "Maps to export",
-                "openPath": PathManager.get_paths()["game"]["map_dir"],
+                "openPath": PathManager.get_paths()["tiled"]["map_dir"],
                 "fileType": "tmx (*.tmx)"
             }
 

@@ -12,9 +12,9 @@ Instagram: [thisisnotruben](https://www.instagram.com/thisisnotruben/)
 Facebook: [Ruben Alvarez Reyes](https://www.facebook.com/thisisnotruben)
 
 ## Description:
-* Console program to help with the workflow of map making in tiled and exports tiled files to game engine.
+* Program to help with the workflow of map making in tiled and exports tiled files to game engine.
 * Export game databases for game engine.
-* All program commands and features found in [main.py](core/main.py) *Commands* enum.
+* All program commands and features can be found in [main.py](core/main.py) *Commands* enum.
 
 ## Program used for:
 * [Tides of War](https://github.com/thisisnotruben/Tides-of-War)
