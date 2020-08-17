@@ -3,8 +3,9 @@
 Ruben Alvarez Reyes
 """
 
+from types import MethodType
 from collections import OrderedDict
-from PyQt5.QtWidgets import QWidget, QMessageBox, QAction, QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QMessageBox, QAction, QListWidgetItem, QMenu
 from PyQt5.QtCore import Qt
 
 from content_maker.views.character_content_node_view import Ui_character_content_node
@@ -33,6 +34,31 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
         # setup delete button function
         self.on_delete_confirm = QAction()
         self.delete_node_bttn.clicked.connect(self.deleteNode)
+        # route context menu operations
+        list_widgets = [self.character_list, self.drops_list, self.merchandise_list, self.spells_list]
+        for list_widget in list_widgets:
+            list_widget.contextMenuEvent = MethodType(self.onListContextMenu, list_widget)
+
+    def onListContextMenu(self, list_widget, QContextMenuEvent):
+        # get select item
+        row = list_widget.indexAt(QContextMenuEvent.pos()).row()
+        # create context menu
+        menu = QMenu(self)
+        # create actions
+        move_up_action = QAction("Move Up",
+            triggered=lambda: list_widget.insertItem(row - 1, list_widget.takeItem(row)))
+        move_down_action = QAction("Move Down",
+            triggered=lambda: list_widget.insertItem(row + 1, list_widget.takeItem(row)))
+        delete_action = QAction("Delete",
+            triggered=lambda: list_widget.takeItem(row))
+        if row > 0:
+            menu.addAction(move_up_action)
+        if row < list_widget.count() - 1:
+            menu.addAction(move_down_action)
+        menu.addSeparator()
+        menu.addAction(delete_action)
+        # exec actionrow
+        action = menu.exec_(QContextMenuEvent.globalPos())
 
     def deleteNode(self, bypass_prompt=False):
         self.setAttribute(Qt.WA_DeleteOnClose)

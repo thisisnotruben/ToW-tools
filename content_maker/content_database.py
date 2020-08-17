@@ -16,16 +16,6 @@ from core.tiled_manager import Tiled
 from core.path_manager import PathManager
 
 
-class DataEntry(QListWidgetItem):
-    def __init__(self, index, QIcon, str, parent=None, type=QListWidgetItem.Type):
-        super().__init__(QIcon, str, parent=parent, type=type)
-        self.index = index
-
-    def __hash__(self):
-        # is hashed for Set() operations to be used
-        return self.index
-
-
 class DataView(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -62,14 +52,9 @@ class DataView(QListWidget):
         character_data = Tiled().get_character_data()
         self.type_tags[self.character_tag] = set()
         self.sub_type_tags[self.character_tag] = set()
-        for character_id in character_data:
-            character_race = os.path.splitext(
-                os.path.basename(character_data[character_id]["img"]))[0].split("-")[0]
-            character_data[character_id]["_TYPE"] = character_race
-            character_data[character_id]["_SUB_TYPE"] = character_data[character_id]["map"].capitalize()
-            character_data[character_id]["_DB"] = self.character_tag
-            self.type_tags[self.character_tag].add(character_race.capitalize())
-            self.sub_type_tags[self.character_tag].add(character_data[character_id]["_SUB_TYPE"])
+        for cPacket in character_data:
+            self.type_tags[self.character_tag].add(cPacket["map"])
+            self.sub_type_tags[self.character_tag].add(cPacket["race"])
         self.type_tags[self.character_tag] = list(self.type_tags[self.character_tag])
         self.type_tags[self.character_tag].sort()
         self.sub_type_tags[self.character_tag] = list(self.sub_type_tags[self.character_tag])
@@ -77,17 +62,16 @@ class DataView(QListWidget):
 
         self.clearDatabase()
         
-        icon_data = self.game_db.execute_query("SELECT icon, name FROM worldobject")
-        for data in icon_data:
+        item_data = self.game_db.execute_query("SELECT icon, name FROM worldobject")
+        for data in item_data:
             self.addItem({}, data[0], data[1])
-        
-        for character_id in character_data:
-            self.addItem(character_data[character_id], character_data[character_id]["img"],
-                character_data[character_id]["editorName"])
+               
+        for cPacket in character_data:
+            self.addItem(cPacket, cPacket["img"], "%s | %s" % (cPacket["editorName"], cPacket["map"]))
 
     def addItem(self, data, icon_data, label):
         icon = self.icon_generator.getIcon(icon_data)
-        entry = DataEntry(self.count(), icon, label, self)
+        entry = QListWidgetItem(icon, label, self)
         entry.setSizeHint(QSize(32, 32))
         entry.setData(Qt.UserRole, data)
         entry.setData(Qt.UserRole + 1, icon_data)
@@ -101,11 +85,8 @@ class DataView(QListWidget):
 
     def isCharacter(self, entry_name):
         """check if entry is a character. returns `bool`"""
-        return self.getEntryNameToGameName(entry_name) in [
-            self.getEntryNameToGameName(entry.text())
-            for entry in self.all_items
-            if entry.data(Qt.UserRole)["_DB"] == self.character_tag
-        ]
+        return len(self.game_db.execute_query(
+            f"SELECT name FROM worldobject WHERE name = '{entry_name}'")) == 0
 
     def isSpell(self, entry_name):
         return len(self.game_db.execute_query(
@@ -115,10 +96,7 @@ class DataView(QListWidget):
         """is the entry mentioned more then once in Database?
         returns `bool`"""
         # turn all database names to the actual game names
-        formatted_names = [
-            self.getEntryNameToGameName(entry.text())
-            for entry in self.all_items
-        ]
+        formatted_names = map(self.getEntryNameToGameName, self.all_items.keys())
         entry_name = self.getEntryNameToGameName(entry_name)
         # if it equals zero, then item doesn't exist
         duplicate_finder = Counter(formatted_names)
@@ -126,15 +104,12 @@ class DataView(QListWidget):
 
     def getEntryNameToGameName(self, entry_name):
         """get whats shown in the game returns `str`"""
-        if "-" in entry_name:
-            entry_name = entry_name.split("-")[1]
-        return entry_name
+        return entry_name.split("-")[1] if "-" in entry_name else entry_name
 
     def getEntryIconSource(self, entry_name):
         """Returns icon index `int` for atlas or filepath to image `str`"""
-        for entry in self.all_items:
-            if entry.text() == entry_name:
-                return entry.data(Qt.UserRole + 1)
+        if entry_name in self.all_items.keys():
+            return self.item(self.all_items[entry_name]).data(Qt.UserRole + 1)
         return -1
         
     def getQuestTypeTags(self, entry_name):

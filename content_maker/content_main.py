@@ -22,6 +22,7 @@ from content_maker.metas import ISerializable, Dirty
 from content_maker.clipboard import Clipboard
 
 from core.game_db import GameDB, DataBases
+from core.path_manager import PathManager
 
 
 class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
@@ -170,26 +171,59 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
         self.insertNode(node_curr_index + by).unserialize(serialized_data)
   
     def onSearch(self, current_text):
-        founded_items = set(self.db.execute_query(
-            f"SELECT name FROM worldobject WHERE name LIKE '%{current_text}%';"))
+        # util functions
+        name2Tuple = lambda objectName: (objectName,)
+        charFilter = lambda dict_key, tag_filter: set(map(name2Tuple, filter(lambda cName: self.list_view.item(
+            self.list_view.all_items[cName]).data(Qt.UserRole)[dict_key] == tag_filter,
+            map(lambda t: t[0], founded_items))))
+        def clear_combo_box(combo_box):
+            while combo_box.count() != 1:
+                combo_box.removeItem(1)
+        
+        # cascading search starts
+        founded_items = set(map(lambda listWidgetItem: (listWidgetItem.text(),),
+            self.list_view.findItems(current_text, Qt.MatchContains)))
         
         db_filter = self.filter_db.currentText()
-        if db_filter != "All" \
-        and len(self.db.execute_query(f"SELECT name FROM sqlite_master WHERE name = '{db_filter}';")) > 0:
-            founded_items.intersection_update(set(self.db.execute_query(
-                f"SELECT name FROM {db_filter};")))
+        if db_filter != "All":
+            if len(self.db.execute_query(f"SELECT name FROM sqlite_master WHERE name = '{db_filter}';")) > 0:
+                founded_items.intersection_update(set(self.db.execute_query(
+                    f"SELECT name FROM {db_filter};")))
+            else:
+                # all character filter tag; doing the complement to find them
+                all_items = set(map(name2Tuple, self.list_view.all_items.keys()))
+                all_items.difference_update(set(self.db.execute_query("SELECT name FROM worldobject;")))
+                founded_items.intersection_update(all_items)
 
         type_filter = self.filter_type.currentText()
         if self.filter_type.isVisible() and type_filter != "All":
-            founded_items.intersection_update(set(self.db.execute_query(
-                f"SELECT name FROM worldobject WHERE type LIKE '%{type_filter}%'")))
-
-        # TODO
+            if db_filter == self.list_view.character_tag:
+                mapCharacters = charFilter("map", type_filter)
+                founded_items.intersection_update(mapCharacters)
+                # load only races found in map to sub_type_filter if db == character
+                mapRaces = set(map(lambda cTuple: 
+                    self.list_view.item(self.list_view.all_items[cTuple[0]]).data(Qt.UserRole)["race"],
+                    mapCharacters))
+                mapRaces.add("All")
+                current_filters = set(map(lambda i: self.filter_sub_type.itemText(i), range(self.filter_sub_type.count())))
+                if mapRaces != current_filters:
+                    clear_combo_box(self.filter_sub_type)
+                    mapRaces.remove("All")
+                    mapRaces = list(mapRaces)
+                    mapRaces.sort()
+                    self.filter_sub_type.addItems(mapRaces)
+            else:
+                founded_items.intersection_update(set(self.db.execute_query(
+                    f"SELECT name FROM worldobject WHERE type LIKE '%{type_filter}%'")))
+        elif type_filter == "All" and db_filter == self.list_view.character_tag \
+        and self.filter_sub_type.count() < len(self.list_view.sub_type_tags[db_filter]) + 1:
+            # reset character filter
+            clear_combo_box(self.filter_sub_type)
+            self.filter_sub_type.addItems(self.list_view.sub_type_tags[db_filter])
+                
         sub_type_filter = self.filter_sub_type.currentText()
-        if False and self.filter_sub_type.isVisible() and sub_type_filter != "All":
-            founded_items = set([entry for entry in founded_items
-                if "_SUB_TYPE" in entry.data(Qt.UserRole)
-                and entry.data(Qt.UserRole)["_SUB_TYPE"] == sub_type_filter])
+        if self.filter_sub_type.isVisible() and sub_type_filter != "All":
+            founded_items.intersection_update(charFilter("race", sub_type_filter))
 
         founded_items = set([item[0] for item in founded_items])
         for entry in self.list_view.all_items.keys():
@@ -219,8 +253,14 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
             self.deleteNode(self.nodes[0])
 
     def getFileOpenDialogue(self, save_prompt=False):
-        self.recent_dir = os.path.dirname(self.current_file) \
-            if os.path.isabs(self.current_file) else QDir().homePath()
+        # get last open dir or resort to defaults
+        if os.path.isabs(self.current_file):
+            self.recent_dir = os.path.dirname(self.current_file)
+        elif os.path.isdir(PathManager().get_paths()["content_dir"]):
+            self.recent_dir = PathManager().get_paths()["content_dir"]
+        else:
+            self.recent_dir = QDir().homePath()
+
         file_filter = "json (*.json)"
         if save_prompt:
             return QFileDialog.getSaveFileName(self, "Save Node File", self.recent_dir, file_filter)[0]

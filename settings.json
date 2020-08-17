@@ -37,6 +37,7 @@
         "db_dir": "/home/rubsz/tiled/Tides_of_War/dev/database",
         "database": "/home/rubsz/tiled/Tides_of_War/dev/database/tides_of_war.db",
         "db_export_path": "/home/rubsz/godot/my_games/Tides_of_War/data",
+        "content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content",
         "character_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/character",
         "quest_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/quest",
         "dev_character_dir": "/home/rubsz/tiled/Tides_of_War/dev/asset/dev_character",

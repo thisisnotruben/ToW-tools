@@ -10,7 +10,7 @@ import json
 class PathManager:
     @staticmethod
     def get_master_path():
-        return os.path.join(os.path.dirname(__file__), os.pardir, "paths.json")
+        return os.path.join(os.path.dirname(__file__), os.pardir, "settings.json")
 
     @staticmethod
     def get_paths():

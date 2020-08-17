@@ -183,12 +183,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="debug_map">
+         <widget class="QPushButton" name="export_quest">
           <property name="toolTip">
-           <string>DEBUG_MAP</string>
+           <string>EXPORT_QUEST</string>
           </property>
           <property name="text">
-           <string>Debug Map</string>
+           <string>Export Quest</string>
           </property>
          </widget>
         </item>
@@ -204,6 +204,16 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="debug_map">
+          <property name="toolTip">
+           <string>DEBUG_MAP</string>
+          </property>
+          <property name="text">
+           <string>Debug Map</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>

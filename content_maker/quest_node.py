@@ -143,6 +143,9 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             and other_objective != objective:
                 self.onObjectveDelete(self.objective_list.count() - 1)
                 break
+        if hasattr(objective, "delete_self"):
+            # when the user clicks on cancel
+            self.onObjectveDelete(self.objective_list.count() - 1)
 
     def copyObjective(self, row, entry):
         # transfer data

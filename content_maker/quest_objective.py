@@ -62,8 +62,8 @@ class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
         # in particular, or all units with this name
         entry_name = self.getWorldObjectName()
         if not self.db_list.isEntryUnique(entry_name):            
-            reply = QMessageBox.question(self, "Duplicate found in world \u2015 Tides of War", \
-                "World object is mentioned more then once in game. "
+            reply = QMessageBox.question(self, "Duplicate found in world ─ Tides of War", \
+                "World object is mentioned more than once in game. "
                 "Include all world objects with this name, or just "
                 "this specific world object?",
                 QMessageBox.YesToAll | QMessageBox.Yes | QMessageBox.Cancel)
@@ -76,7 +76,7 @@ class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
                 self.wildcard["virgin_world_object_name"] = entry.text()
                 entry.setText(self.db_list.getEntryNameToGameName(entry.text()))
             elif reply == QMessageBox.Cancel:
-                self.onObjectveDelete(self.objective_list.count() - 1)
+                self.delete_self = True
         # spells and unique characters can only have an amount one
         elif self.db_list.isSpell(entry_name) \
         or (self.db_list.isCharacter(entry_name) \

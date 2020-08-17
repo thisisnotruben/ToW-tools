@@ -21,8 +21,8 @@ class Commands(enum.Enum):
     EXPORT_TILESETS = enum.auto()
     EXPORT_ALL_TILED = enum.auto()
     EXPORT_DATABASES = enum.auto()
-    EXPORT_CONTENT = enum.auto()
-    EXPORT_ALL = enum.auto()
+    EXPORT_CONTENT = "ARGS: (contentFilePaths)"
+    EXPORT_QUEST = "ARGS: (questFilePaths)"
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
     MAKE_32_TILESETS = enum.auto()
@@ -82,20 +82,12 @@ class Main:
 
         elif command == Commands.EXPORT_DATABASES:
             self.db.export_databases()
-            self.db.export_character_content()
 
         elif command == Commands.EXPORT_CONTENT:
-            self.db.export_quest_content()
-
-        elif command == Commands.EXPORT_ALL:
-            if self.tiled.is_debugging():
-                self.tiled.debug_map()
-            self.tiled.export_tilesets()
-            self.tiled.export_map()
-            self.tiled.export_meta()
-            self.db.export_databases()
-            self.db.export_character_content()
-            self.db.export_quest_content()
+            self.db.export_character_content(*arg)
+            
+        elif command == Commands.EXPORT_QUEST:
+            self.db.export_quest_content(*arg)
 
         elif command == Commands.DEBUG_MAP:
             self.tiled.debug_map()

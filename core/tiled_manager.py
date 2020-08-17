@@ -295,9 +295,9 @@ class Tiled:
                     src, dest, character_hv_frames, (0, 0))
         print("--> ALL SPRITE ICONS MADE")
 
-    def get_character_data(self):
-        return {} # TODO
+    def get_character_data(self) -> list:
         # loop through all map files in dir
+        master_list = []
         for map_file in os.listdir(self.tiled["map_dir"]):
             if map_file.endswith(Tiled.map_ext):
                 # extract file paths
@@ -306,9 +306,13 @@ class Tiled:
                 # get character data
                 unit_data = self._get_character_map_data()
                 for unit_id in unit_data:
-                    unit_data[unit_id]["img"] = os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext)
-                    unit_data[unit_id]["map"] = os.path.splitext(os.path.basename(self.tiled["map_file"]))[0]
-        return unit_data
+                    master_list.append({
+                        "img": os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext),
+                        "map": os.path.splitext(os.path.basename(self.tiled["map_file"]))[0],
+                        "race": unit_data[unit_id]["img"].split("-")[0],
+                        "editorName": unit_data[unit_id]["editorName"]
+                    })
+        return master_list
 
     def _get_character_map_data(self):
         master_dict = {}
