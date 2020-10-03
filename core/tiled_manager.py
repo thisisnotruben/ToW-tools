@@ -22,11 +22,9 @@ class Tiled:
     tileset_ext = ".tsx"
     temp_dir = "debugging_temp"
     special_units = ["critter", "aberration"]
-    tags_single = ["actorType", "dialogue", "level"]
-    tags_multiple = ["quest", "item", "spell"]
     tag_path = "path"
     tag_spawn = "spawnPos"
-    all_tags = []
+    tagTypes = {"name": str, "enemy":bool, "level":int}
     cell_size = 16
 
     def __init__(self):
@@ -39,8 +37,6 @@ class Tiled:
         self.game = data["game"]
         self.debug = data["debug"]
         self.tilesets_32 = data["32"]
-        # add all tags
-        Tiled.all_tags = Tiled.tags_single + Tiled.tags_multiple
 
     @staticmethod
     def _debug_map_move_files(root_dir, dest_dir):
@@ -144,7 +140,7 @@ class Tiled:
             elif "name" in unit_atts:
                 names[unit_atts["id"]] = unit_atts["name"]
             elif "template" not in unit_atts:
-                names[unit_atts["id"]] = unit_meta[unit_atts["id"]]["defaultName"]
+                names[unit_atts["id"]] = unit_meta[unit_atts["id"]]["name"]
         return names
 
     def _get_unit_paths(self):
@@ -326,31 +322,42 @@ class Tiled:
         layer = root[group_index][layer_index]
         editor_names = self._get_character_names(True)
         game_names = self._get_character_names(False)
+
         for unit_index in range(len(layer)):
             unit_atts = layer[unit_index].attrib
             unit_ID = layer[unit_index].attrib["id"]
             if not "template" in unit_atts:
+
                 master_dict[unit_ID] = {
                     "editorName": editor_names[unit_ID],
                     "name": game_names[unit_ID].strip(),
                     "img": os.path.splitext(unit_meta[unit_ID]["img"])[0],
                     "enemy": bool(strtobool(unit_meta[unit_ID]["enemy"])),
+                    "level": int(unit_meta[unit_ID]["level"]),
                     Tiled.tag_path: [],
                     Tiled.tag_spawn: spawn_locs[unit_ID]
                 }
+
                 if unit_ID in unit_patrol_paths:
                     master_dict[unit_ID][
                         Tiled.tag_path] = unit_patrol_paths[unit_ID]
+
                 for unit_property in layer[unit_index]:
                     if unit_property.tag == "properties":
-                        for unit_attribute in layer[unit_index][
-                                unit_attribute_index]:
-                            for tag in Tiled.all_tags:
+                        for unit_attribute in layer[unit_index][unit_attribute_index]:
+
+                            for tag in Tiled.tagTypes.keys():
                                 attribute_name = unit_attribute.attrib["name"]
-                                if attribute_name == tag or tag in attribute_name:
-                                    master_dict[unit_ID][
-                                        attribute_name] = unit_attribute.attrib[
-                                            "value"]
+                                if attribute_name == tag:
+                                    
+                                    # don't want to replace custom name is default name
+                                    if tag == "name" and master_dict[unit_ID]["name"].strip() != "":
+                                        continue
+
+                                    # parse tag to appropriate data type
+                                    master_dict[unit_ID][attribute_name] = \
+                                        Tiled.tagTypes[tag](unit_attribute.attrib["value"])
+
                         unit_attribute_index += 1
                     unit_attribute_index = 0
         return master_dict
@@ -427,16 +434,19 @@ class Tiled:
         clean_dict = {}
         for unit_ID in master_dict:
             if "editorName" in master_dict[unit_ID]:
-                unit_editor_name = master_dict[unit_ID]["editorName"]
+
+                unit_editor_name : str = master_dict[unit_ID]["editorName"]
                 del master_dict[unit_ID]["editorName"]
                 if not (unit_editor_name.split("-")[0] in Tiled.special_units
                         and len(master_dict[unit_ID]) == 1):
                     clean_dict[unit_editor_name] = master_dict[unit_ID]
+
         master_dict = clean_dict
         # write json
-        dest = os.path.join(self.game["meta_dir"], "%s.json" % os.path.splitext(self.file_name)[0])
+        filename = os.path.splitext(self.file_name)[0]
+        dest = os.path.join(self.game["meta_dir"], filename, "%s.json" % filename)
         with open(dest, "w") as outfile:
-            json.dump(master_dict, outfile, indent=4)
+            json.dump(master_dict, outfile, indent="\t")
         print("--> META: (%s) EXPORTED" % self.file_name)
 
     def export_all_maps(self, *map_paths):

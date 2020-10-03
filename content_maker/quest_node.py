@@ -213,13 +213,13 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 
 
         payload = OrderedDict([
-            ("quest_name", self.name_entry.text()),
-            ("next_quest", getItemData(self.next_quest_list)),
+            ("questName", self.name_entry.text()),
+            ("nextQuest", getItemData(self.next_quest_list)),
             ("reward", getItemData(self.reward_list)),
-            ("keep_reward_items", self.reward_keep.isChecked()),
-            ("gold_reward", self.gold_reward_amount.value()),
-            ("quest_giver", getItemData(self.giver_list, True)),
-            ("quest_completer", getItemData(self.completer_list, True))
+            ("keepRewardItems", self.reward_keep.isChecked()),
+            ("goldReward", self.gold_reward_amount.value()),
+            ("questGiver", getItemData(self.giver_list, True)),
+            ("questCompleter", getItemData(self.completer_list, True))
         ])
  
         giver_dialogue = OrderedDict([
@@ -234,7 +234,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
                 for i, objective in enumerate(self.objectiveEntryMap.keys())
         ])
         
-        payload["giver_dialogue"] = giver_dialogue
+        payload["giverDialogue"] = giver_dialogue
         payload["objectives"] = objective_data
         return payload
 
@@ -245,28 +245,28 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             list_widget.addItem(QListWidgetItem(icon, serialized_list_data[0]))
 
         # set quest name
-        self.name_entry.setText(data["quest_name"])
+        self.name_entry.setText(data["questName"])
         # set next quest
-        for quest in data["next_quest"]:
+        for quest in data["nextQuest"]:
             unpackItemData(self.next_quest_list, quest)
         # set rewards
         for reward in data["reward"]:
             unpackItemData(self.reward_list, reward)
         # set keep reward items
-        self.reward_keep.setChecked(bool(data["keep_reward_items"]))
+        self.reward_keep.setChecked(bool(data["keepRewardItems"]))
         # set gold reward
-        self.gold_reward_amount.setValue(int(data["gold_reward"]))
+        self.gold_reward_amount.setValue(int(data["goldReward"]))
         # set quest giver
-        if len(data["quest_giver"]) != 0:
-            unpackItemData(self.giver_list, data["quest_giver"])
+        if len(data["questGiver"]) != 0:
+            unpackItemData(self.giver_list, data["questGiver"])
         # set quest completer
-        if len(data["quest_completer"]) != 0:
-            unpackItemData(self.completer_list, data["quest_completer"])
+        if len(data["questCompleter"]) != 0:
+            unpackItemData(self.completer_list, data["questCompleter"])
         # set quest giver dialogues
-        self.start_entry.setText(data["giver_dialogue"]["start"])
-        self.active_entry.setText(data["giver_dialogue"]["active"])
-        self.completed_entry.setText(data["giver_dialogue"]["completed"])
-        self.delivered_entry.setText(data["giver_dialogue"]["delivered"])
+        self.start_entry.setText(data["giverDialogue"]["start"])
+        self.active_entry.setText(data["giverDialogue"]["active"])
+        self.completed_entry.setText(data["giverDialogue"]["completed"])
+        self.delivered_entry.setText(data["giverDialogue"]["delivered"])
         # set quest objectives
         for objective_data in data["objectives"].keys():
             self.addObjective().unserialize(data["objectives"][objective_data])

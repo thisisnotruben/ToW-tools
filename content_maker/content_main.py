@@ -337,7 +337,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
             self.setTitle()
             with open(self.current_file, "w") as outfile:
                 try:
-                    json.dump(self.serialize(), outfile, indent=4)
+                    json.dump(self.serialize(), outfile, indent="\t")
                 except Exception as e:
                     print(sys.exc_info())
         else:

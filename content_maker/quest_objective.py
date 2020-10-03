@@ -116,34 +116,34 @@ class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
     def serialize(self):
         self.dirty = False
         payload = OrderedDict([
-            ("world_object", [self.getWorldObjectName(), -1]),
-            ("keep_world_object", self.world_object_keep.isChecked()),
-            ("quest_type", self.quest_type.currentText().lower()),
+            ("worldObject", [self.getWorldObjectName(), -1]),
+            ("keepWorldObject", self.world_object_keep.isChecked()),
+            ("questType", self.quest_type.currentText().lower()),
             ("amount", self.amount.value()),
             ("wildcard", OrderedDict(self.wildcard)),
-            ("extra_content", self.character_content.serialize())
+            ("extraContent", self.character_content.serialize())
         ])
-        if payload["world_object"][0] != "":
-            icon = self.db_list.getEntryIconSource(payload["world_object"][0])
+        if payload["worldObject"][0] != "":
+            icon = self.db_list.getEntryIconSource(payload["worldObject"][0])
             if icon == -1:
                 icon = self.db_list.getEntryIconSource(self.wildcard["virgin_world_object_name"])
-            payload["world_object"] = [payload["world_object"][0], icon]
+            payload["worldObject"] = [payload["worldObject"][0], icon]
         return payload
 
     def unserialize(self, data):
         # set world object
-        if data["world_object"][0] != "":
-            icon = IconGenerator().getIcon(data["world_object"][1])
-            self.world_object.addItem(QListWidgetItem(icon, data["world_object"][0]))
-            self.world_object_keep.setDisabled(self.db_list.isCharacter(data["world_object"][0]))
+        if data["worldObject"][0] != "":
+            icon = IconGenerator().getIcon(data["worldObject"][1])
+            self.world_object.addItem(QListWidgetItem(icon, data["worldObject"][0]))
+            self.world_object_keep.setDisabled(self.db_list.isCharacter(data["worldObject"][0]))
             # set quest type
             self.quest_type.addItems([
                     tag.capitalize()
-                    for tag in self.db_list.getQuestTypeTags(data["world_object"][0])
+                    for tag in self.db_list.getQuestTypeTags(data["worldObject"][0])
             ])
-            self.quest_type.setCurrentText(data["quest_type"].capitalize())
+            self.quest_type.setCurrentText(data["questType"].capitalize())
         # set keep world object
-        self.world_object_keep.setChecked(bool(data["keep_world_object"]))
+        self.world_object_keep.setChecked(bool(data["keepWorldObject"]))
         # set amount
         self.amount.setValue(int(data["amount"]))
         # set generic data
@@ -151,5 +151,5 @@ class QuestObjective(Ui_quest_objective_view, QWidget, ISerializable, Dirty):
         self.wildcard["active"] = bool(data["wildcard"]["active"])
         self.amount.setDisabled(not self.wildcard["active"])
         # set character content data
-        self.character_content.unserialize(data["extra_content"])
+        self.character_content.unserialize(data["extraContent"])
 
