@@ -23,6 +23,7 @@ class Commands(enum.Enum):
     EXPORT_DATABASES = enum.auto()
     EXPORT_CONTENT = "ARGS: (contentFilePaths)"
     EXPORT_QUEST = "ARGS: (questFilePaths)"
+    EXPORT_NAMEDB = enum.auto()
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
     MAKE_32_TILESETS = enum.auto()
@@ -88,6 +89,9 @@ class Main:
             
         elif command == Commands.EXPORT_QUEST:
             self.db.export_quest_content(*arg)
+
+        elif command == Commands.EXPORT_NAMEDB:
+            self.db.exportScript()
 
         elif command == Commands.DEBUG_MAP:
             self.tiled.debug_map()

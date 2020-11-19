@@ -4,6 +4,7 @@ Ruben Alvarez Reyes
 """
 
 import os
+import re
 import enum
 import json
 import sqlite3
@@ -18,6 +19,10 @@ class DataBases(enum.Enum):
     ITEMDB = "item"
     SPELLDB = "spell"
     MISSILE_SPELL = "missileSpell"
+    AREA_EFFECT = "areaEffect"
+    LAND_MINE = "landMine"
+    MODIFIER = "modifier"
+    USE = "use"
 
 
 class GameDB:
@@ -26,11 +31,12 @@ class GameDB:
 
     def __init__(self):
         paths = PathManager.get_paths()
-        self.paths = {
+        self.paths: dict = {
             "db_dir": paths["db_dir"],
             "db_export_path": paths["db_export_path"],
             "character_content_dir": paths["character_content_dir"],
-            "quest_content_dir": paths["quest_content_dir"]
+            "quest_content_dir": paths["quest_content_dir"],
+            "nameDB": paths["nameDB"]
         }
         self.database_path = paths["database"]
         self._load_db()
@@ -69,82 +75,56 @@ class GameDB:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def _getModAttributeNames(self) -> list:
-        return ["stamina", "intellect", "agility", "hpMax", \
-        "manaMax", "maxDamage", "minDamage", "regenTime", "armor", \
-        "weaponRange", "weaponSpeed"]
+    def _getDB(self, query: str) -> dict:
+        tuples = self.execute_query(query)
+        attributeNames = [attName[0] for attName in self.cursor.description]
+        return {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
 
-    def _getUseAttributeNames(self) -> list:
-        return ["hp", "mana", "damage"]
+    def getModDB(self) -> dict:
+        tuples = self.execute_query("SELECT * FROM modifier;")
+        attributeNames = [attName[0] for attName in self.cursor.description]
+        modAttributes = ["stamina", "intellect", "agility", "hpMax", \
+            "manaMax", "maxDamage", "minDamage", "regenTime", "armor", \
+            "weaponRange", "weaponSpeed", "moveSpeed"]
 
-    def _getModBoilerPlate(self) -> dict:
-        modAttributes = self._getModAttributeNames()
+        mod = dict()
+        for t in tuples:
+            mod[t[0]] = {
+                "durationSec": t[attributeNames.index("duration")],
+                **{attribute : {
+                    "type": t[attributeNames.index(attribute + "Type")],
+                    "value": t[attributeNames.index(attribute)]
+                } for attribute in modAttributes}
+            }
 
-        return {
-            "durationSec": 0,
-            **{attribute : {
-                "type": "FLAT",
-                "value": 0 
-            } for attribute in modAttributes}
-        }
+        return mod
 
-    def _getUseBoilerPlate(self) -> dict:
-        useAttributes = self._getUseAttributeNames()
+    def getUseDB(self) -> dict:
+        tuples = self.execute_query("SELECT * FROM use;")
+        attributeNames = [attName[0] for attName in self.cursor.description]
+        useAttributes = ["hp", "mana", "damage"]
 
-        return {
-            "repeatSec": 0,
-            **{attribute : {
-                "type": "FLAT",
-                "value": 0
-            } for attribute in useAttributes}
-        }
+        use = dict()
+        for t in tuples:
+            use[t[0]] = {
+                "totalSec": t[attributeNames.index("totalSec")],
+                "repeatSec": t[attributeNames.index("repeatSec")],
+                **{attribute : {
+                    "type": t[attributeNames.index(attribute + "Type")],
+                    "value": t[attributeNames.index(attribute)]
+                } for attribute in useAttributes}
+            }
 
-    def _setModUseDB(self, data: dict) -> dict:
-        data = data.copy()
-
-        modBp: dict = self._getModBoilerPlate()
-        useBp: dict = self._getUseBoilerPlate()
-
-        useTuples = self.execute_query("SELECT * FROM use;")
-        useAttributeNames = [attName[0] for attName in self.cursor.description]
-        useNameTupleIdx = [t[0] for t in useTuples]
-
-        modTuples = self.execute_query("SELECT * FROM modifier;")
-        modAttributeNames = [attName[0] for attName in self.cursor.description]
-        modNameTupleIdx = [t[0] for t in modTuples]
-
-        for datum in data.keys():
-
-            mod = modBp.copy()
-            if datum in modNameTupleIdx:
-                t = modTuples[modNameTupleIdx.index(datum)]
-                # set mod values
-                mod["durationSec"] = t[modAttributeNames.index("duration")]
-                for attName in self._getModAttributeNames():
-                    mod[attName]["value"] = t[modAttributeNames.index(attName)]
-                    mod[attName]["type"] = t[modAttributeNames.index(attName + "Type")]
-
-            use = useBp.copy()
-            if datum in useNameTupleIdx:
-                t = useTuples[useNameTupleIdx.index(datum)]
-                # set use values
-                use["repeatSec"] = t[useAttributeNames.index("repeatSec")]
-                for attName in self._getUseAttributeNames():
-                    use[attName]["value"] = t[useAttributeNames.index(attName)]
-                    use[attName]["type"] = t[useAttributeNames.index(attName + "Type")]
-
-            data[datum]["modifiers"] = mod
-            data[datum]["use"] = use
-
-        return data
+        return use
 
     def getItemDB(self) -> dict:
-        tuples = self.execute_query("SELECT * FROM worldobject NATURAL JOIN item;")
-        attributeNames = [attName[0] for attName in self.cursor.description]
+        return self._getDB("SELECT * FROM worldobject NATURAL JOIN item;")
 
-        data: dict = {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
-        data = self._setModUseDB(data)
-        return data
+    def getAreaEffectDB(self) -> dict:
+        return self._getDB("SELECT * FROM areaeffect;")
+
+    def getLandMineDB(self) -> dict:
+        return self._getDB("SELECT * FROM landmine NATURAL JOIN areaeffect;")
 
     def getSpellDB(self) -> dict:
         tuples = self.execute_query("SELECT * FROM worldobject NATURAL JOIN spell;")
@@ -152,7 +132,6 @@ class GameDB:
 
         idxs = [
             attributeNames.index("ignoreArmor"),
-            attributeNames.index("effectOnTarget"),
             attributeNames.index("requiresTarget")
         ]
 
@@ -162,9 +141,7 @@ class GameDB:
             for j in range(len(idxs)):
                 tuples[i][idxs[j]] = tuples[i][idxs[j]] == 1
 
-        data: dict = {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
-        data = self._setModUseDB(data)
-        return data
+        return {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
 
     def getImageDB(self) -> dict:
         tuples = self.execute_query("SELECT * FROM image;")
@@ -184,21 +161,19 @@ class GameDB:
         return {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
 
     def getMissileSpellDB(self) -> dict:
-        tuples = self.execute_query(f"SELECT * FROM missilespell;")
-        attribute_names = [attName[0] for attName in self.cursor.description]
+        tuples = self.execute_query("SELECT * FROM missilespell;")
+        attributeNames = [attName[0] for attName in self.cursor.description]
 
         # convert intended bools to bools
         idxs = [
-            attribute_names.index("rotate"),
-            attribute_names.index("instantSpawn"),
-            attribute_names.index("reverse")
+            attributeNames.index("rotate")
         ]
         for i in range(len(tuples)):
             tuples[i] = list(tuples[i])
             for j in range(len(idxs)):
                 tuples[i][idxs[j]] = tuples[i][idxs[j]] == 1
 
-        return {t[0]: dict(zip(attribute_names[1:], t[1:])) for t in tuples}
+        return {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
 
     def export_databases(self) -> None:
         print("--> EXPORTING DATABASES")
@@ -207,7 +182,11 @@ class GameDB:
             DataBases.ITEMDB: self.getItemDB(),
             DataBases.SPELLDB: self.getSpellDB(),
             DataBases.IMAGEDB: self.getImageDB(),
-            DataBases.MISSILE_SPELL: self.getMissileSpellDB()
+            DataBases.MISSILE_SPELL: self.getMissileSpellDB(),
+            DataBases.AREA_EFFECT: self.getAreaEffectDB(),
+            DataBases.LAND_MINE: self.getLandMineDB(),
+            DataBases.MODIFIER: self.getModDB(),
+            DataBases.USE: self.getUseDB()
         }
 
         # export databases
@@ -218,13 +197,45 @@ class GameDB:
             print(f" |-> DATABASE EXPORTED: ({dest})")
         print("--> ALL DATABASES EXPORTED")
 
+    def exportScript(self) -> None:
+        print("--> EXPORTING SCRIPTS")
+
+        self.cursor.execute("SELECT name FROM assetsnd WHERE assetfolder='ui' ORDER BY name ASC;")
+        tuples: list = self.cursor.fetchall()
+
+        definitions: str = "public const string"
+
+        with open(self.paths["nameDB"], "r+") as nameDB:
+            f: str = nameDB.read()
+
+            m = re.search(r"public static class Sound.*\{.*\}", f, re.DOTALL | re.IGNORECASE)
+            if m != None:
+                result: str = m.group(0)
+                result = result[result.find(definitions) + len(definitions): result.find("}")]
+
+                names: str = ""
+                for t in tuples:
+                    names += "\t" * 4 + f'{t[0].upper().replace(" ", "_")} = "{t[0]}",\n'
+                names = names[0: -2]
+                names += ";"
+
+                f = f.replace(result, names)
+            nameDB.seek(0)
+            nameDB.write(f)
+
     @staticmethod
-    def getWorldName(world_packet: list) -> str:
+    def getWorldName(world_packet: list, nodePath: bool = False) -> str:
+        name: str = ""
+
         if len(world_packet) > 0:
-            delimiter = " | "
+            delimiter: str = " | "
             name = world_packet[0]
-            return name[:name.index(delimiter)] if delimiter in name else name
-        return ""
+
+            if delimiter in name:
+                splittedName: list = name.split(delimiter)
+                name = f"/root/{splittedName[1]}/zed/z1/{splittedName[0]}" \
+                    if nodePath else splittedName[0]
+        return name
 
     def export_character_content(self, *contentFilePaths) -> None:
         print("--> EXPORTING CHARACTER CONTENT")
@@ -238,26 +249,26 @@ class GameDB:
                 content = json.load(infile)
 
                 # reformat json
-                reformatted_dict = {}
+                reformattedDict = {}
                 for node in content["nodes"].keys():
-                    node_dict = content["nodes"][node]
-                    if len(node_dict["character"]) == 0:
-                        print(f" |-> CHARACTER CONTENT NOT EXPORTED: ({node_dict})")
+                    nodeDict = content["nodes"][node]
+                    if len(nodeDict["character"]) == 0:
+                        print(f" |-> CHARACTER CONTENT NOT EXPORTED: ({nodeDict})")
                         continue
 
                     # parse main
-                    character_name = GameDB.getWorldName(node_dict.pop("character"))
-                    node_dict["drops"] = list(map(GameDB.getWorldName, node_dict["drops"]))
-                    node_dict["spells"] = list(map(GameDB.getWorldName, node_dict["spells"]))
-                    node_dict["merchandise"] = list(map(GameDB.getWorldName, node_dict["merchandise"]))
+                    character_name = GameDB.getWorldName(nodeDict.pop("character"))
+                    nodeDict["drops"] = list(map(GameDB.getWorldName, nodeDict["drops"]))
+                    nodeDict["spells"] = list(map(GameDB.getWorldName, nodeDict["spells"]))
+                    nodeDict["merchandise"] = list(map(GameDB.getWorldName, nodeDict["merchandise"]))
 
                     # add to main dict
-                    reformatted_dict[character_name] = node_dict
+                    reformattedDict[character_name] = nodeDict
 
                 # export json
                 fileName = os.path.splitext(os.path.basename(contentFile))[0]
                 dest = os.path.join(self.paths["db_export_path"], fileName + GameDB.content_ext)
-                self._export(reformatted_dict, dest)
+                self._export(reformattedDict, dest)
                 print(f" |-> CHARACTER CONTENT EXPORTED: ({dest})")
 
     def export_quest_content(self, *questFilePaths) -> None:
@@ -272,41 +283,50 @@ class GameDB:
                 content = json.load(infile)
 
                 # reformat json
-                reformatted_dict = {}
+                reformattedDict: dict = {}
                 for node in content["nodes"].keys():
 
-                    # quest needs to have: 
+                    # quest needs to have:
                     # name, at least one objective, and quest giver/completer
-                    node_dict = content["nodes"][node]
-                    if node_dict["questName"].strip() == "" \
-                    or len(node_dict["questGiver"]) == 0 \
-                    or len(node_dict["questCompleter"]) == 0 \
-                    or len(node_dict["objectives"].keys()) == 0:
+                    nodeDict: dict = content["nodes"][node]
+                    if len(nodeDict["questName"].strip()) == 0 \
+                    or len(nodeDict["questGiver"]) == 0 \
+                    or len(nodeDict["questCompleter"]) == 0 \
+                    or len(nodeDict["objectives"].keys()) == 0:
                         continue
 
-                    # parse main
-                    quest_giver = GameDB.getWorldName(node_dict.pop("questGiver"))
-                    node_dict["nextQuest"] = list(map(GameDB.getWorldName, node_dict["nextQuest"]))
-                    node_dict["reward"] = list(map(GameDB.getWorldName, node_dict["reward"]))
-                    node_dict["questCompleter"] = GameDB.getWorldName(node_dict["questCompleter"])
+                    questName: str = nodeDict.pop("questName")
+
+                    nodeDict["questGiver"] = GameDB.getWorldName(nodeDict["questGiver"], True)
+                    nodeDict["questCompleter"] = GameDB.getWorldName(nodeDict["questCompleter"], True)
+
+                    nodeDict["nextQuest"] = list(map(GameDB.getWorldName, nodeDict["nextQuest"]))
+                    nodeDict["reward"] = list(map(GameDB.getWorldName, nodeDict["reward"]))
 
                     # parse objective
-                    objectives = {}
-                    for objective in node_dict["objectives"].keys():
-                        world_object_name = GameDB.getWorldName(node_dict["objectives"][objective].pop("worldObject"))
-                        del node_dict["objectives"][objective]["wildcard"]
-                        node_dict["objectives"][objective]["extraContent"]["reward"] = \
-                            GameDB.getWorldName(node_dict["objectives"][objective]["extraContent"]["reward"])
-                        objectives[world_object_name] = node_dict["objectives"][objective]
-                    del node_dict["objectives"]
-                    node_dict["objectives"] = objectives
+                    objectives: dict = {}
+                    for objective in nodeDict["objectives"].keys():
+                        worldObjectName: str = GameDB.getWorldName(nodeDict["objectives"][objective].pop("worldObject"))
 
-                    # export json
-                    reformatted_dict[quest_giver] = node_dict
+                        del nodeDict["objectives"][objective]["wildcard"]
+
+                        nodeDict["objectives"][objective]["questType"] = \
+                            nodeDict["objectives"][objective]["questType"].upper()
+
+                        nodeDict["objectives"][objective]["extraContent"]["reward"] = \
+                            GameDB.getWorldName(nodeDict["objectives"][objective]["extraContent"]["reward"])
+
+                        objectives[worldObjectName] = nodeDict["objectives"][objective]
+
+                    del nodeDict["objectives"]
+                    nodeDict["objectives"] = objectives
+
+                    reformattedDict[questName] = nodeDict
 
                 # export json
                 fileName = os.path.splitext(os.path.basename(questFile))[0]
-                dest = os.path.join(self.paths["db_export_path"], fileName + GameDB.content_ext)
-                self._export(reformatted_dict, dest)
+                dest = os.path.join(self.paths["db_export_path"], "quest", fileName + GameDB.content_ext)
+                self._export(reformattedDict, dest)
+
                 print(f" |-> QUEST CONTENT EXPORTED: ({dest})")
-                    
+

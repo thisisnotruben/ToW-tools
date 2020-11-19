@@ -23,7 +23,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
         self.db_list = db_list
         self.setupUi(self)
         self.show()
-                
+
     def setupUi(self, quest_node):
         super().setupUi(quest_node)
         # map character lists drop events and contxt menus
@@ -89,11 +89,11 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             if reply == QMessageBox.Yes:
                 self.on_delete_confirm.trigger()
                 self.close()
-    
+
     def routeObjectiveContextMenu(self, objective, entry):
         objective.contextMenuEvent = MethodType(self.onObjectiveContextMenu, objective)
         self.objectiveEntryMap[objective] = entry
-        
+
     def onObjectiveContextMenu(self, objective_node, QContextMenuEvent):
         # get index from right click
         row = self.objective_list.row(self.objectiveEntryMap[objective_node])
@@ -124,7 +124,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
         self.objective_list.takeItem(row)
         # delete events from objective copied
         self.objectiveEntryMap.pop(objective)
-    
+
     def onObjectveMove(self, row, by):
         # get widgets
         objective = self.copyObjective(row, self.objective_list.item(row))
@@ -219,11 +219,8 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             ("keepRewardItems", self.reward_keep.isChecked()),
             ("goldReward", self.gold_reward_amount.value()),
             ("questGiver", getItemData(self.giver_list, True)),
-            ("questCompleter", getItemData(self.completer_list, True))
-        ])
- 
-        giver_dialogue = OrderedDict([
-            ("start", self.start_entry.toPlainText()),
+            ("questCompleter", getItemData(self.completer_list, True)),
+            ("available", self.start_entry.toPlainText()),
             ("active", self.active_entry.toPlainText()),
             ("completed", self.completed_entry.toPlainText()),
             ("delivered", self.delivered_entry.toPlainText())
@@ -233,8 +230,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
             ("objective_%d" % i, objective.serialize())
                 for i, objective in enumerate(self.objectiveEntryMap.keys())
         ])
-        
-        payload["giverDialogue"] = giver_dialogue
+
         payload["objectives"] = objective_data
         return payload
 
@@ -263,10 +259,10 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
         if len(data["questCompleter"]) != 0:
             unpackItemData(self.completer_list, data["questCompleter"])
         # set quest giver dialogues
-        self.start_entry.setText(data["giverDialogue"]["start"])
-        self.active_entry.setText(data["giverDialogue"]["active"])
-        self.completed_entry.setText(data["giverDialogue"]["completed"])
-        self.delivered_entry.setText(data["giverDialogue"]["delivered"])
+        self.start_entry.setText(data["available"])
+        self.active_entry.setText(data["active"])
+        self.completed_entry.setText(data["completed"])
+        self.delivered_entry.setText(data["delivered"])
         # set quest objectives
         for objective_data in data["objectives"].keys():
             self.addObjective().unserialize(data["objectives"][objective_data])
