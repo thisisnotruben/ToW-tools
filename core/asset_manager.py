@@ -6,6 +6,8 @@ Ruben Alvarez Reyes
 import re
 import os
 import shutil
+import subprocess
+from collections import Counter
 
 from core.game_db import GameDB, DataBases
 from core.image_editor import Color, Font, ImageEditor
@@ -16,7 +18,7 @@ class AssetManager:
 
     img_ext: str = ".png"
     godotImport: str = "import"
-    audioExt: list = ["wav", "ogg"]
+    audioExt: list = [".wav", ".ogg"]
 
     def __init__(self):
         self.assets: dict = dict()
@@ -141,9 +143,10 @@ class AssetManager:
 
         tuples: list = GameDB().execute_query("SELECT name, rawName, assetFolder FROM AssetSnd;")
         allSoundNames: set = set()
-        exported: set = set()
+        exported: list = list()
         sndDirs: set = set()
 
+        found: bool = False
         for t in tuples:
             rawName: str = t[1]
             soundID: tuple = (t[0], rawName)
@@ -161,9 +164,22 @@ class AssetManager:
 
                         ext: str = os.path.splitext(fileName)[1]
                         src: str = os.path.join(dirPath, rawName)
-                        dest: str = os.path.join(sndDir, t[0] + ext)
-                        shutil.copy(src, dest)
-                        exported.add(soundID)
+                        dest: str = ""
+
+                        if ext == AssetManager.audioExt[1]: # ogg
+                            dest = os.path.join(sndDir, t[0] + AssetManager.audioExt[0])
+                            self._exportToWAV(src, dest)
+                        else:
+                            dest = os.path.join(sndDir, t[0] + ext)
+                            shutil.copy(src, dest)
+
+                        exported.append(soundID)
+
+                        found = True
+                        break
+                if found:
+                    break
+            found = False
 
         # find stray files
         foundFiles: set = set()
@@ -175,10 +191,21 @@ class AssetManager:
                     foundFiles.add(os.path.splitext(fileName)[0])
 
         # display results
-        for name, rawName in allSoundNames - exported:
-            print(f" |-> COULDN'T FIND: %s" % f"{name}:".ljust(15) + rawName)
+        for name, rawName in allSoundNames - set(exported):
+            print(" |-> COULDN'T FIND: %s" % f"{name}: ".ljust(15) + rawName)
+
         allSoundNames = set([s[0] for s in allSoundNames])
         for fileName in allSoundNames - foundFiles:
-            print(f" |-> STRAY FILE FOUND: {fileName}")
+            print(f" |-> STRAY FILE FOUND IN PROJECT: {fileName}")
+
+        counter: Counter = Counter(exported)
+        for k, v in counter.items():
+            if v > 1:
+                print(" |-> DUPLICATE FOUND IN ASSET POOL: %s" % f"{k[0]}: ".ljust(15) + k[1])
+
         print("--> ALL AUDIO EXPORTED")
+
+    def _exportToWAV(self, src: str, dest: str):
+        command: str = f"ffmpeg -i {src} {dest}"
+        subprocess.call(command, shell=True)
 
