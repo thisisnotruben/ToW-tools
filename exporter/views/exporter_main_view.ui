@@ -193,6 +193,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="export_raw_audio">
+          <property name="toolTip">
+           <string>EXPORT_AUDIO</string>
+          </property>
+          <property name="text">
+           <string>Export Raw Audio</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="asset_layout_spacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -244,7 +254,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

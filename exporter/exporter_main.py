@@ -88,6 +88,7 @@ class MainWindow(Ui_MainWindow):
         self.make_tilesets.clicked.connect(lambda : self.onClick(self.make_tilesets.toolTip()))
         self.export_content.clicked.connect(lambda : self.onOpenFileDialog(self.export_content.toolTip(), FileDialogueType.CONTENT))
         self.export_quest.clicked.connect(lambda : self.onOpenFileDialog(self.export_quest.toolTip(), FileDialogueType.QUEST))
+        self.export_raw_audio.clicked.connect(lambda : self.onClick(self.export_raw_audio.toolTip()))
 
         self.thread = Thread(self.main_window)
         self.thread.finished.connect(self.onCommandFinished)

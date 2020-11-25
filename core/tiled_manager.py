@@ -17,21 +17,21 @@ from core.path_manager import PathManager
 
 class Tiled:
 
-    img_ext = ".png"
-    map_ext = ".tmx"
+    img_ext: str = ".png"
+    map_ext: str = ".tmx"
     tileset_ext = ".tsx"
-    temp_dir = "debugging_temp"
-    special_units = ["critter", "aberration"]
-    tag_path = "path"
-    tag_spawn = "spawnPos"
-    tagTypes = {"name": str, "enemy":bool, "level":int}
-    cell_size = 16
+    temp_dir: str = "debugging_temp"
+    special_units: list = ["critter", "aberration"]
+    tag_path: str = "path"
+    tag_spawn: str = "spawnPos"
+    tagTypes: dict = {"name": str, "enemy":bool, "level":int}
+    cell_size: int = 16
 
     def __init__(self):
-        self.tiled = {}
-        self.game = {}
-        self.debug = {}
-        self.tilesets_32 = []
+        self.tiled: dict = dict()
+        self.game: dict = dict()
+        self.debug: dict = dict()
+        self.tilesets_32: list = []
         data = PathManager.get_paths()
         self.tiled = data["tiled"]
         self.game = data["game"]
@@ -39,14 +39,14 @@ class Tiled:
         self.tilesets_32 = data["32"]
 
     @staticmethod
-    def _debug_map_move_files(root_dir, dest_dir):
-        for tileset in os.listdir(root_dir):
+    def _debugMapMoveFiles(rootDir: str, destDir: str) -> None:
+        for tileset in os.listdir(rootDir):
             if tileset.endswith(Tiled.img_ext):
-                src = os.path.join(root_dir, tileset)
-                shutil.copy(src, dest_dir)
+                src = os.path.join(rootDir, tileset)
+                shutil.copy(src, destDir)
 
     @staticmethod
-    def _get_center_pos(pos=(), size=()):
+    def _getCenterPos(pos: tuple=(), size: tuple=()) -> tuple:
         offset = round(float(Tiled.cell_size) / 2.0)
         x = int(round((int(pos[0]) + int(size[0]) / 2.0) / float(Tiled.cell_size)) * float(Tiled.cell_size))
         x += offset
@@ -54,23 +54,23 @@ class Tiled:
         return (int(x), int(y))
 
     @staticmethod
-    def _write_xml(tree, dest):
+    def _writeXml(tree, dest: str) -> None:
         tree.write(dest, encoding="UTF-8", xml_declaration=True)
 
     @staticmethod
-    def _format_name(unit_meta, unit_atts) -> str:
-        base_name = ""
-        if "name" in unit_atts:
-            base_name = unit_atts["name"]
-        elif "template" in unit_atts:
-            base_name = unit_atts["template"].split("/")[-1].split(".")[0]
-        elif bool(unit_meta):
-            base_name = unit_meta[unit_atts["id"]]["img"].split("-")[0]
-        return "%s-%s" % (unit_atts["id"], base_name)
+    def _formatName(unitMeta, unitAtts: dict) -> str:
+        baseName: str = ""
+        if "name" in unitAtts:
+            baseName = unitAtts["name"]
+        elif "template" in unitAtts:
+            baseName = unitAtts["template"].split("/")[-1].split(".")[0]
+        elif bool(unitMeta):
+            baseName = unitMeta[unitAtts["id"]]["img"].split("-")[0]
+        return "%s-%s" % (unitAtts["id"], baseName)
 
-    def _get_map_character_layer(self, root):
-        group_index = 0
-        layer_index = 0
+    def _getMapCharacterLayer(self, root) -> tuple:
+        group_index: int = 0
+        layer_index: int = 0
         for child in root:
             if child.tag == "group" and child.attrib["name"] == "zed":
                 for child in root[group_index]:
@@ -81,60 +81,81 @@ class Tiled:
             group_index += 1
         return (group_index, layer_index)
 
-    def _get_map_character_tilesets(self, root) -> dict:
-        tilesets = {}
+    def _getMapCharacterTilesets(self, root) -> dict:
+        tilesets: dict = dict()
         for group in root:
             if group.tag == "tileset" and "character" in group.attrib["source"]:
                 tilesets[int(group.attrib["firstgid"])] = group.attrib["source"]
         return tilesets
 
-    def _get_character_attributes(self, root) -> {}:
-        master_dict = {}
-        tilesets = self._get_map_character_tilesets(root)
-        group_index, layer_index = self._get_map_character_layer(root)
+    def _getCharacterAttributes(self, root) -> dict:
+        masterDict: dict = dict()
+        tilesets: dict = self._getMapCharacterTilesets(root)
+        group_index, layer_index = self._getMapCharacterLayer(root)
+
         os.chdir(self.tiled["map_dir"])
+
         for child in root[group_index][layer_index]:
-            unit_attr = child.attrib
-            if "template" in unit_attr:
+            unitAttr: dict = child.attrib
+
+            if "template" in unitAttr:
                 continue
-            ID = int(unit_attr["gid"])
-            tile_id = -1
-            for tileset_id in tilesets:
-                if ID >= tileset_id:
-                    tile_id = tileset_id
-            root = ET.parse(tilesets[tile_id]).getroot()
-            master_dict[unit_attr["id"]] = {}
-            id_idx = 0
-            for child in root:
-                if "id" in child.attrib and int(child.attrib["id"]) == ID - tile_id:
-                    for attribute in root[id_idx]:
+
+            characterID: int = int(unitAttr["gid"])
+            characterTilesetID: int = -1
+            for tilesetID in tilesets:
+                if characterID >= tilesetID:
+                    characterTilesetID = tilesetID
+
+            characterAttr: dict = dict()
+            # set default attributes from tileset
+            i: int = 0
+            characterTilesetRoot = ET.parse(tilesets[characterTilesetID]).getroot()
+            for group in characterTilesetRoot:
+                if "id" in group.attrib and int(group.attrib["id"]) == characterID - characterTilesetID:
+                    for attribute in characterTilesetRoot[i]:
+
                         if attribute.tag == "properties":
                             for attrib in attribute:
                                 attrib = attrib.attrib
-                                master_dict[unit_attr["id"]][attrib["name"]] = attrib["value"]
+                                characterAttr[attrib["name"]] = attrib["value"]
                         elif attribute.tag == "image":
                             tex_name = attribute.attrib["source"]
-                            master_dict[unit_attr["id"]]["img"] = tex_name
-                id_idx += 1
-        return master_dict
+                            characterAttr["img"] = tex_name
+                i += 1
 
-    def _get_character_names(self, editor_names: bool, root) -> {}:
-        names = {}
-        unit_meta = self._get_character_attributes(root)
-        group_index, layer_index = self._get_map_character_layer(root)
-        for child in root[group_index][layer_index]:
-            unit_atts = child.attrib
-            if editor_names:
-                names[unit_atts["id"]] = Tiled._format_name(unit_meta, unit_atts)
-            elif "name" in unit_atts:
-                names[unit_atts["id"]] = unit_atts["name"]
-            elif "template" not in unit_atts:
-                names[unit_atts["id"]] = unit_meta[unit_atts["id"]]["name"]
+            # set map character attributes if set
+            for characterProperties in child:
+                if characterProperties.tag == "properties":
+                    for characterProperty in characterProperties:
+                        attributes: dict = characterProperty.attrib
+                        characterAttr[attributes["name"]] = attributes["value"]
+
+            masterDict[unitAttr["id"]] = characterAttr
+        return masterDict
+
+    def _getCharacterNames(self, editorNames: bool, root) -> dict:
+        names: dict = dict()
+        unitMeta: dict = self._getCharacterAttributes(root)
+        groupIndex, layerIndex = self._getMapCharacterLayer(root)
+
+        name: str = ""
+        for child in root[groupIndex][layerIndex]:
+            attributes: dict = child.attrib
+
+            if editorNames:
+                name = Tiled._formatName(unitMeta, attributes)
+            elif "name" in attributes:
+                name = attributes["name"]
+            elif "template" not in attributes:
+                name = unitMeta[attributes["id"]]["name"]
+            names[attributes["id"]] = name
+
         return names
 
-    def _get_unit_paths(self, root):
-        unit_paths = {}
-        unit_spawn_locs = self._get_unit_spawn_locs(root)
+    def _getUnitPaths(self, root) -> dict:
+        unit_paths: dict = dict()
+        unit_spawn_locs = self._getUnitSpawnLocs(root)
         for child in root:
             if child.tag == "group" and child.attrib["name"] == "meta":
                 for sub_child in child:
@@ -159,15 +180,17 @@ class Tiled:
                             unit_paths[path.attrib["name"]] = points
         return unit_paths
 
-    def _get_unit_spawn_locs(self, root):
-        spawn_locs = {}
-        group_index, layer_index = self._get_map_character_layer(root)
+    def _getUnitSpawnLocs(self, root) -> dict:
+        spawnPos: dict = dict()
+        group_index, layer_index = self._getMapCharacterLayer(root)
         for child in root[group_index][layer_index]:
-            unit_atts = child.attrib
-            if "width" in unit_atts:
-                spawn_loc = Tiled._get_center_pos((unit_atts["x"], unit_atts["y"]), (unit_atts["width"], unit_atts["height"]))
-                spawn_locs[unit_atts["id"]] = spawn_loc
-        return spawn_locs
+            unitAtts: dict = child.attrib
+
+            if "width" in unitAtts:
+                spawn_loc: tuple = Tiled._getCenterPos((unitAtts["x"], unitAtts["y"]), (unitAtts["width"], unitAtts["height"]))
+                spawnPos[unitAtts["id"]] = spawn_loc
+
+        return spawnPos
 
     def is_debugging(self):
         return os.path.exists(os.path.join(self.tiled["map_dir"], Tiled.temp_dir))
@@ -176,13 +199,13 @@ class Tiled:
         os.chdir(self.tiled["map_dir"])
         debug = True
         if os.path.exists(Tiled.temp_dir):
-            Tiled._debug_map_move_files(Tiled.temp_dir, self.tiled["tileset_dir"])
+            Tiled._debugMapMoveFiles(Tiled.temp_dir, self.tiled["tileset_dir"])
             shutil.rmtree(Tiled.temp_dir)
             debug = False
         else:
             os.mkdir(Tiled.temp_dir)
-            Tiled._debug_map_move_files(self.tiled["tileset_dir"], Tiled.temp_dir)
-            Tiled._debug_map_move_files(self.tiled["debug_dir"], self.tiled["tileset_dir"])
+            Tiled._debugMapMoveFiles(self.tiled["tileset_dir"], Tiled.temp_dir)
+            Tiled._debugMapMoveFiles(self.tiled["debug_dir"], self.tiled["tileset_dir"])
             with open(os.path.join(Tiled.temp_dir, "README.txt"), "w") as f:
                 f.write("Don't delete folder or contents of folder manually. If you do, you've done messed up.")
         print("--> MAP DEBUG OVERLAY: %s\n--> PRESS (CTRL-T) TO REFRESH IF HASN'T SHOWN" % debug)
@@ -259,14 +282,14 @@ class Tiled:
 
     def get_character_data(self) -> list:
         # loop through all map files in dir
-        master_list = []
+        master_list: list = list()
         for map_file in os.listdir(self.tiled["map_dir"]):
             if map_file.endswith(Tiled.map_ext):
                 # extract file paths
                 self.tiled["map_file"] = os.path.join(self.tiled["map_dir"], map_file)
                 self.file_name = os.path.splitext(map_file)[0]
                 # get character data
-                unit_data = self._get_character_map_data()
+                unit_data = self._getCharacterMapData()
                 for unit_id in unit_data:
                     master_list.append({
                         "img": os.path.join(self.tiled["character_dir"], unit_data[unit_id]["img"] + Tiled.img_ext),
@@ -276,76 +299,62 @@ class Tiled:
                     })
         return master_list
 
-    def _get_character_map_data(self):
-        master_dict = {}
+    def _getCharacterMapData(self) -> dict:
+        masterDict: dict = dict()
         root = ET.parse(self.tiled["map_file"]).getroot()
-        # get unit attributes
-        group_index, layer_index = self._get_map_character_layer(root)
-        unit_attribute_index = 0
-        unit_meta = self._get_character_attributes(root)
-        unit_patrol_paths = self._get_unit_paths(root)
-        spawn_locs = self._get_unit_spawn_locs(root)
-        layer = root[group_index][layer_index]
-        editor_names = self._get_character_names(True, root)
-        game_names = self._get_character_names(False, root)
 
-        for unit_index in range(len(layer)):
-            unit_atts = layer[unit_index].attrib
-            unit_ID = layer[unit_index].attrib["id"]
-            if not "template" in unit_atts:
+        editorNames: dict = self._getCharacterNames(True, root)
+        gameNames: dict = self._getCharacterNames(False, root)
+        unitMeta: dict = self._getCharacterAttributes(root)
+        unitPatrolPaths: dict = self._getUnitPaths(root)
+        spawnPos: dict = self._getUnitSpawnLocs(root)
 
-                master_dict[unit_ID] = {
-                    "editorName": editor_names[unit_ID],
-                    "name": game_names[unit_ID].strip(),
-                    "img": os.path.splitext(unit_meta[unit_ID]["img"])[0],
-                    "enemy": bool(strtobool(unit_meta[unit_ID]["enemy"])),
-                    "level": int(unit_meta[unit_ID]["level"]),
-                    Tiled.tag_path: [],
-                    Tiled.tag_spawn: spawn_locs[unit_ID]
-                }
+        groupIndex, layerIndex = self._getMapCharacterLayer(root)
+        layer = root[groupIndex][layerIndex]
 
-                if unit_ID in unit_patrol_paths:
-                    master_dict[unit_ID][
-                        Tiled.tag_path] = unit_patrol_paths[unit_ID]
+        for unitIndex in range(len(layer)):
+            if "template" in layer[unitIndex].attrib:
+                continue
 
-                for unit_property in layer[unit_index]:
-                    if unit_property.tag == "properties":
-                        for unit_attribute in layer[unit_index][unit_attribute_index]:
+            unitID: str = layer[unitIndex].attrib["id"]
+            masterDict[unitID] = {
+                "editorName": editorNames[unitID],
+                "name": gameNames[unitID].strip(),
+                "img": os.path.splitext(unitMeta[unitID]["img"])[0],
+                "enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
+                "level": int(unitMeta[unitID]["level"]),
+                Tiled.tag_path: unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
+                Tiled.tag_spawn: spawnPos[unitID]
+            }
 
-                            for tag in Tiled.tagTypes.keys():
-                                attribute_name = unit_attribute.attrib["name"]
-                                if attribute_name == tag:
-
-                                    # don't want to replace custom name is default name
-                                    if tag == "name" and master_dict[unit_ID]["name"].strip() != "":
-                                        continue
-                                    # parse tag to appropriate data type
-                                    master_dict[unit_ID][attribute_name] = Tiled.tagTypes[tag](unit_attribute.attrib["value"])
-
-                        unit_attribute_index += 1
-                    unit_attribute_index = 0
-        return master_dict
+        return masterDict
 
     def export_tilesets(self):
         print("--> EXPORTING TILESETS")
+
         if os.path.exists(self.game["tileset_dir"]):
             shutil.rmtree(self.game["tileset_dir"])
         shutil.copytree(self.tiled["tileset_dir"], self.game["tileset_dir"])
+
         print(" |-> DIRECTORY EXPORTED: (%s)" % self.game["tileset_dir"])
+
         for filename in os.listdir(self.tiled["character_dir"]):
             if filename.endswith(Tiled.tileset_ext):
+
                 src = os.path.join(self.tiled["character_dir"], filename)
                 dest = os.path.join(self.game["character_dir"], filename)
                 shutil.copy(src, dest)
+
                 print(" |-> TILESET EXPORTED: (%s)" % dest)
+
         print("--> ALL TILESETS EXPORTED")
 
     def _export_map(self):
         tree = ET.parse(self.tiled["map_file"])
         root = tree.getroot()
-        group_index, layer_index = self._get_map_character_layer(root)
-        editor_names = self._get_character_names(True, root)
-        spawn_locs = self._get_unit_spawn_locs(root)
+        group_index, layer_index = self._getMapCharacterLayer(root)
+        editor_names = self._getCharacterNames(True, root)
+        spawn_locs = self._getUnitSpawnLocs(root)
 
         # for characters
         for unit in root[group_index][layer_index]:
@@ -370,10 +379,10 @@ class Tiled:
                         if layer.tag == "objectgroup" and layer.attrib["name"] == "target_dummys":
                             for td in layer:
                                 td_atts = td.attrib
-                                spawn_loc = Tiled._get_center_pos((td_atts["x"], td_atts["y"]), tD_size)
+                                spawn_loc = Tiled._getCenterPos((td_atts["x"], td_atts["y"]), tD_size)
                                 td.set("x", str(spawn_loc[0]))
                                 td.set("y", str(spawn_loc[1]))
-                                td.set("name", Tiled._format_name({}, td_atts))
+                                td.set("name", Tiled._formatName({}, td_atts))
 
         # for lights and graves
         for tag_name in ["light", "grave"]:
@@ -382,17 +391,17 @@ class Tiled:
                     for layer in group:
                         if layer.tag == "objectgroup" and tag_name in layer.attrib["name"]:
                             for thing in layer:
-                                thing.set("name", Tiled._format_name({}, thing.attrib))
+                                thing.set("name", Tiled._formatName({}, thing.attrib))
 
         self._removeCharacterTilsets(root)
 
         # write to map
         dest = os.path.join(self.game["map_dir"], self.file_name + Tiled.map_ext)
-        Tiled._write_xml(tree, dest)
+        Tiled._writeXml(tree, dest)
         print("--> MAP: (%s) EXPORTED -> (%s)" % (self.file_name, dest))
 
     def _export_meta(self):
-        master_dict = self._get_character_map_data()
+        master_dict = self._getCharacterMapData()
         # reformat data
         clean_dict = {}
         for unit_ID in master_dict:

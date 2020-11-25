@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir))
 from core.game_db import GameDB
 from core.image_editor import Color, Font
 from core.tiled_manager import Tiled
-from core.asset_manager import AssetManager 
+from core.asset_manager import AssetManager
 from core.archive_manager import Archiver
 
 
@@ -24,6 +24,7 @@ class Commands(enum.Enum):
     EXPORT_CONTENT = "ARGS: (contentFilePaths)"
     EXPORT_QUEST = "ARGS: (questFilePaths)"
     EXPORT_NAMEDB = enum.auto()
+    EXPORT_AUDIO = enum.auto()
     DEBUG_MAP = enum.auto()
     MAKE_DEBUG_TILESETS = enum.auto()
     MAKE_32_TILESETS = enum.auto()
@@ -86,12 +87,15 @@ class Main:
 
         elif command == Commands.EXPORT_CONTENT:
             self.db.export_character_content(*arg)
-            
+
         elif command == Commands.EXPORT_QUEST:
             self.db.export_quest_content(*arg)
 
         elif command == Commands.EXPORT_NAMEDB:
             self.db.exportScript()
+
+        elif command == Commands.EXPORT_AUDIO:
+            self.asset.exportRawAudio()
 
         elif command == Commands.DEBUG_MAP:
             self.tiled.debug_map()

@@ -14,108 +14,112 @@ from core.path_manager import PathManager
 
 class AssetManager:
 
-    img_ext = ".png"
+    img_ext: str = ".png"
+    godotImport: str = "import"
+    audioExt: list = ["wav", "ogg"]
 
     def __init__(self):
-        self.assets = {}
+        self.assets: dict = dict()
         # load paths
         assets = PathManager.get_paths()
         self.assets["icon_atlas_data"] = assets["icon_atlas_data"]
         self.assets["game_character_dir"] = assets["game"]["character_dir"]
         self.assets["dev_character_dir"] = assets["dev_character_dir"]
+        self.assets["sndDir"] = assets["game"]["sndDir"]
+        self.assets["rawSndAssetDir"] = assets["rawSndAssetDir"]
 
-    def make_icon_atlas(self):
+
+    def make_icon_atlas(self) -> None:
         icon = self.assets["icon_atlas_data"]
+
         # check data integrity
-        defined_color_names = [c.name for c in Color]
+        definedColorNames: list = [c.name for c in Color]
         for color in [icon["bg"], icon["grid"], icon["text"]]:
-            if not color in defined_color_names:
-                print(
-                    "--> COLOR: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED COLORS:"
-                    % color)
-                for color in defined_color_names:
+            if not color in definedColorNames:
+                print("--> COLOR: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED COLORS:" % color)
+                for color in definedColorNames:
                     print(" |-> ", color)
                 print("--> ABORTING")
                 exit(1)
-        defined_font_names = [f.name for f in Font]
-        if not icon["font"] in defined_font_names:
-            print(
-                "--> FONT: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED FONTS:"
-                % icon["font"])
-            for font in defined_font_names:
+
+        definedFontNames: list = [f.name for f in Font]
+        if not icon["font"] in definedFontNames:
+            print("--> FONT: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED FONTS:" % icon["font"])
+            for font in definedFontNames:
                 print(" |-> ", font)
             print("--> ABORTING")
             exit(1)
+
         # make paths
-        src = icon["path"]
-        dest = os.path.join(os.path.dirname(icon["path"]), icon["atlas_name"])
+        src: str = icon["path"]
+        dest: str = os.path.join(os.path.dirname(icon["path"]), icon["atlas_name"])
+
         # make atlas attributes
-        size = (int(icon["size"][0]), int(icon["size"][1]))
-        hv_frames = (int(icon["hv_frames"][0]), int(icon["hv_frames"][1]))
+        size: tuple = (int(icon["size"][0]), int(icon["size"][1]))
+        hvFrames: tuple = (int(icon["hv_frames"][0]), int(icon["hv_frames"][1]))
+
         # make atlas
         print("--> MAKING ICON ATLAS:")
         ImageEditor.resize_image(src, dest, size)
+
         print(" |-> IMAGE RESIZED")
-        ImageEditor.fill_bg(dest, dest,
-                                         Color[icon["bg"]].value)
+        ImageEditor.fill_bg(dest, dest, Color[icon["bg"]].value)
+
         print(" |-> IMAGE FILLED")
-        ImageEditor.line_grid(
-            dest, dest, hv_frames, Color[icon["grid"]].value)
+        ImageEditor.line_grid(dest, dest, hvFrames, Color[icon["grid"]].value)
+
         print(" |-> IMAGE GRID LINES MADE")
-        ImageEditor.text_grid(
-            dest, dest, hv_frames, Color[icon["text"]].value,
-            Font[icon["font"]].value)
+        ImageEditor.text_grid(dest, dest, hvFrames, Color[icon["text"]].value, Font[icon["font"]].value)
+
         print(" |-> IMAGE ENUMERATED")
         print("--> ICON ATLAS MADE: (%s)" % dest)
 
-    def make_sprite_deaths(self, *order_paths):
+    def make_sprite_deaths(self, *orderPaths) -> None:
         # load img db
-        img_data = GameDB().get_frame_data()
+        imgData: dict = GameDB().get_frame_data()
+
         # determine order
-        batch_order = []
-        if len(order_paths) == 0:
-            batch_order = [
+        batchOrder: list = list()
+        if len(orderPaths) == 0:
+            batchOrder = [
                 os.path.join(self.assets["game_character_dir"], f)
                 for f in os.listdir(self.assets["game_character_dir"])
             ]
         else:
-            batch_order = order_paths
-            for order in batch_order:
+            batchOrder = orderPaths
+            for order in batchOrder:
                 if not os.path.isfile(order):
-                    print(
-                        "--> ERROR: (order_paths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING"
-                    )
+                    print("--> ERROR: (orderPaths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING")
                     return
+
         # start command
-        command = "gimp -idf"
+        command: str = "gimp -idf"
         # build command
         print("--> MAKING SPRITE DEATH ANIMATIONS")
-        for src in batch_order:
+        for src in batchOrder:
             if src.endswith(AssetManager.img_ext):
                 # make args
-                img_name = os.path.splitext(os.path.basename(src))[0]
-                dest = src
-                if not img_name in img_data:
-                    print(
-                        " |-> SPRITE DOESN'T HAVE FRAME DATA, SKIPPING: (%s)" %
-                        src)
+                imgName: str = os.path.splitext(os.path.basename(src))[0]
+                dest: str = src
+                if not imgName in imgData.keys():
+                    print(" |-> SPRITE DOESN'T HAVE FRAME DATA, SKIPPING: (%s)" % src)
                     continue
-                h_frames = img_data[img_name]["total"]
-                death_frame_start = h_frames - img_data[img_name]["attacking"] - 4
+
+                hFrames: int = imgData[imgName]["total"]
+                death_frame_start: int = hFrames - imgData[imgName]["attacking"] - 4
                 # append arg
-                command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (
-                    src, dest, h_frames, death_frame_start)
-            elif len(order_paths) != 0:
-                print(
-                    "--> ERROR: (order_paths) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH"
-                )
+                command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (src, dest, hFrames, death_frame_start)
+
+            elif len(orderPaths) != 0:
+                print("--> ERROR: (orderPaths) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH")
+
         command += " -b '(gimp-quit 0)'"
         # execute command
         os.system(command)
         print("--> SPRITE DEATH ANIMATIONS MADE")
 
-    def make_sym_links(self):
-        syms_made = []
+    def make_sym_links(self) -> None:
+        syms_made: list = list()
         # file naming convention used
         pattern = re.compile("[0-9]+%s" % AssetManager.img_ext)
         # loop through all dirs to find hard copies and send to the game asset dir
@@ -131,3 +135,50 @@ class AssetManager:
                     print(" |-> SYM LINK MADE: (%s) -> (%s)" % (src, dest))
         print("--> ALL SYM LINKS MADE")
         return syms_made
+
+    def exportRawAudio(self) -> None:
+        print("--> EXPORTING AUDIO")
+
+        tuples: list = GameDB().execute_query("SELECT name, rawName, assetFolder FROM AssetSnd;")
+        allSoundNames: set = set()
+        exported: set = set()
+        sndDirs: set = set()
+
+        for t in tuples:
+            rawName: str = t[1]
+            soundID: tuple = (t[0], rawName)
+            allSoundNames.add(soundID)
+
+            sndDir: str = os.path.join(self.assets["sndDir"], t[2])
+            sndDirs.add(sndDir)
+            if not os.path.isdir(sndDir):
+                os.mkdir(sndDir)
+
+            # export audio files
+            for dirPath, dirNames, fileNames in os.walk(self.assets["rawSndAssetDir"]):
+                for fileName in fileNames:
+                    if rawName == fileName:
+
+                        ext: str = os.path.splitext(fileName)[1]
+                        src: str = os.path.join(dirPath, rawName)
+                        dest: str = os.path.join(sndDir, t[0] + ext)
+                        shutil.copy(src, dest)
+                        exported.add(soundID)
+
+        # find stray files
+        foundFiles: set = set()
+        for sndDir in sndDirs:
+            for fileName in os.listdir(sndDir):
+
+                if AssetManager.godotImport not in fileName \
+                and any(ext in fileName for ext in AssetManager.audioExt):
+                    foundFiles.add(os.path.splitext(fileName)[0])
+
+        # display results
+        for name, rawName in allSoundNames - exported:
+            print(f" |-> COULDN'T FIND: %s" % f"{name}:".ljust(15) + rawName)
+        allSoundNames = set([s[0] for s in allSoundNames])
+        for fileName in allSoundNames - foundFiles:
+            print(f" |-> STRAY FILE FOUND: {fileName}")
+        print("--> ALL AUDIO EXPORTED")
+
