@@ -5,6 +5,7 @@ Tiled version tested on: 1.3.1
 """
 
 import os
+import csv
 import json
 import shutil
 import xml.etree.ElementTree as ET
@@ -34,6 +35,8 @@ class Tiled:
         self.tilesets_32: list = []
         data = PathManager.get_paths()
         self.tiled = data["tiled"]
+        self.tiled["hierarch"] = data["tilesetHierarch"]
+        self.tiled["32hTilesets"] = data["32hTilesets"]
         self.game = data["game"]
         self.debug = data["debug"]
         self.tilesets_32 = data["32"]
@@ -393,7 +396,7 @@ class Tiled:
                             for thing in layer:
                                 thing.set("name", Tiled._formatName({}, thing.attrib))
 
-        self._removeCharacterTilsets(root)
+        self._standardizeTilesets(root)
 
         # write to map
         dest = os.path.join(self.game["map_dir"], self.file_name + Tiled.map_ext)
@@ -443,4 +446,116 @@ class Tiled:
 
         for tileset in tilesetsToDelete:
             root.remove(tileset)
+
+    def _standardizeTilesets(self, root) -> None:
+        self._removeCharacterTilsets(root)
+
+        horizontalBit: int = 0x80000000
+
+        tilesets: dict = dict()
+        matrices: dict = dict()
+        hierarch: dict = dict()
+
+        # get hierarch data
+        for tilesetName, level in self.tiled["hierarch"].items():
+            tilesetPath: str = os.path.join(self.tiled["tileset_dir"], tilesetName + Tiled.img_ext)
+            imgSize: tuple = ImageEditor.get_size(tilesetPath)
+            cells: int = -1
+
+            if tilesetName in self.tiled["32hTilesets"]:
+                cells = imgSize[0] // 16 * imgSize[1] // 32
+            else:
+                cells = imgSize[0] * imgSize[1] // 16**2
+
+            hierarch[tilesetName] = (int(level), int(cells))
+
+        # parse the xml
+        i: int = 1
+        for group in root:
+            if group.tag == "tileset" and "tilesets" in group.attrib["source"]:
+                attributes: dict = group.attrib
+                tilesets[int(attributes["firstgid"])] = {
+                    "source": attributes["source"],
+                    "hierarch": i
+                }
+                i += 1
+
+            elif group.tag =="group":
+                for layer in group:
+                    if layer.tag == "layer" and layer[0].tag == "data" \
+                    and "csv" in layer[0].attrib["encoding"]:
+
+                        reader = csv.reader(layer[0].text.split("\n"), delimiter=",")
+                        matrix: list = []
+                        for row in reader:
+                            if len(row) > 0:
+                                matrix.append([int(c) for c in row if c.isdigit()])
+
+                        matrices[layer.attrib["name"]] = matrix
+
+        # put it all together
+        refTilesets: dict = dict()
+        for gid in tilesets.keys():
+
+            tilesetName: str = os.path.splitext(os.path.basename(tilesets[gid]["source"]))[0]
+            data: dict = {
+                "gidDesired": 1,
+                "hierarch": tilesets[gid]["hierarch"],
+                "hierarchDesired": hierarch[tilesetName][0],
+                "tilesetName":tilesetName,
+                "tiles": dict()
+            }
+
+            for v in hierarch.values():
+                if v[0] < data["hierarchDesired"]:
+                    data["gidDesired"] += v[1]
+
+            for layerName, matrix in matrices.items():
+                data["tiles"][layerName] = set()
+
+                for i in range(len(matrix)):
+                    for j in range(len(matrix[i])):
+
+                        tile: int = matrix[i][j]
+                        flippedH: bool = tile & horizontalBit > 0
+                        if flippedH:
+                            tile &= ~horizontalBit
+
+                        if tile >= gid and tile < gid + hierarch[tilesetName][1]:
+                            if flippedH:
+                                tile |= horizontalBit
+                            newTileID: int = tile - gid + data["gidDesired"]
+
+                            data["tiles"][layerName].add((i, j, newTileID))
+
+            refTilesets[gid] = data
+
+        # write new tiles id's to matrix
+        for matrix in matrices.values():
+            for data in refTilesets.values():
+                for layerName, newTileIDPackets in data["tiles"].items():
+                    for newTileIDPacket in newTileIDPackets:
+                        matrices[layerName][newTileIDPacket[0]][newTileIDPacket[1]] = newTileIDPacket[2]
+
+        # write matrix results to xml
+        for group in root:
+            if group.tag == "tileset" and "tilesets" in group.attrib["source"]:
+                data: dict = refTilesets[int(group.attrib["firstgid"])]
+
+                group.set("firstgid", str(data["gidDesired"]))
+                group.set("source", "tilesets/" + data["tilesetName"] + Tiled.tileset_ext)
+
+            if group.tag =="group":
+                for layer in group:
+                    if layer.tag == "layer" and layer[0].tag == "data" and "csv" in layer[0].attrib["encoding"]:
+
+                        matrixStr: str = "\n"
+                        for row in matrices[layer.attrib["name"]]:
+                            matrixStr += ",".join([str(c) for c in row]) + ",\n"
+
+                        layer[0].text = matrixStr[:-2] + "\n"
+
+        groupIndex, layerIndex = self._getMapCharacterLayer(root)
+        for characterObject in root[groupIndex][layerIndex]:
+            characterObject.set("gid", "0")
 

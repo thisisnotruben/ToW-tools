@@ -175,11 +175,6 @@ class AssetManager:
 
                         exported.append(soundID)
 
-                        found = True
-                        break
-                if found:
-                    break
-            found = False
 
         # find stray files
         foundFiles: set = set()

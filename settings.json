@@ -71,5 +71,16 @@
 		"spell": [
 			"learn"
 		]
-	}
+	},
+	"tilesetHierarch": {
+		"terrain": 1,
+		"trees": 2,
+		"walls": 3,
+		"tiles": 4,
+		"tiles_32": 5,
+		"misc": 6,
+		"misc_32": 7,
+		"buildings": 8
+	},
+	"32hTilesets": ["buildings", "misc_32", "tiles_32", "trees", "walls"]
 }

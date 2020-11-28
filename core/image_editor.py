@@ -123,3 +123,8 @@ class ImageEditor:
         with Image.open(input_path, "r") as img:
             img = img.resize(size)
             img.save(output_path)
+
+    @staticmethod
+    def get_size(input_path) -> tuple:
+        with Image.open(input_path, "r") as img:
+            return img.size
