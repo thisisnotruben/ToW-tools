@@ -75,12 +75,14 @@ class Main:
             if self.tiled.is_debugging():
                 self.tiled.debug_map()
             self.tiled.export_tilesets()
+            self.tiled.exportTilesetData()
 
         elif command == Commands.EXPORT_ALL_TILED:
             if self.tiled.is_debugging():
                 self.tiled.debug_map()
             self.tiled.export_tilesets()
             self.tiled.export_all_maps()
+            self.tiled.exportTilesetData()
 
         elif command == Commands.EXPORT_DATABASES:
             self.db.export_databases()

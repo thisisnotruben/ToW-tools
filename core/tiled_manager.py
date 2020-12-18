@@ -23,16 +23,13 @@ class Tiled:
     tileset_ext = ".tsx"
     temp_dir: str = "debugging_temp"
     special_units: list = ["critter", "aberration"]
-    tag_path: str = "path"
-    tag_spawn: str = "spawnPos"
-    tagTypes: dict = {"name": str, "enemy":bool, "level":int}
     cell_size: int = 16
 
     def __init__(self):
         self.tiled: dict = dict()
         self.game: dict = dict()
         self.debug: dict = dict()
-        self.tilesets_32: list = []
+        self.tilesets_32: list = list()
         data = PathManager.get_paths()
         self.tiled = data["tiled"]
         self.tiled["hierarch"] = data["tilesetHierarch"]
@@ -71,40 +68,21 @@ class Tiled:
             baseName = unitMeta[unitAtts["id"]]["img"].split("-")[0]
         return "%s-%s" % (unitAtts["id"], baseName)
 
-    def _getMapCharacterLayer(self, root) -> tuple:
-        group_index: int = 0
-        layer_index: int = 0
-        for child in root:
-            if child.tag == "group" and child.attrib["name"] == "zed":
-                for child in root[group_index]:
-                    if child.tag == "objectgroup" and child.attrib["name"] == "characters":
-                        break
-                    layer_index += 1
-                break
-            group_index += 1
-        return (group_index, layer_index)
-
-    def _getMapCharacterTilesets(self, root) -> dict:
-        tilesets: dict = dict()
-        for group in root:
-            if group.tag == "tileset" and "character" in group.attrib["source"]:
-                tilesets[int(group.attrib["firstgid"])] = group.attrib["source"]
-        return tilesets
-
     def _getCharacterAttributes(self, root) -> dict:
         masterDict: dict = dict()
-        tilesets: dict = self._getMapCharacterTilesets(root)
-        group_index, layer_index = self._getMapCharacterLayer(root)
+        tilesets: dict = dict()
 
         os.chdir(self.tiled["map_dir"])
 
-        for child in root[group_index][layer_index]:
-            unitAttr: dict = child.attrib
+        for item in root.findall("tileset"):
+            if "character" in item.get("source"):
+                tilesets[int(item.get("firstgid"))] = item.get("source")
 
-            if "template" in unitAttr:
+        for item in root.findall("group/objectgroup[@name='characters']/object"):
+            if "template" in item.keys():
                 continue
 
-            characterID: int = int(unitAttr["gid"])
+            characterID: int = int(item.get("gid"))
             characterTilesetID: int = -1
             for tilesetID in tilesets:
                 if characterID >= tilesetID:
@@ -112,86 +90,65 @@ class Tiled:
 
             characterAttr: dict = dict()
             # set default attributes from tileset
-            i: int = 0
-            characterTilesetRoot = ET.parse(tilesets[characterTilesetID]).getroot()
-            for group in characterTilesetRoot:
-                if "id" in group.attrib and int(group.attrib["id"]) == characterID - characterTilesetID:
-                    for attribute in characterTilesetRoot[i]:
+            for characterItem in ET.parse(tilesets[characterTilesetID]).getroot().findall("tile[@id]"):
+                if int(characterItem.get("id")) == characterID - characterTilesetID:
 
-                        if attribute.tag == "properties":
-                            for attrib in attribute:
-                                attrib = attrib.attrib
-                                characterAttr[attrib["name"]] = attrib["value"]
-                        elif attribute.tag == "image":
-                            tex_name = attribute.attrib["source"]
-                            characterAttr["img"] = tex_name
-                i += 1
+                    characterAttr["img"] = characterItem.find("image").get("source")
+                    for characterProperty in characterItem.findall("properties/property"):
+                        characterAttr[characterProperty.get("name")] = characterProperty.get("value")
 
             # set map character attributes if set
-            for characterProperties in child:
-                if characterProperties.tag == "properties":
-                    for characterProperty in characterProperties:
-                        attributes: dict = characterProperty.attrib
-                        characterAttr[attributes["name"]] = attributes["value"]
+            for characterProperty in item.findall("properties/property"):
+                characterAttr[characterProperty.get("name")] = characterProperty.get("value")
 
-            masterDict[unitAttr["id"]] = characterAttr
+            masterDict[item.get("id")] = characterAttr
         return masterDict
 
     def _getCharacterNames(self, editorNames: bool, root) -> dict:
-        names: dict = dict()
         unitMeta: dict = self._getCharacterAttributes(root)
-        groupIndex, layerIndex = self._getMapCharacterLayer(root)
+        names: dict = dict()
 
-        name: str = ""
-        for child in root[groupIndex][layerIndex]:
-            attributes: dict = child.attrib
-
+        for item in root.findall("group/objectgroup[@name='characters']/object"):
+            name: str = ""
             if editorNames:
-                name = Tiled._formatName(unitMeta, attributes)
-            elif "name" in attributes:
-                name = attributes["name"]
-            elif "template" not in attributes:
-                name = unitMeta[attributes["id"]]["name"]
-            names[attributes["id"]] = name
+                name = Tiled._formatName(unitMeta, item.attrib)
+            elif "name" in item.keys():
+                name = item.get("name")
+            elif "template" not in item.keys():
+                name = unitMeta[item.get("id")]["name"]
+            names[item.get("id")] = name
 
         return names
 
     def _getUnitPaths(self, root) -> dict:
-        unit_paths: dict = dict()
-        unit_spawn_locs = self._getUnitSpawnLocs(root)
-        for child in root:
-            if child.tag == "group" and child.attrib["name"] == "meta":
-                for sub_child in child:
-                    if sub_child.tag == "objectgroup" and sub_child.attrib["name"] == "paths":
-                        for path in sub_child:
-                            if not "name" in path.attrib or not path.attrib["name"].isnumeric():
-                                print("--> NO NAME SET IN PATH-ID: %s\n--> NAME NEEDS TO BE UNIT-ID\n--> ABORTING" % path.attrib["id"])
-                                exit(1)
-                            elif not path.attrib["name"] in unit_spawn_locs:
-                                print("--> PATH NAME: %s DOESN'T MATCH WITH ANY CHARACTER-ID\n--> ABORTING" % path.attrib["name"])
-                                exit(1)
-                            point_origin = unit_spawn_locs[path.attrib["name"]]
-                            parse_points: str = ""
-                            points: list = []
-                            for p in path:
-                                parse_points += p.attrib["points"]
-                            parse_points = parse_points.split(" ")
-                            for p in parse_points:
-                                p = p.split(",")
-                                p = (int(p[0]) + point_origin[0], int(p[1]) + point_origin[1])
-                                points.append(p)
-                            unit_paths[path.attrib["name"]] = points
-        return unit_paths
+        unitsPaths: dict = dict()
+        spawnPos: dict = self._getUnitSpawnLocs(root)
+
+        for item in root.findall("group/objectgroup[@name='paths']/object"):
+            if "name" not in item.keys() and not item.get("name").isnumeric():
+                print(f"--> NO NAME SET IN PATH-ID: {item.get('id')}\n--> NAME NEEDS TO BE UNIT-ID\n--> SKIPPING")
+                continue
+            elif item.get("name") not in spawnPos.keys():
+                print(f"--> PATH NAME: {item.get('name')} DOESN'T MATCH WITH ANY CHARACTER-ID\n--> SKIPPING")
+                continue
+
+            point_origin: tuple = spawnPos[item.get("name")]
+            points: list = list()
+
+            # 'item[0]' tag is either polygon or polyline
+            for p in item[0].get("points").split(" "):
+                p = p.split(",")
+                points.append((int(p[0]) + point_origin[0], int(p[1]) + point_origin[1]))
+            unitsPaths[item.get("name")] = points
+        return unitsPaths
 
     def _getUnitSpawnLocs(self, root) -> dict:
         spawnPos: dict = dict()
-        group_index, layer_index = self._getMapCharacterLayer(root)
-        for child in root[group_index][layer_index]:
-            unitAtts: dict = child.attrib
 
-            if "width" in unitAtts:
-                spawn_loc: tuple = Tiled._getCenterPos((unitAtts["x"], unitAtts["y"]), (unitAtts["width"], unitAtts["height"]))
-                spawnPos[unitAtts["id"]] = spawn_loc
+        for item in root.findall("group/objectgroup[@name='characters']/object[@width]"):
+            spawnPos[item.get("id")] = Tiled._getCenterPos(
+                (item.get("x"), item.get("y")), (item.get("width"), item.get("height"))
+            )
 
         return spawnPos
 
@@ -312,22 +269,19 @@ class Tiled:
         unitPatrolPaths: dict = self._getUnitPaths(root)
         spawnPos: dict = self._getUnitSpawnLocs(root)
 
-        groupIndex, layerIndex = self._getMapCharacterLayer(root)
-        layer = root[groupIndex][layerIndex]
-
-        for unitIndex in range(len(layer)):
-            if "template" in layer[unitIndex].attrib:
+        for item in root.findall("group/objectgroup[@name='characters']/object"):
+            if "template" in item.keys():
                 continue
 
-            unitID: str = layer[unitIndex].attrib["id"]
+            unitID: str = item.get("id")
             masterDict[unitID] = {
                 "editorName": editorNames[unitID],
                 "name": gameNames[unitID].strip(),
                 "img": os.path.splitext(unitMeta[unitID]["img"])[0],
                 "enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
                 "level": int(unitMeta[unitID]["level"]),
-                Tiled.tag_path: unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
-                Tiled.tag_spawn: spawnPos[unitID]
+                "path": unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
+                "spawnPos": spawnPos[unitID]
             }
 
         return masterDict
@@ -344,62 +298,44 @@ class Tiled:
         for filename in os.listdir(self.tiled["character_dir"]):
             if filename.endswith(Tiled.tileset_ext):
 
-                src = os.path.join(self.tiled["character_dir"], filename)
-                dest = os.path.join(self.game["character_dir"], filename)
+                src: str = os.path.join(self.tiled["character_dir"], filename)
+                dest: str = os.path.join(self.game["character_dir"], filename)
                 shutil.copy(src, dest)
 
                 print(" |-> TILESET EXPORTED: (%s)" % dest)
-
         print("--> ALL TILESETS EXPORTED")
 
     def _export_map(self):
         tree = ET.parse(self.tiled["map_file"])
         root = tree.getroot()
-        group_index, layer_index = self._getMapCharacterLayer(root)
-        editor_names = self._getCharacterNames(True, root)
-        spawn_locs = self._getUnitSpawnLocs(root)
+        editorNames: dict = self._getCharacterNames(True, root)
+        spawnPos: dict = self._getUnitSpawnLocs(root)
 
-        # for characters
-        for unit in root[group_index][layer_index]:
-            unit_id = unit.attrib["id"]
-            unit.set("name", str(editor_names[unit_id]))
-            if "width" in unit.attrib:
-                unit.set("x", str(spawn_locs[unit_id][0]))
-                unit.set("y", str(spawn_locs[unit_id][1]))
+        for item in root.findall("group/objectgroup[@name='characters']/object"):
+            characterID: str = item.get("id")
+            item.set("name", str(editorNames[characterID]))
+            item.set("x", str(spawnPos[characterID][0]))
+            item.set("y", str(spawnPos[characterID][1]))
 
-        # for target_dummys
-        tD_size = ()
+        targetDummySize: tuple = tuple()
         for template in os.listdir(self.tiled["template_dir"]):
             if "target_dummy" in template:
-                tD_root = ET.parse(os.path.join(self.tiled["template_dir"], template)).getroot()
-                for child in tD_root:
-                    if child.tag == "object":
-                        tD_size = (int(child.attrib["width"]), int(child.attrib["height"]))
-        if bool(tD_size):
-            for group in root:
-                if group.tag == "group" and group.attrib["name"] == "zed":
-                    for layer in group:
-                        if layer.tag == "objectgroup" and layer.attrib["name"] == "target_dummys":
-                            for td in layer:
-                                td_atts = td.attrib
-                                spawn_loc = Tiled._getCenterPos((td_atts["x"], td_atts["y"]), tD_size)
-                                td.set("x", str(spawn_loc[0]))
-                                td.set("y", str(spawn_loc[1]))
-                                td.set("name", Tiled._formatName({}, td_atts))
+                item = ET.parse(os.path.join(self.tiled["template_dir"], template)).getroot().find("object")
+                targetDummySize = (int(item.get("width")), int(item.get("height")))
+        if bool(targetDummySize):
+            for item in root.findall("group/objectgroup[@name='target_dummys']/objectgroup"):
+                spawnPos: tuple = Tiled._getCenterPos((item.get("x"), item.get("y")), targetDummySize)
+                item.set("x", str(spawnPos[0]))
+                item.set("y", str(spawnPos[1]))
+                item.set("name", Tiled._formatName({}, item.attrib))
 
-        # for lights and graves
-        for tag_name in ["light", "grave"]:
-            for group in root:
-                if group.tag == "group" and group.attrib["name"] == "meta":
-                    for layer in group:
-                        if layer.tag == "objectgroup" and tag_name in layer.attrib["name"]:
-                            for thing in layer:
-                                thing.set("name", Tiled._formatName({}, thing.attrib))
+        for objectGroupName in ["lights", "gravesites"]:
+            for item in root.findall(f"group/objectgroup[@name='{objectGroupName}']/object"):
+                item.set("name", Tiled._formatName(dict(), item.attrib))
 
         self._standardizeTilesets(root)
 
-        # write to map
-        dest = os.path.join(self.game["map_dir"], self.file_name + Tiled.map_ext)
+        dest: str = os.path.join(self.game["map_dir"], self.file_name + Tiled.map_ext)
         Tiled._writeXml(tree, dest)
         print("--> MAP: (%s) EXPORTED -> (%s)" % (self.file_name, dest))
 
@@ -438,60 +374,33 @@ class Tiled:
             self._export_map()
             self._export_meta()
 
-    def _removeCharacterTilsets(self, root) -> None:
-        tilesetsToDelete: list = []
-        for group in root:
-            if group.tag == "tileset" and "character" in group.attrib["source"]:
-                tilesetsToDelete.append(group)
-
-        for tileset in tilesetsToDelete:
-            root.remove(tileset)
-
     def _standardizeTilesets(self, root) -> None:
-        self._removeCharacterTilsets(root)
-
         horizontalBit: int = 0x80000000
 
         tilesets: dict = dict()
         matrices: dict = dict()
-        hierarch: dict = dict()
-
-        # get hierarch data
-        for tilesetName, level in self.tiled["hierarch"].items():
-            tilesetPath: str = os.path.join(self.tiled["tileset_dir"], tilesetName + Tiled.img_ext)
-            imgSize: tuple = ImageEditor.get_size(tilesetPath)
-            cells: int = -1
-
-            if tilesetName in self.tiled["32hTilesets"]:
-                cells = imgSize[0] // 16 * imgSize[1] // 32
-            else:
-                cells = imgSize[0] * imgSize[1] // 16**2
-
-            hierarch[tilesetName] = (int(level), int(cells))
+        hierarch: dict = self._getHierarchData()
 
         # parse the xml
         i: int = 1
-        for group in root:
-            if group.tag == "tileset" and "tilesets" in group.attrib["source"]:
-                attributes: dict = group.attrib
-                tilesets[int(attributes["firstgid"])] = {
-                    "source": attributes["source"],
+        for item in root.findall("tileset"):
+            if "character" in item.get("source"):
+                root.remove(item)
+            else:
+                tilesets[int(item.get("firstgid"))] = {
+                    "source": item.get("source"),
                     "hierarch": i
                 }
                 i += 1
 
-            elif group.tag =="group":
-                for layer in group:
-                    if layer.tag == "layer" and layer[0].tag == "data" \
-                    and "csv" in layer[0].attrib["encoding"]:
-
-                        reader = csv.reader(layer[0].text.split("\n"), delimiter=",")
-                        matrix: list = []
-                        for row in reader:
-                            if len(row) > 0:
-                                matrix.append([int(c) for c in row if c.isdigit()])
-
-                        matrices[layer.attrib["name"]] = matrix
+        for item in root.findall("group/layer"):
+            csvData = item.find("data[@encoding='csv']")
+            if csvData is not None:
+                matrices[item.get("name")] = [
+                    [int(c) for c in row if c.isdigit()]
+                    for row in csv.reader(csvData.text.split("\n"), delimiter=",")
+                    if len(row) > 0
+                ]
 
         # put it all together
         refTilesets: dict = dict()
@@ -499,16 +408,10 @@ class Tiled:
 
             tilesetName: str = os.path.splitext(os.path.basename(tilesets[gid]["source"]))[0]
             data: dict = {
-                "gidDesired": 1,
-                "hierarch": tilesets[gid]["hierarch"],
-                "hierarchDesired": hierarch[tilesetName][0],
-                "tilesetName":tilesetName,
+                "firstgid": hierarch[tilesetName][2],
+                "tilesetName": tilesetName,
                 "tiles": dict()
             }
-
-            for v in hierarch.values():
-                if v[0] < data["hierarchDesired"]:
-                    data["gidDesired"] += v[1]
 
             for layerName, matrix in matrices.items():
                 data["tiles"][layerName] = set()
@@ -524,7 +427,7 @@ class Tiled:
                         if tile >= gid and tile < gid + hierarch[tilesetName][1]:
                             if flippedH:
                                 tile |= horizontalBit
-                            newTileID: int = tile - gid + data["gidDesired"]
+                            newTileID: int = tile - gid + hierarch[tilesetName][2]
 
                             data["tiles"][layerName].add((i, j, newTileID))
 
@@ -538,24 +441,137 @@ class Tiled:
                         matrices[layerName][newTileIDPacket[0]][newTileIDPacket[1]] = newTileIDPacket[2]
 
         # write matrix results to xml
-        for group in root:
-            if group.tag == "tileset" and "tilesets" in group.attrib["source"]:
-                data: dict = refTilesets[int(group.attrib["firstgid"])]
+        for item in root.findall("tileset"):
+            data: dict = refTilesets[int(item.get("firstgid"))]
+            item.set("firstgid", str(data["firstgid"]))
+            item.set("source", "tilesets/" + data["tilesetName"] + Tiled.tileset_ext)
 
-                group.set("firstgid", str(data["gidDesired"]))
-                group.set("source", "tilesets/" + data["tilesetName"] + Tiled.tileset_ext)
+        for item in root.findall("group/layer"):
+            csvData = item.find("data[@encoding='csv']")
+            if csvData is None:
+                continue
 
-            if group.tag =="group":
-                for layer in group:
-                    if layer.tag == "layer" and layer[0].tag == "data" and "csv" in layer[0].attrib["encoding"]:
+            matrixStr: str = "\n"
+            for row in matrices[item.get("name")]:
+                matrixStr += ",".join([str(c) for c in row]) + ",\n"
+            csvData.text = matrixStr[:-2] + "\n"
 
-                        matrixStr: str = "\n"
-                        for row in matrices[layer.attrib["name"]]:
-                            matrixStr += ",".join([str(c) for c in row]) + ",\n"
+        for item in root.findall("group/objectgroup[@name='characters']/object"):
+            item.set("gid", "0")
 
-                        layer[0].text = matrixStr[:-2] + "\n"
+    def _getHierarchData(self) -> dict:
+        hierarch: dict = dict()
+        for tilesetName, level in self.tiled["hierarch"].items():
+            tilesetPath: str = os.path.join(self.tiled["tileset_dir"], tilesetName + Tiled.img_ext)
+            imgSize: tuple = ImageEditor.get_size(tilesetPath)
+            cells: int = -1
 
-        groupIndex, layerIndex = self._getMapCharacterLayer(root)
-        for characterObject in root[groupIndex][layerIndex]:
-            characterObject.set("gid", "0")
+            if tilesetName in self.tiled["32hTilesets"]:
+                cells = imgSize[0] // 16 * imgSize[1] // 32
+            else:
+                cells = imgSize[0] * imgSize[1] // 16**2
+
+            hierarch[tilesetName] = (int(level), int(cells))
+
+        for tilesetName, dataPacket in hierarch.items():
+            firstgid: int = 1
+            for v in hierarch.values():
+                if v[0] < dataPacket[0]:
+                    firstgid += v[1]
+
+            hierarch[tilesetName] = (dataPacket[0], dataPacket[1], firstgid)
+
+        return hierarch
+
+    def exportTilesetData(self) -> None:
+        occluderData: dict = dict()
+        for tilesetName in ["buildings", "trees", "misc_32", "tiles_32", "walls"]:
+            occluderData.update(self._exportOccluderData(tilesetName))
+
+        shaderData: dict = dict()
+
+        for dirpath, _, filenames in os.walk(self.tiled["map_dir"]):
+            for filename in filenames:
+                filepath: str = os.path.join(dirpath, filename)
+
+                if filepath.endswith(Tiled.tileset_ext):
+                    shaderData.update(self._exportTileShaderData(filepath))
+
+                elif filepath.endswith(Tiled.map_ext):
+                    for item in ET.parse(filepath).getroot().findall("group/objectgroup/object"):
+                        shaderProperty = item.find("properties/property[@name='shader']")
+                        if shaderProperty is not None:
+                            shaderData["%s-%s" % (os.path.splitext(filename)[0], item.get("id"))] = shaderProperty.get("value")
+
+        dest: str = os.path.join(self.game["meta_dir"], "importer")
+        dataPackets: list = [
+            (os.path.join(dest, "tilesetLightOccluders.json"), occluderData),
+            (os.path.join(dest, "tilesetAnimations.json"), self._exportTileAnimData()),
+            (os.path.join(dest, "tilesetShaders.json"), shaderData)
+        ]
+
+        if not os.path.isdir(dest):
+            os.mkdir(dest)
+        for dataPacket in dataPackets:
+            with open(dataPacket[0], "w") as outfile:
+                json.dump(dataPacket[1], outfile, indent="\t")
+
+    def _exportOccluderData(self, tilesetName: str) -> dict:
+        getFileName: str = lambda filePath: os.path.splitext(os.path.basename(filePath))[0]
+
+        root = ET.parse(os.path.join(self.tiled["tileset_dir"], tilesetName + Tiled.tileset_ext)).getroot()
+
+        master: dict = dict()
+        hierarch: dict = self._getHierarchData()
+        templatePaths: set = set()
+
+        # get all tile occluder data
+        for tile in root.findall("tile[@id]"):
+            tileTemplate = tile.find("objectgroup/object[@template]")
+            if tileTemplate is None:
+                continue
+
+            tileGid: int = hierarch[tilesetName][2] + int(tile.get("id"))
+            master[tileGid] = {
+                "templateName": getFileName(tileTemplate.get("template")),
+                "pos": [int(tileTemplate.get("x")), int(tileTemplate.get("y"))]
+            }
+            templatePaths.add(os.path.join(self.tiled["tileset_dir"], tileTemplate.get("template")))
+
+        # get the occluder data
+        for templatePath in templatePaths:
+            polygonTag = ET.parse(templatePath).getroot().find("object/polygon")
+            points: list = list()
+            for point in polygonTag.get("points").split(" "):
+                point = point.split(",")
+                points.append(int(point[0]))
+                points.append(int(point[1]))
+            master[getFileName(templatePath)] = points
+
+        return master
+
+    def _exportTileAnimData(self) -> dict:
+        root = ET.parse(os.path.join(self.tiled["tileset_dir"], "terrain" + Tiled.tileset_ext)).getroot()
+
+        return {
+            int(tile.get("id")) + 1: tile.get("type")
+            for tile in root.findall("tile[@type]")
+        }
+
+    def _exportTileShaderData(self, tilesetPath: str) -> dict:
+        master: dict = dict()
+        hierarch: dict = self._getHierarchData()
+
+        for tile in ET.parse(tilesetPath).getroot().findall("tile[@id]"):
+            item = tile.find("properties/property[@name='shader']")
+            if item is None:
+                continue
+
+            shaderName: str = item.get("value").strip()
+            if len(shaderName) > 0:
+                tilesetName: str = os.path.splitext(os.path.basename(tilesetPath))[0]
+                tileGid: int = hierarch[tilesetName][2] + int(tile.get("id"))
+                master[tileGid] = shaderName
+
+        return master
 

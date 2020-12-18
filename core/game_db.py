@@ -200,7 +200,7 @@ class GameDB:
     def exportScript(self) -> None:
         print("--> EXPORTING SCRIPTS")
 
-        self.cursor.execute("SELECT name FROM assetsnd WHERE assetfolder='ui' ORDER BY name ASC;")
+        self.cursor.execute("SELECT name FROM sound WHERE assetfolder='ui' ORDER BY name ASC;")
         tuples: list = self.cursor.fetchall()
 
         definitions: str = "public const string"
