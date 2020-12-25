@@ -6,14 +6,14 @@ PY_EXT=".py"
 
 for path in "${VIEW_DIRS[@]}"; do
 
-    for src in $path*$QT_EXT; do
+	for src in $path*$QT_EXT; do
 
-        dest=$(dirname $src)/$(basename -s $QT_EXT $src)$PY_EXT
+		dest=$(dirname $src)/$(basename -s $QT_EXT $src)$PY_EXT
 
-        pyuic5 -x $src -o $dest
+		pyuic5 -x $src -o $dest
 
-        echo "Made: "$dest
-            
-    done
+		echo "Made: "$dest
+			
+	done
 
 done

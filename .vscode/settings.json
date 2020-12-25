@@ -1,5 +1,7 @@
 {
-	"python.pythonPath": "/usr/bin/python3",
+	"python.pythonPath": "C:\\Users\\rubsz\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
 	"python.formatting.provider": "yapf",
-	"editor.formatOnSave": false
+	"editor.formatOnSave": false,
+	"python.linting.pylintPath": "/path/to/virtualenv/bin/pylint",
+	"python.linting.pylintEnabled": true
 }
