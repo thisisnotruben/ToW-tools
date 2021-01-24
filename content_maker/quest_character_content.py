@@ -25,8 +25,7 @@ class QuestCharacterContent(Ui_objective_content_view, QWidget, ISerializable, D
 		self.reward.itemChanged.connect(self.onRewardItemChanged)
 		self.reward.contextMenuEvent = MethodType(self.onRewardContextMenuEvent, self.reward)
 		# set stylesheet
-		root_dir = os.path.join(os.path.dirname(__file__), os.pardir)
-		path = os.path.join(root_dir, "QTDark-master", "QTDark.stylesheet")
+		path: str = os.path.join(os.path.dirname(__file__), "QTDark-master", "QTDark.stylesheet")
 		with open(path, "r") as f:
 			self.setStyleSheet(f.read())
 

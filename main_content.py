@@ -37,11 +37,9 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 		self.setupUi(self)
 		self.showMaximized()
 		self.db = GameDB()
-	
+
 	def setupUi(self, MainWindow):
 		super().setupUi(MainWindow)
-		# set main window title/icon
-		MainWindow.setWindowIcon(QIcon("icon.png"))
 		self.setTitle()
 		# route actions
 		self.action_undo.triggered.connect(lambda: self.onDo(False))
@@ -54,7 +52,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 		self.action_save.triggered.connect(self.onSaveFile)
 		self.action_save_As.triggered.connect(self.onSaveAsFile)
 		self.action_quit.triggered.connect(self.close)
-		
+
 		# add about popup
 		about_popup = lambda: QMessageBox.about(MainWindow, "About", self.about)
 		self.action_about.triggered.connect(about_popup)
@@ -94,7 +92,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 
 	def insertNode(self, index=0):
 		self.setDirty([])
-		# init widget 
+		# init widget
 		node = self.node(self.list_view)
 		node.routeDirtiables(self)
 		# route button connections
@@ -122,7 +120,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 		node.deleteNode(True)
 
 	def disableUndoRedoActions(self):
-		# check index of buttons and 
+		# check index of buttons and
 		# potentially disable buttons
 		reached_end = self.clipboard.reached_end()
 		self.action_undo.setDisabled(reached_end[0])
@@ -162,7 +160,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 		self.deleteNode(node)
 		# insert node new at index and set data
 		self.insertNode(node_curr_index + by).unserialize(serialized_data)
-  
+
 	def onSearch(self, current_text):
 		# util functions
 		name2Tuple = lambda objectName: (objectName,)
@@ -172,11 +170,11 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 		def clear_combo_box(combo_box):
 			while combo_box.count() != 1:
 				combo_box.removeItem(1)
-		
+
 		# cascading search starts
 		founded_items = set(map(lambda listWidgetItem: (listWidgetItem.text(),),
 			self.list_view.findItems(current_text, Qt.MatchContains)))
-		
+
 		db_filter = self.filter_db.currentText()
 		if db_filter != "All":
 			if len(self.db.execute_query(f"SELECT name FROM sqlite_master WHERE name = '{db_filter}';")) > 0:
@@ -194,7 +192,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 				mapCharacters = charFilter("map", type_filter)
 				founded_items.intersection_update(mapCharacters)
 				# load only races found in map to sub_type_filter if db == character
-				mapRaces = set(map(lambda cTuple: 
+				mapRaces = set(map(lambda cTuple:
 					self.list_view.item(self.list_view.all_items[cTuple[0]]).data(Qt.UserRole)["race"],
 					mapCharacters))
 				mapRaces.add("All")
@@ -213,7 +211,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 			# reset character filter
 			clear_combo_box(self.filter_sub_type)
 			self.filter_sub_type.addItems(self.list_view.sub_type_tags[db_filter])
-				
+
 		sub_type_filter = self.filter_sub_type.currentText()
 		if self.filter_sub_type.isVisible() and sub_type_filter != "All":
 			founded_items.intersection_update(charFilter("race", sub_type_filter))
@@ -264,7 +262,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 			"There are unsaved changes. Do you want to save now?", \
 			QMessageBox.Discard | QMessageBox.Cancel | QMessageBox.Save)
 		if reply == QMessageBox.Save:
-			self.onSaveFile()        
+			self.onSaveFile()
 		return reply
 
 	def onNewFile(self):
@@ -354,7 +352,7 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 			QCloseEvent.ignore()
 		else:
 			QCloseEvent.accept()
-	
+
 	def onDo(self, redo):
 		self.clearWorkspace()
 		payload = self.clipboard.redo() if redo else self.clipboard.undo()
@@ -407,9 +405,14 @@ if __name__ == "__main__":
 	# make app
 	app = QApplication(sys.argv)
 	ui = MainWindow(app)
-	# set style sheet
-	path: str = os.path.join("QTDark-master", "QTDark.stylesheet")
+
+	# set style sheet / icon
+	rootDir: str = os.path.dirname(__file__)
+	path: str = os.path.join(rootDir, "QTDark-master", "QTDark.stylesheet")
+
+	ui.setWindowIcon(QIcon(os.path.join(rootDir, "icon.png")))
 	with open(path, "r") as f:
 		ui.setStyleSheet(f.read())
+
 	# exec app
 	sys.exit(app.exec_())

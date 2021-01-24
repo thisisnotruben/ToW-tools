@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Tides of War Exporter
 Comment=Tool to help with the development of Tides Tides of War
-Exec=/home/rubsz/tiled/Tides_of_War/dev/ToW_tool/main.py
+Exec=/home/rubsz/tiled/Tides_of_War/dev/ToW_tool/main_exporter.py
 Icon=/home/rubsz/tiled/Tides_of_War/dev/ToW_tool/icon.png
 Type=Application
 StartupNotify=false

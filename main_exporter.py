@@ -51,21 +51,20 @@ class MainWindow(Ui_MainWindow):
 	def setupUi(self, MainWindow):
 		super().setupUi(MainWindow)
 
-		icon = QIcon(os.path.join(os.path.dirname(__file__), os.pardir, "icon.png"))
-		self.main_window.setWindowIcon(icon)
-
 		about_popup = lambda: QMessageBox.about(self.main_window, "About", self.about)
 		self.action_about.triggered.connect(about_popup)
 
 		self.action_quit.triggered.connect(MainWindow.close)
 
-		# set style sheet
-		path: str = os.path.join("QTDark-master", "QTDark.stylesheet")
-		with open(path, "r") as f:
+		# set style sheet / icon
+		rootDir: str = os.path.dirname(__file__)
+
+		self.main_window.setWindowIcon(QIcon(os.path.join(rootDir, "icon.png")))
+		with open(os.path.join(rootDir, "QTDark-master", "QTDark.stylesheet"), "r") as f:
 			MainWindow.setStyleSheet(f.read())
 
 	def setup_tool(self):
-		self.buttons = [self.make_sprite_icons, self.make_sprite_deaths, self.make_sym_links, 
+		self.buttons = [self.make_sprite_icons, self.make_sprite_deaths, self.make_sym_links,
 			self.make_icon_atlas, self.archive, self.export_map, self.export_db, self.debug_map,
 			self.make_tilesets, self.export_content, self.make_lid]
 
@@ -96,7 +95,7 @@ class MainWindow(Ui_MainWindow):
 		}
 
 		pM: dict = PathManager.get_paths()
-		
+
 		if dialogueType == FileDialogueType.SPRITE_SHEET:
 			dialogue["header"] = "Open SpriteSheets"
 			dialogue["openPath"] = pM["game"]["character_dir"]
@@ -142,4 +141,3 @@ if __name__ == "__main__":
 
 	# exec app
 	sys.exit(app.exec_())
-	
