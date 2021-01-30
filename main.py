@@ -20,6 +20,9 @@ class Commands(enum.Enum):
 	EXPORT_QUEST = "ARGS: (questFilePaths)"
 	EXPORT_NAMEDB = enum.auto()
 	EXPORT_AUDIO = enum.auto()
+	EXPORT_USED_GID = enum.auto()
+	EXPORT_TILE_CSV = enum.auto()
+	SET_CHAR_PROP = enum.auto()
 	DEBUG_MAP = enum.auto()
 	MAKE_DEBUG_TILESETS = enum.auto()
 	MAKE_32_TILESETS = enum.auto()
@@ -92,6 +95,15 @@ class Main:
 
 		elif command == Commands.EXPORT_AUDIO:
 			self.asset.exportRawAudio()
+
+		elif command == Commands.EXPORT_USED_GID:
+			self.tiled.exportUsedTileGid()
+
+		elif command == Commands.EXPORT_TILE_CSV:
+			self.tiled.exportCsvs()
+
+		elif command == Commands.SET_CHAR_PROP:
+			self.tiled.setCharacterTilesetProperties()
 
 		elif command == Commands.DEBUG_MAP:
 			self.tiled.debug_map()

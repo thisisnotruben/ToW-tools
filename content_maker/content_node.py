@@ -11,7 +11,7 @@ from .icon_generator import IconGenerator
 
 
 class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Dirty):
-	
+
 	def __init__(self, db_list, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		Dirty.__init__(self)
@@ -68,7 +68,7 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
 			if reply == QMessageBox.Yes:
 				self.on_delete_confirm.trigger()
 				self.close()
-		
+
 	def deleteCharacter(self, list_widget, listWidgetItem):
 		# delete character entry
 		if self.db_list.isCharacter(listWidgetItem.text()):
@@ -109,11 +109,8 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
 		self.move_node_right_bttn.clicked.connect(parent.setDirty)
 
 		self.character_list.itemChanged.connect(parent.setDirty)
-		self.level.valueChanged.connect(parent.setDirty)
-		self.enemy.stateChanged.connect(parent.setDirty)
 		self.healer.stateChanged.connect(parent.setDirty)
 		self.healer_gold_amount.valueChanged.connect(parent.setDirty)
-		self.dialogue.textChanged.connect(parent.setDirty)
 		self.drops_list.itemChanged.connect(parent.setDirty)
 		self.spells_list.itemChanged.connect(parent.setDirty)
 		self.merchandise_list.itemChanged.connect(parent.setDirty)
@@ -132,16 +129,13 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
 
 		payload = OrderedDict([
 			("character", getItemData(self.character_list, True)),
-			("level", self.level.value()),
-			("enemy", self.enemy.isChecked()),
 			("healer", self.healer.isChecked()),
 			("healerCost", self.healer_gold_amount.value()),
-			("dialogue", self.dialogue.toPlainText()),
 			("drops", getItemData(self.drops_list)),
 			("spells", getItemData(self.spells_list)),
 			("merchandise", getItemData(self.merchandise_list))
 		])
-	
+
 		return payload
 
 	def unserialize(self, data):
@@ -154,11 +148,8 @@ class CharacterContentNode(QWidget, Ui_character_content_node, ISerializable, Di
 		if len(data["character"]) != 0:
 			unpackItemData(self.character_list, data["character"])
 
-		self.level.setValue(int(data["level"]))
-		self.enemy.setChecked(bool(data["enemy"]))
 		self.healer.setChecked(bool(data["healer"]))
 		self.healer_gold_amount.setValue(int(data["healerCost"]))
-		self.dialogue.setText(data["dialogue"])
 
 		for drop in data["drops"]:
 			unpackItemData(self.drops_list, drop)

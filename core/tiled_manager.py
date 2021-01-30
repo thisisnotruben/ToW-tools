@@ -276,6 +276,7 @@ class Tiled:
 				"img": os.path.splitext(unitMeta[unitID]["img"])[0],
 				"enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
 				"level": int(unitMeta[unitID]["level"]),
+				"dialogue": unitMeta[unitID]["dialogue"],
 				"path": unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
 				"spawnPos": spawnPos[unitID]
 			}
@@ -592,4 +593,86 @@ class Tiled:
 					master[tileGid] = [int(item.get("x")), int(item.get("y"))]
 
 		return master
+
+	def exportUsedTileGid(self) -> None:
+		horizontalBit: int = 0x80000000
+		usedGids: set = set()
+
+		for filename in os.listdir(self.game["map_dir"]):
+			if not filename.endswith(Tiled.map_ext):
+				continue
+
+			root = ET.parse(os.path.join(self.game["map_dir"], filename)).getroot()
+			for item in root.findall("group/layer"):
+				csvData = item.find("data[@encoding='csv']")
+				if csvData is None:
+					continue
+
+				for row in csv.reader(csvData.text.split("\n"), delimiter=","):
+					for gid in row:
+						if gid.isdigit() and gid != "0":
+							tile: int = int(gid)
+							if tile & horizontalBit > 0:
+								tile &= ~horizontalBit
+							usedGids.add(tile)
+
+		dest: str = os.path.join(self.game["meta_dir"], "importer", "usedGid.json")
+		with open(dest, "w") as outfile:
+			json.dump(sorted(list(usedGids)), outfile, indent="\t")
+
+	def exportCsvs(self):
+		for filename in os.listdir(self.game["map_dir"]):
+			if not filename.endswith(Tiled.map_ext):
+				continue
+
+			tileData: dict = dict()
+			root = ET.parse(os.path.join(self.game["map_dir"], filename)).getroot()
+
+			for group in root.findall("group"):
+				tileData[group.get("name")] = dict()
+
+				for item in group.findall("layer"):
+					csvData = item.find("data[@encoding='csv']")
+					if csvData is not None:
+						tileData[group.get("name")][item.get("name")] = [
+							[int(c) for c in row if c.isdigit()]
+							for row in csv.reader(csvData.text.split("\n"), delimiter=",")
+							if len(row) > 0
+						]
+
+			dest: str = os.path.join(self.game["meta_dir"], "importer", os.path.splitext(filename)[0] + ".json")
+			with open(dest, "w") as outfile:
+				json.dump(tileData, outfile, indent="\t")
+
+	def setCharacterTilesetProperties(self) -> None:
+
+		characterAtlas: dict = {
+			"name": {"type": "bool", "value":"false"},
+			"level": {"type": "int", "value": "1"},
+			"name": {"value": ""},
+			"dialogue": {"value": ""}
+		}
+		characterAttributes: set = set(characterAtlas.keys())
+
+		for filename in os.listdir(self.tiled["character_dir"]):
+			if filename.endswith(Tiled.tileset_ext):
+
+				filepath: str = os.path.join(self.tiled["character_dir"], filename)
+				tree = ET.parse(filepath)
+
+				for properties in tree.getroot().findall("tile/properties"):
+					attributes: set = set()
+					for prop in properties:
+						attributes.add(prop.get("name"))
+
+					for prop in characterAttributes - attributes:
+
+						attribute = ET.SubElement(properties, "property", {
+							"name": prop,
+							"value": characterAtlas[prop]["value"]
+						})
+						if "type" in characterAtlas[prop].keys():
+							attribute.set("type", characterAtlas[prop]["type"])
+
+				Tiled._writeXml(tree, filepath)
 
