@@ -35,18 +35,18 @@ class AssetManager:
 		definedColorNames: list = [c.name for c in Color]
 		for color in [icon["bg"], icon["grid"], icon["text"]]:
 			if not color in definedColorNames:
-				print("--> COLOR: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED COLORS:" % color)
+				print("──> COLOR: (%s) NOT DEFINED FOR ICON ATLAS\n──> DEFINED COLORS:" % color)
 				for color in definedColorNames:
 					print(" |-> ", color)
-				print("--> ABORTING")
+				print("──> ABORTING")
 				exit(1)
 
 		definedFontNames: list = [f.name for f in Font]
 		if not icon["font"] in definedFontNames:
-			print("--> FONT: (%s) NOT DEFINED FOR ICON ATLAS\n--> DEFINED FONTS:" % icon["font"])
+			print("──> FONT: (%s) NOT DEFINED FOR ICON ATLAS\n──> DEFINED FONTS:" % icon["font"])
 			for font in definedFontNames:
 				print(" |-> ", font)
-			print("--> ABORTING")
+			print("──> ABORTING")
 			exit(1)
 
 		# make paths
@@ -58,7 +58,7 @@ class AssetManager:
 		hvFrames: tuple = (int(icon["hv_frames"][0]), int(icon["hv_frames"][1]))
 
 		# make atlas
-		print("--> MAKING ICON ATLAS:")
+		print("──> MAKING ICON ATLAS:")
 		ImageEditor.resize_image(src, dest, size)
 
 		print(" |-> IMAGE RESIZED")
@@ -71,7 +71,7 @@ class AssetManager:
 		ImageEditor.text_grid(dest, dest, hvFrames, Color[icon["text"]].value, Font[icon["font"]].value)
 
 		print(" |-> IMAGE ENUMERATED")
-		print("--> ICON ATLAS MADE: (%s)" % dest)
+		print("──> ICON ATLAS MADE: (%s)" % dest)
 
 	def make_sprite_deaths(self, *orderPaths) -> None:
 		# load img db
@@ -88,13 +88,13 @@ class AssetManager:
 			batchOrder = orderPaths
 			for order in batchOrder:
 				if not os.path.isfile(order):
-					print("--> ERROR: (orderPaths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING")
+					print("──> ERROR: (orderPaths) CANNOT CONTAIN DIRECTOR(Y/IES)\n──> ABORTING")
 					return
 
 		# start command
 		command: str = "gimp -idf"
 		# build command
-		print("--> MAKING SPRITE DEATH ANIMATIONS")
+		print("──> MAKING SPRITE DEATH ANIMATIONS")
 		for src in batchOrder:
 			if src.endswith(AssetManager.img_ext):
 				# make args
@@ -110,19 +110,19 @@ class AssetManager:
 				command += ' -b \'(python-fu-death-anim-batch RUN-NONINTERACTIVE "%s" "%s" %d %d)\'' % (src, dest, hFrames, death_frame_start)
 
 			elif len(orderPaths) != 0:
-				print("--> ERROR: (orderPaths) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH")
+				print("──> ERROR: (orderPaths) ARG WRONG TYPE, MUST BE ABSOLUTE ADDRESS PNG FILE PATH")
 
 		command += " -b '(gimp-quit 0)'"
 		# execute command
 		os.system(command)
-		print("--> SPRITE DEATH ANIMATIONS MADE")
+		print("──> SPRITE DEATH ANIMATIONS MADE")
 
 	def make_sym_links(self) -> None:
 		syms_made: list = list()
 		# file naming convention used
 		pattern = re.compile("[0-9]+%s" % AssetManager.img_ext)
 		# loop through all dirs to find hard copies and send to the game asset dir
-		print("--> MAKING SYM LINKS")
+		print("──> MAKING SYM LINKS")
 		for dirpath, dirnames, filenames in os.walk(self.assets["dev_character_dir"]):
 			for file_name in filenames:
 				src = os.path.join(dirpath, file_name)
@@ -132,11 +132,11 @@ class AssetManager:
 					os.symlink(dest, src)
 					syms_made.append(dest)
 					print(" |-> SYM LINK MADE: (%s) -> (%s)" % (src, dest))
-		print("--> ALL SYM LINKS MADE")
+		print("──> ALL SYM LINKS MADE")
 		return syms_made
 
 	def exportRawAudio(self) -> None:
-		print("--> EXPORTING AUDIO")
+		print("──> EXPORTING AUDIO")
 
 		tuples: list = GameDB().execute_query("SELECT name, rawName, assetFolder FROM AssetSnd;")
 		allSoundNames: set = set()
@@ -195,7 +195,7 @@ class AssetManager:
 			if v > 1:
 				print(" |-> DUPLICATE FOUND IN ASSET POOL: %s" % f"{k[0]}: ".ljust(15) + k[1])
 
-		print("--> ALL AUDIO EXPORTED")
+		print("──> ALL AUDIO EXPORTED")
 
 	def _exportToWAV(self, src: str, dest: str):
 		command: str = f"ffmpeg -i {src} {dest}"

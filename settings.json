@@ -15,7 +15,8 @@
 		"character_dir": "asset/img/character",
 		"sndDir": "asset/snd",
 		"meta_dir": "data",
-		"light_dir": "asset/img/light/tiledLight"
+		"light_dir": "asset/img/light/tiledLight",
+		"dialogic": "dialogic/timelines"
 	},
 	"debug": {
 		"buildings.png": "GREEN",

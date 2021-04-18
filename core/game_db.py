@@ -172,7 +172,7 @@ class GameDB:
 		return {t[0]: dict(zip(attributeNames[1:], t[1:])) for t in tuples}
 
 	def export_databases(self) -> None:
-		print("--> EXPORTING DATABASES")
+		print("──> EXPORTING DATABASES")
 
 		databases: dict = {
 			DataBases.ITEMDB: self.getItemDB(),
@@ -191,10 +191,10 @@ class GameDB:
 			self._export(databases[db], dest)
 
 			print(f" |-> DATABASE EXPORTED: ({dest})")
-		print("--> ALL DATABASES EXPORTED")
+		print("──> ALL DATABASES EXPORTED")
 
 	def exportScript(self) -> None:
-		print("--> EXPORTING SCRIPTS")
+		print("──> EXPORTING SCRIPTS")
 
 		self.cursor.execute("SELECT name FROM sound WHERE assetfolder='ui' ORDER BY name ASC;")
 		tuples: list = self.cursor.fetchall()
@@ -234,7 +234,7 @@ class GameDB:
 		return name
 
 	def export_character_content(self, *contentFilePaths) -> None:
-		print("--> EXPORTING CHARACTER CONTENT")
+		print("──> EXPORTING CHARACTER CONTENT")
 
 		if len(contentFilePaths) == 0:
 			print(" |-> ABORTING: NO PATHS GIVEN")
@@ -268,7 +268,7 @@ class GameDB:
 				print(f" |-> CHARACTER CONTENT EXPORTED: ({dest})")
 
 	def export_quest_content(self, *questFilePaths) -> None:
-		print("--> EXPORTING QUEST CONTENT")
+		print("──> EXPORTING QUEST CONTENT")
 
 		if len(questFilePaths) == 0:
 			print(" |-> ABORTING: NO PATHS GIVEN")

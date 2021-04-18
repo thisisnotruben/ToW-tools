@@ -122,10 +122,10 @@ class Tiled:
 
 		for item in root.findall("group/objectgroup[@name='paths']/object"):
 			if "name" not in item.keys() and not item.get("name").isnumeric():
-				print(f"--> NO NAME SET IN PATH-ID: {item.get('id')}\n--> NAME NEEDS TO BE UNIT-ID\n--> SKIPPING")
+				print(f"──> NO NAME SET IN PATH-ID: {item.get('id')}\n──> NAME NEEDS TO BE UNIT-ID\n──> SKIPPING")
 				continue
 			elif item.get("name") not in spawnPos.keys():
-				print(f"--> PATH NAME: {item.get('name')} DOESN'T MATCH WITH ANY CHARACTER-ID\n--> SKIPPING")
+				print(f"──> PATH NAME: {item.get('name')} DOESN'T MATCH WITH ANY CHARACTER-ID\n──> SKIPPING")
 				continue
 
 			point_origin: tuple = spawnPos[item.get("name")]
@@ -164,19 +164,19 @@ class Tiled:
 			Tiled._debugMapMoveFiles(self.tiled["debug_dir"], self.tiled["tileset_dir"])
 			with open(os.path.join(Tiled.temp_dir, "README.txt"), "w") as f:
 				f.write("Don't delete folder or contents of folder manually. If you do, you've done messed up.")
-		print("--> MAP DEBUG OVERLAY: %s\n--> PRESS (CTRL-T) TO REFRESH IF HASN'T SHOWN" % debug)
+		print("──> MAP DEBUG OVERLAY: %s\n──> PRESS (CTRL-T) TO REFRESH IF HASN'T SHOWN" % debug)
 
 	def make_debug_tilesets(self):
 		defined_color_names = [c.name for c in Color]
-		print("--> MAKING DEBUG TILESETS:")
+		print("──> MAKING DEBUG TILESETS:")
 		for tileset in os.listdir(self.tiled["tileset_dir"]):
 			if tileset.endswith(Tiled.img_ext):
 				# check if color is defined
 				if not self.debug[tileset] in defined_color_names:
-					print("--> COLOR: (%s) NOT DEFINED FOR TILESET: (%s)\n--> DEFINED COLORS:" % (self.debug[tileset], tileset))
+					print("──> COLOR: (%s) NOT DEFINED FOR TILESET: (%s)\n──> DEFINED COLORS:" % (self.debug[tileset], tileset))
 					for color in defined_color_names:
 						print(" |-> ", color)
-					print("--> ABORTING")
+					print("──> ABORTING")
 					exit(1)
 				# make paths
 				src = os.path.join(self.tiled["tileset_dir"], tileset)
@@ -184,10 +184,10 @@ class Tiled:
 				# create overlay
 				ImageEditor.create_overlay(src, dest, Color[self.debug[tileset]].value)
 				print(" |-> TILESET MADE: (%s)" % dest)
-		print("--> ALL DEBUG TILESETS MADE")
+		print("──> ALL DEBUG TILESETS MADE")
 
 	def make_32_tilesets(self):
-		print("--> MAKING 32px TILESETS:")
+		print("──> MAKING 32px TILESETS:")
 		for tileset in os.listdir(self.tiled["tileset_dir"]):
 			if tileset in self.tilesets_32:
 				# make paths
@@ -198,7 +198,7 @@ class Tiled:
 				ImageEditor.pad_height(src, dest, 16, 16)
 
 				print(" |-> TILESET MADE: (%s)" % dest)
-		print("--> ALL 32px TILESETS MADE")
+		print("──> ALL 32px TILESETS MADE")
 
 	def make_sprite_icons(self, *sprite_paths):
 		batch_order = []
@@ -214,9 +214,9 @@ class Tiled:
 			# checking if input are valid files & images
 			for img in batch_order:
 				if not os.path.isfile(img):
-					print("--> ERROR: (sprite_paths) CANNOT CONTAIN DIRECTOR(Y/IES)\n--> ABORTING")
+					print("──> ERROR: (sprite_paths) CANNOT CONTAIN DIRECTOR(Y/IES)\n──> ABORTING")
 					return
-		print("--> MAKING SPRITE ICONS")
+		print("──> MAKING SPRITE ICONS")
 		# load img db
 		img_data = GameDB().get_frame_data()
 		# make character icons
@@ -234,7 +234,7 @@ class Tiled:
 				# write image
 				ImageEditor.crop_frame(
 					src, dest, character_hv_frames, (0, 0))
-		print("--> ALL SPRITE ICONS MADE")
+		print("──> ALL SPRITE ICONS MADE")
 
 	def get_character_data(self) -> list:
 		# loop through all map files in dir
@@ -274,9 +274,9 @@ class Tiled:
 				"editorName": editorNames[unitID],
 				"name": gameNames[unitID].strip(),
 				"img": os.path.splitext(unitMeta[unitID]["img"])[0],
+				"dialogue": "",
 				"enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
 				"level": int(unitMeta[unitID]["level"]),
-				"dialogue": unitMeta[unitID]["dialogue"],
 				"path": unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
 				"spawnPos": spawnPos[unitID]
 			}
@@ -284,7 +284,7 @@ class Tiled:
 		return masterDict
 
 	def export_tilesets(self):
-		print("--> EXPORTING TILESETS")
+		print("──> EXPORTING TILESETS")
 
 		for directory in ["light_dir", "tileset_dir"]:
 			if os.path.exists(self.game[directory]):
@@ -301,7 +301,7 @@ class Tiled:
 				shutil.copy(src, dest)
 
 				print(f" |-> TILESET EXPORTED: ({dest})")
-		print("--> ALL TILESETS EXPORTED")
+		print("──> ALL TILESETS EXPORTED")
 
 	def _export_map(self, fileName: str):
 		tree = ET.parse(self.tiled["map_file"])
@@ -340,27 +340,24 @@ class Tiled:
 
 		dest: str = os.path.join(self.game["map_dir"], fileName + Tiled.map_ext)
 		Tiled._writeXml(tree, dest)
-		print("--> MAP: (%s) EXPORTED -> (%s)" % (fileName, dest))
+		print("──> MAP: (%s) EXPORTED -> (%s)" % (fileName, dest))
 
-	def _export_meta(self, fileName: str):
+	def _exportMapData(self, fileName: str):
 		master_dict = self._getCharacterMapData()
+		
 		# reformat data
-		clean_dict = {}
+		reformattedDict: dict = dict()
 		for unit_ID in master_dict:
 			if "editorName" in master_dict[unit_ID]:
-
 				unit_editor_name : str = master_dict[unit_ID]["editorName"]
 				del master_dict[unit_ID]["editorName"]
-				if not (unit_editor_name.split("-")[0] in Tiled.special_units and len(master_dict[unit_ID]) == 1):
-					clean_dict[unit_editor_name] = master_dict[unit_ID]
-
-		master_dict = clean_dict
+				reformattedDict[unit_editor_name] = master_dict[unit_ID]
 
 		# write json
 		dest = os.path.join(self.game["meta_dir"], fileName, "%s.json" % fileName)
 		with open(dest, "w") as outfile:
-			json.dump(master_dict, outfile, indent="\t")
-		print("--> META: (%s) EXPORTED" % fileName)
+			json.dump(reformattedDict, outfile, indent="\t")
+		print("──> META: (%s) EXPORTED" % fileName)
 
 	def export_all_maps(self, *map_paths):
 		if len(map_paths) == 0:
@@ -374,7 +371,7 @@ class Tiled:
 			self.tiled["map_file"] = map_file
 			fileName = os.path.splitext(os.path.basename(map_file))[0]
 			self._export_map(fileName)
-			self._export_meta(fileName)
+			self._exportMapData(fileName)
 
 	def _standardizeTilesets(self, root) -> None:
 		horizontalBit: int = 0x80000000
@@ -595,6 +592,7 @@ class Tiled:
 		return master
 
 	def exportUsedTileGid(self) -> None:
+		"""Exports all used tile GID's; optimizes tileset to way smaller file"""
 		horizontalBit: int = 0x80000000
 		usedGids: set = set()
 
@@ -645,12 +643,12 @@ class Tiled:
 				json.dump(tileData, outfile, indent="\t")
 
 	def setCharacterTilesetProperties(self) -> None:
+		"""So that all tiles in 'Tiled' have by default these defined propertiess"""
 
 		characterAtlas: dict = {
-			"name": {"type": "bool", "value":"false"},
+			"enemy": {"type": "bool", "value":"false"},
 			"level": {"type": "int", "value": "1"},
-			"name": {"value": ""},
-			"dialogue": {"value": ""}
+			"name": {"value": ""}
 		}
 		characterAttributes: set = set(characterAtlas.keys())
 
@@ -660,14 +658,18 @@ class Tiled:
 				filepath: str = os.path.join(self.tiled["character_dir"], filename)
 				tree = ET.parse(filepath)
 
-				for properties in tree.getroot().findall("tile/properties"):
+				for character in tree.getroot().findall("tile"):
+					characterProperties = character.find("properties")
+
 					attributes: set = set()
-					for prop in properties:
-						attributes.add(prop.get("name"))
+					if characterProperties is None:
+						characterProperties = ET.SubElement(character, "properties")
+					else:
+						for characterProperty in characterProperties:
+							attributes.add(characterProperty.get("name"))
 
 					for prop in characterAttributes - attributes:
-
-						attribute = ET.SubElement(properties, "property", {
+						attribute = ET.SubElement(characterProperties, "property", {
 							"name": prop,
 							"value": characterAtlas[prop]["value"]
 						})

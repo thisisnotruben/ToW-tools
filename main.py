@@ -9,6 +9,7 @@ from core.image_editor import Color, Font
 from core.tiled_manager import Tiled
 from core.asset_manager import AssetManager
 from core.archive_manager import Archiver
+from core.game_dialogue import GameDialogue
 
 
 class Commands(enum.Enum):
@@ -26,12 +27,13 @@ class Commands(enum.Enum):
 	DEBUG_MAP = enum.auto()
 	MAKE_DEBUG_TILESETS = enum.auto()
 	MAKE_32_TILESETS = enum.auto()
-	MAKE_32_DEBUG_TILESETS = enum.auto()
+	MAKE_32_DEBUG_TILESETS = enum.auto() 
 	MAKE_ICON_ATLAS = enum.auto()
 	MAKE_SPRITE_ICONS = enum.auto()
 	MAKE_SPRITE_DEATHS = "OPTIONAL ARG: (FILE_PATH)"
 	MAKE_SYM_LINKS = enum.auto()
 	MAKE_LID = "OPTIONAL ARGS: (ALL: ALL SPRITES) || (FILE_PATH: SPECIFIC SPRITE) || (NONE: SPRITES FROM SYM-LINKS)"
+	SYNC_DIALOGUE = enum.auto()
 	BACKUP = enum.auto()
 	HELP = enum.auto()
 	QUIT = enum.auto()
@@ -43,24 +45,25 @@ class Main:
 		self.tiled = Tiled()
 		self.archive = Archiver()
 		self.asset = AssetManager()
+		self.dialogue = GameDialogue()
 
 	@staticmethod
 	def show_commands():
-		print("--> COMMANDS:")
+		print("──> COMMANDS:")
 		for command in Commands:
-			print(" |-> ", command.name)
+			print(" ├─", command.name)
 			if type(command.value) == str:
-				print("    \*-> ", command.value)
-		print("\n--> COLORS:")
+				print("    └─> ", command.value)
+		print("\n──> COLORS:")
 		for color in Color:
-			print(" |-> ", color.name)
-		print("\n--> FONTS:")
+			print(" ├─", color.name)
+		print("\n──> FONTS:")
 		for font in Font:
-			print(" |-> ", font.name)
+			print(" ├─> ", font.name)
 
 	def execute_command(self, command, *arg):
 		if not command in [c.name for c in Commands]:
-			print(f"--> UNKNOWN COMMAND: ({command})\n--> TYPE HELP FOR ALL COMMANDS")
+			print(f"──> UNKNOWN COMMAND: ({command})\n──> TYPE HELP FOR ALL COMMANDS")
 			return
 
 		command = Commands[command]
@@ -151,6 +154,9 @@ class Main:
 				self.tiled.make_sprite_icons(*sprites)
 				self.asset.make_sprite_deaths(*sprites)
 
+		elif command == Commands.SYNC_DIALOGUE:
+			self.dialogue.SyncDialogueToMapData()
+
 		elif command == Commands.BACKUP:
 			self.archive.backup()
 
@@ -161,8 +167,8 @@ class Main:
 			exit(0)
 
 	def main_loop(self):
-		print("----TIDES OF WAR TOOL----")
-		prompt_message = "\n--> ENTER COMMAND:\n~$ "
+		print("────TIDES OF WAR TOOL────")
+		prompt_message = "\n──> ENTER COMMAND:\n~$ "
 		while True:
 			prompt = input(prompt_message).strip().split(" ")
 			command = prompt[0].upper()
