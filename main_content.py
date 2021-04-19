@@ -180,11 +180,19 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 			if len(self.db.execute_query(f"SELECT name FROM sqlite_master WHERE name = '{db_filter}';")) > 0:
 				founded_items.intersection_update(set(self.db.execute_query(
 					f"SELECT name FROM {db_filter};")))
-			else:
+
+			elif db_filter == self.list_view.character_tag:
 				# all character filter tag; doing the complement to find them
-				all_items = set(map(name2Tuple, self.list_view.all_items.keys()))
+				allItemsTemp: set = set(self.list_view.all_items.keys()) - set(self.list_view.allDialogues)
+				all_items = set(map(name2Tuple, allItemsTemp))
 				all_items.difference_update(set(self.db.execute_query("SELECT name FROM worldobject;")))
 				founded_items.intersection_update(all_items)
+
+			elif db_filter == self.list_view.dialogue_tag:
+				founded_items.intersection_update(set(map(name2Tuple, self.list_view.allDialogues)))
+
+			elif db_filter == self.list_view.quest_tag:
+				founded_items.intersection_update(set(map(name2Tuple, self.list_view.allQuests)))
 
 		type_filter = self.filter_type.currentText()
 		if self.filter_type.isVisible() and type_filter != "All":
@@ -225,7 +233,8 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 			while combo_box.count() != 1:
 				combo_box.removeItem(1)
 
-		if text == DataBases.SPELLDB.value.capitalize() or text == "All":
+		if text in [DataBases.SPELLDB.value.capitalize(), self.list_view.dialogue_tag, self.list_view.quest_tag] \
+		or text == "All":
 			self.filter_type.hide()
 			self.filter_sub_type.hide()
 		else:

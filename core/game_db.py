@@ -287,16 +287,17 @@ class GameDB:
 					nodeDict: dict = content["nodes"][node]
 					if len(nodeDict["questName"].strip()) == 0 \
 					or len(nodeDict["questGiver"]) == 0 \
-					or len(nodeDict["questCompleter"]) == 0 \
 					or len(nodeDict["objectives"].keys()) == 0:
 						continue
+					# or len(nodeDict["questCompleter"]) == 0 \
 
 					questName: str = nodeDict.pop("questName")
 
 					nodeDict["questGiver"] = GameDB.getWorldName(nodeDict["questGiver"], True)
-					nodeDict["questCompleter"] = GameDB.getWorldName(nodeDict["questCompleter"], True)
+					nodeDict["dialogue"] = GameDB.getWorldName(nodeDict["dialogue"], False)
+					# nodeDict["questCompleter"] = GameDB.getWorldName(nodeDict["questCompleter"], True)
 
-					nodeDict["nextQuest"] = list(map(GameDB.getWorldName, nodeDict["nextQuest"]))
+					nodeDict["nextQuest"] = GameDB.getWorldName(nodeDict["nextQuest"], False)
 					nodeDict["reward"] = list(map(GameDB.getWorldName, nodeDict["reward"]))
 
 					# parse objective
@@ -320,9 +321,9 @@ class GameDB:
 					reformattedDict[questName] = nodeDict
 
 				# export json
-				fileName = os.path.splitext(os.path.basename(questFile))[0]
-				dest = os.path.join(self.paths["db_export_path"], "quest", fileName + GameDB.content_ext)
-				self._export(reformattedDict, dest)
+				if len(reformattedDict) > 0:
+					fileName = os.path.splitext(os.path.basename(questFile))[0]
+					dest = os.path.join(self.paths["db_export_path"], "quest", fileName + GameDB.content_ext)
+					self._export(reformattedDict, dest)
 
-				print(f" |-> QUEST CONTENT EXPORTED: ({dest})")
-
+					print(f" |-> QUEST CONTENT EXPORTED: ({dest})")

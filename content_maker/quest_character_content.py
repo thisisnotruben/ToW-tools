@@ -24,10 +24,12 @@ class QuestCharacterContent(Ui_objective_content_view, QWidget, ISerializable, D
 		# route context menu & drop events
 		self.reward.itemChanged.connect(self.onRewardItemChanged)
 		self.reward.contextMenuEvent = MethodType(self.onRewardContextMenuEvent, self.reward)
+
 		# set stylesheet
-		path: str = os.path.join(os.path.dirname(__file__), "QTDark-master", "QTDark.stylesheet")
-		with open(path, "r") as f:
-			self.setStyleSheet(f.read())
+		path: str = os.path.join(os.path.dirname(__file__), os.pardir, "QTDark-master", "QTDark.stylesheet")
+		if os.path.isfile(path):
+			with open(path, "r") as f:
+				self.setStyleSheet(f.read())
 
 	def onRewardContextMenuEvent(self, list_widget, QContextMenuEvent):
 	   # get select item

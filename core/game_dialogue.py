@@ -3,6 +3,7 @@
 import re
 import os
 import json
+from typing import List
 
 from .path_manager import PathManager
 
@@ -11,19 +12,23 @@ class GameDialogue:
 	def __init__(self):
 		allPaths = PathManager.get_paths()
 
-		self.dialogicDir = allPaths["game"]["dialogic"]
-		self.gameDataDir = allPaths["game"]["meta_dir"]
+		self.dialogicDir: str = allPaths["game"]["dialogic"]
+		self.gameDataDir: str = allPaths["game"]["meta_dir"]
 
-	def SyncDialogueToMapData(self) -> None:
+	def getDialogueNames(self) -> List[str]:
+		timeLineNames: List[str] = []
 
-		timeLineNames: set = set()
-		mapDataFilePaths: set = set()
-
-		# timeLineNames
 		for timeLineFile in os.listdir(self.dialogicDir):
 			if timeLineFile.endswith("json"):
 				with open(os.path.join(self.dialogicDir, timeLineFile), "r") as f:
-					timeLineNames.add(json.load(f)["metadata"]["name"])
+					timeLineNames.append(json.load(f)["metadata"]["name"])
+
+		return sorted(timeLineNames)
+
+	def SyncDialogueToMapData(self) -> None:
+
+		timeLineNames: List[str] = self.getDialogueNames()
+		mapDataFilePaths: set = set()
 
 		# mapDataFilePaths
 		for mapDir in os.listdir(self.gameDataDir):

@@ -2,7 +2,8 @@
 
 from types import MethodType
 from collections import OrderedDict
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QAction, QMessageBox
+from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QMenu, QAction, QMessageBox
+from PyQt5.QtGui import QDropEvent
 from PyQt5.QtCore import Qt
 
 from .views.quest_node_view import Ui_quest_node_view
@@ -23,25 +24,62 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 
 	def setupUi(self, quest_node):
 		super().setupUi(quest_node)
+
 		# map character lists drop events and contxt menus
 		self.reward_list.contextMenuEvent = MethodType(self.onListContextMenu, self.reward_list)
 		self.reward_list.itemChanged.connect(self.onRewardListItemChanged)
 		self.next_quest_list.contextMenuEvent = MethodType(self.onListContextMenu, self.next_quest_list)
-		self.next_quest_list.setDisabled(True) # TODO: need to setup database first to support this drop
-		for list_widget in [self.giver_list, self.completer_list]:
+		for list_widget in [self.giver_list]: #, self.completer_list]:
 			self.dropEventMap[list_widget] = list_widget.dropEvent
 			list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
 			list_widget.contextMenuEvent = MethodType(self.onListContextMenu, list_widget)
+
 		# setup delete button function
 		self.delete_node_bttn.clicked.connect(self.deleteNode)
 		self.on_delete_confirm = QAction()
+
 		# map objective list drop events
 		self.objective_list.dropEvent = MethodType(
 			self.onObjectiveListDropEvent, self.objective_list)
 
+		# route dialogue drop event
+		self.dropEventMap[self.dialogue_file_list] = self.dialogue_file_list.dropEvent
+		self.dialogue_file_list.dropEvent = MethodType(
+			self.onDialogueDropEvent, self.dialogue_file_list)
+
+		# route nextQuest drop event
+		self.dropEventMap[self.next_quest_list] = self.next_quest_list.dropEvent
+		self.next_quest_list.dropEvent = MethodType(
+			self.onNextQuestDropEvent, self.next_quest_list
+		)
+
+	def onNextQuestDropEvent(self, list_widget: QListWidget, event: QDropEvent) -> None:
+		self.dropEventMap[list_widget](event)
+
+		row: int = list_widget.count() - 1
+		dialogueEntry: QListWidgetItem = list_widget.item(row)
+
+		if not self.db_list.isQuest(dialogueEntry.text()):
+			list_widget.takeItem(row)
+		elif list_widget.count() > 1:
+			list_widget.takeItem(row - 1)
+
+	def onDialogueDropEvent(self, list_widget: QListWidget, event: QDropEvent) -> None:
+		self.dropEventMap[list_widget](event)
+
+		row: int = list_widget.count() - 1
+		dialogueEntry: QListWidgetItem = list_widget.item(row)
+
+		if not self.db_list.isDialogue(dialogueEntry.text()):
+			list_widget.takeItem(row)
+		elif list_widget.count() > 1:
+			list_widget.takeItem(row - 1)
+
 	def onRewardListItemChanged(self, listWidgetItem):
 		# no characters allowed
-		if self.db_list.isCharacter(listWidgetItem.text()):
+		if self.db_list.isCharacter(listWidgetItem.text()) \
+		or self.db_list.isDialogue(listWidgetItem.text()) \
+		or self.db_list.isQuest(listWidgetItem.text()):
 			self.reward_list.takeItem(self.reward_list.count() - 1)
 
 	def onCharacterDropEvent(self, list_widget, event):
@@ -134,13 +172,16 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 		# create quest objective on drop
 		objective = self.addObjective()
 		objective.onDropEvent(objective.world_object, QDropEvent)
+
 		# check if dropped event is a duplicate and delete if it is
 		for other_objective in self.objectiveEntryMap.keys():
 			if other_objective.getWorldObjectName() == objective.getWorldObjectName() \
 			and other_objective != objective:
 				self.onObjectveDelete(self.objective_list.count() - 1)
 				break
-		if hasattr(objective, "delete_self"):
+		if hasattr(objective, "delete_self") \
+		or self.db_list.isDialogue(objective.getWorldObjectName()) \
+		or self.db_list.isQuest(objective.getWorldObjectName()):
 			# when the user clicks on cancel
 			self.onObjectveDelete(self.objective_list.count() - 1)
 
@@ -184,7 +225,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 		self.reward_keep.stateChanged.connect(parent.setDirty)
 		self.gold_reward_amount.valueChanged.connect(parent.setDirty)
 		self.giver_list.itemChanged.connect(parent.setDirty)
-		self.completer_list.itemChanged.connect(parent.setDirty)
+		# self.completer_list.itemChanged.connect(parent.setDirty)
 
 		dialogue_entries = [
 			self.start_entry,
@@ -216,11 +257,12 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 			("keepRewardItems", self.reward_keep.isChecked()),
 			("goldReward", self.gold_reward_amount.value()),
 			("questGiver", getItemData(self.giver_list, True)),
-			("questCompleter", getItemData(self.completer_list, True)),
-			("available", self.start_entry.toPlainText()),
-			("active", self.active_entry.toPlainText()),
-			("completed", self.completed_entry.toPlainText()),
-			("delivered", self.delivered_entry.toPlainText())
+			("dialogue", getItemData(self.dialogue_file_list, True))
+			# ("questCompleter", getItemData(self.completer_list, True)),
+			# ("available", self.start_entry.toPlainText()),
+			# ("active", self.active_entry.toPlainText()),
+			# ("completed", self.completed_entry.toPlainText()),
+			# ("delivered", self.delivered_entry.toPlainText())
 		])
 
 		objective_data = OrderedDict([
@@ -237,30 +279,33 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 			icon = icon_generator.getIcon(serialized_list_data[1])
 			list_widget.addItem(QListWidgetItem(icon, serialized_list_data[0]))
 
-		# set quest name
 		self.name_entry.setText(data["questName"])
-		# set next quest
+
 		for quest in data["nextQuest"]:
 			unpackItemData(self.next_quest_list, quest)
-		# set rewards
+
 		for reward in data["reward"]:
 			unpackItemData(self.reward_list, reward)
-		# set keep reward items
+
 		self.reward_keep.setChecked(bool(data["keepRewardItems"]))
-		# set gold reward
 		self.gold_reward_amount.setValue(int(data["goldReward"]))
-		# set quest giver
-		if len(data["questGiver"]) != 0:
+
+		if len(data["questGiver"]) > 0:
 			unpackItemData(self.giver_list, data["questGiver"])
+
+		if len(data["dialogue"]) > 0:
+			unpackItemData(self.dialogue_file_list, data["dialogue"])
+
 		# set quest completer
-		if len(data["questCompleter"]) != 0:
-			unpackItemData(self.completer_list, data["questCompleter"])
+		# if len(data["questCompleter"]) != 0:
+		# 	unpackItemData(self.completer_list, data["questCompleter"])
+
 		# set quest giver dialogues
-		self.start_entry.setText(data["available"])
-		self.active_entry.setText(data["active"])
-		self.completed_entry.setText(data["completed"])
-		self.delivered_entry.setText(data["delivered"])
+		# self.start_entry.setText(data["available"])
+		# self.active_entry.setText(data["active"])
+		# self.completed_entry.setText(data["completed"])
+		# self.delivered_entry.setText(data["delivered"])
+
 		# set quest objectives
 		for objective_data in data["objectives"].keys():
 			self.addObjective().unserialize(data["objectives"][objective_data])
-
