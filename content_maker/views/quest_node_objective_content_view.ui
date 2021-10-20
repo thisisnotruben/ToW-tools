@@ -32,6 +32,9 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTextEdit" name="dialogue">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="placeholderText">
       <string>Dialogue</string>
      </property>

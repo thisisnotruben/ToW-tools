@@ -22,6 +22,7 @@ class Ui_objective_content_view(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(objective_content_view)
         self.verticalLayout.setObjectName("verticalLayout")
         self.dialogue = QtWidgets.QTextEdit(objective_content_view)
+        self.dialogue.setEnabled(False)
         self.dialogue.setObjectName("dialogue")
         self.verticalLayout.addWidget(self.dialogue)
         self.reward_lbl = QtWidgets.QLabel(objective_content_view)

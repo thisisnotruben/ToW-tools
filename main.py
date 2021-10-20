@@ -27,7 +27,7 @@ class Commands(enum.Enum):
 	DEBUG_MAP = enum.auto()
 	MAKE_DEBUG_TILESETS = enum.auto()
 	MAKE_32_TILESETS = enum.auto()
-	MAKE_32_DEBUG_TILESETS = enum.auto() 
+	MAKE_32_DEBUG_TILESETS = enum.auto()
 	MAKE_ICON_ATLAS = enum.auto()
 	MAKE_SPRITE_ICONS = enum.auto()
 	MAKE_SPRITE_DEATHS = "OPTIONAL ARG: (FILE_PATH)"
@@ -41,11 +41,11 @@ class Commands(enum.Enum):
 
 class Main:
 	def __init__(self):
-		self.db = GameDB()
-		self.tiled = Tiled()
-		self.archive = Archiver()
-		self.asset = AssetManager()
-		self.dialogue = GameDialogue()
+		self.db: GameDB = GameDB()
+		self.tiled: Tiled = Tiled()
+		self.archive: Archiver = Archiver()
+		self.asset: AssetManager = AssetManager()
+		self.dialogue: GameDialogue = GameDialogue()
 
 	@staticmethod
 	def show_commands():
@@ -168,7 +168,7 @@ class Main:
 
 	def main_loop(self):
 		print("────TIDES OF WAR TOOL────")
-		prompt_message = "\n──> ENTER COMMAND:\n~$ "
+		prompt_message: str = "\n──> ENTER COMMAND:\n~$ "
 		while True:
 			prompt = input(prompt_message).strip().split(" ")
 			command = prompt[0].upper()

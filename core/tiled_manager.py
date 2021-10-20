@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import csv
 import json
 import shutil
 import xml.etree.ElementTree as ET
 from distutils.util import strtobool
+from typing import *
 
 from .game_db import GameDB, DataBases
 from .image_editor import ImageEditor, Color
@@ -277,6 +279,7 @@ class Tiled:
 				"dialogue": "",
 				"enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
 				"level": int(unitMeta[unitID]["level"]),
+				"dropRate": unitMeta[unitID]["dropRate"],
 				"path": unitPatrolPaths[unitID] if unitID in unitPatrolPaths else [],
 				"spawnPos": spawnPos[unitID]
 			}
@@ -336,6 +339,10 @@ class Tiled:
 			name: str = item.get("id") if connectedLight is None else connectedLight.get("value")
 			item.set("name", "%s-%s" % (name, item.get("width")))
 
+		for item in root.findall(".//objectgroup[@name='quest']/object"):
+			item.set("name", "%s-questLoot" % item.get("id"))
+
+		self._standardizeTilesetGroups(root)
 		self._standardizeTilesets(root)
 
 		dest: str = os.path.join(self.game["map_dir"], fileName + Tiled.map_ext)
@@ -344,7 +351,7 @@ class Tiled:
 
 	def _exportMapData(self, fileName: str):
 		master_dict = self._getCharacterMapData()
-		
+
 		# reformat data
 		reformattedDict: dict = dict()
 		for unit_ID in master_dict:
@@ -353,44 +360,79 @@ class Tiled:
 				del master_dict[unit_ID]["editorName"]
 				reformattedDict[unit_editor_name] = master_dict[unit_ID]
 
-		# write json
-		dest = os.path.join(self.game["meta_dir"], fileName, "%s.json" % fileName)
+		destDir = os.path.join(self.game["meta_dir"], fileName)
+
+		# main file
+		dest = os.path.join(destDir, "%s.json" % fileName)
 		with open(dest, "w") as outfile:
 			json.dump(reformattedDict, outfile, indent="\t")
+
+		# quest loot file
+		src = os.path.join(self.tiled["map_dir"], fileName + Tiled.map_ext)
+		if os.path.isfile(src):
+
+			dest = os.path.join(destDir, "%s_questLoot.json" % fileName)
+			with open(dest, "w") as outfile:
+				json.dump(self._getQuestItemData(src), outfile, indent="\t")
+
 		print("──> META: (%s) EXPORTED" % fileName)
 
 	def export_all_maps(self, *map_paths):
 		if len(map_paths) == 0:
 			# if no args, then export all maps
-			map_paths = [
-				os.path.join(self.tiled["map_dir"], map_file)
-				for map_file in os.listdir(self.tiled["map_dir"])
-				if map_file.endswith(Tiled.map_ext)
-			]
+			map_paths = []
+			for map_file in os.listdir(self.tiled["map_dir"]):
+				if re.match("zone_\d%s" % Tiled.map_ext , map_file):
+					map_paths.append(os.path.join(self.tiled["map_dir"], map_file))
+
 		for map_file in map_paths:
 			self.tiled["map_file"] = map_file
 			fileName = os.path.splitext(os.path.basename(map_file))[0]
 			self._export_map(fileName)
 			self._exportMapData(fileName)
+			self._exportCharacterQuestDropData(map_file)
+
+	def _standardizeTilesetGroups(self, root) -> None:
+		horizontalBit: int = 0x80000000
+
+		tilesets: dict = self._getCurrentHierarchData(root)
+		hierarch: dict = self._getHierarchData()
+
+		objectPaths: List[str] = [
+			".//objectgroup[@name='transitionSigns']",
+			".//objectgroup[@name='quest']"
+		]
+
+		data: Dict[ET.Element, str] = {}
+
+		for objectPath in objectPaths:
+			for objects in root.findall(objectPath):
+
+				for gid in tilesets.keys():
+					tilesetName: str = os.path.splitext(os.path.basename(tilesets[gid]["source"]))[0]
+					for item in objects.findall("object"):
+
+						tile: int = int(item.get("gid"))
+						flippedH: bool = tile & horizontalBit > 0
+						if flippedH:
+							tile &= ~horizontalBit
+
+						if tile >= gid and tile < gid + hierarch[tilesetName][1]:
+							if flippedH:
+								tile |= horizontalBit
+
+							newTileID: int = tile - gid + hierarch[tilesetName][2]
+							data[item] = str(newTileID)
+
+		for tileObject, newId in data.items():
+				tileObject.set("gid", newId)
 
 	def _standardizeTilesets(self, root) -> None:
 		horizontalBit: int = 0x80000000
 
-		tilesets: dict = dict()
+		tilesets: dict = self._getCurrentHierarchData(root)
 		matrices: dict = dict()
 		hierarch: dict = self._getHierarchData()
-
-		# parse the xml
-		i: int = 1
-		for item in root.findall("tileset"):
-			if "tilesets" in item.get("source"):
-				tilesets[int(item.get("firstgid"))] = {
-					"source": item.get("source"),
-					"hierarch": i
-				}
-				i += 1
-			else:
-				root.remove(item)
 
 		for item in root.findall("group/layer"):
 			csvData = item.find("data[@encoding='csv']")
@@ -459,6 +501,22 @@ class Tiled:
 			for item in root.findall(f"group/objectgroup[@name='{tagName}']/object"):
 				item.set("gid", "0")
 
+	def _getCurrentHierarchData(self, root) -> Dict[int, Dict]:
+		tilesets: Dict[int, Dict] = {}
+
+		i: int = 1
+		for item in root.findall("tileset"):
+			if "tilesets" in item.get("source"):
+				tilesets[int(item.get("firstgid"))] = {
+					"source": item.get("source"),
+					"hierarch": i,
+				}
+				i += 1
+			else:
+				root.remove(item)
+
+		return tilesets
+
 	def _getHierarchData(self) -> dict:
 		hierarch: dict = dict()
 		for tilesetName, level in self.tiled["hierarch"].items():
@@ -485,9 +543,6 @@ class Tiled:
 
 	def exportTilesetData(self) -> None:
 		occluderData: dict = dict()
-		for tilesetName in ["buildings", "trees", "misc_32", "tiles_32", "walls"]:
-			occluderData.update(self._getOccluderData(tilesetName))
-
 		shaderData: dict = dict()
 
 		for dirpath, _, filenames in os.walk(self.tiled["map_dir"]):
@@ -495,6 +550,7 @@ class Tiled:
 				filepath: str = os.path.join(dirpath, filename)
 
 				if filepath.endswith(Tiled.tileset_ext):
+					occluderData.update(self._getOccluderData(filepath))
 					shaderData.update(self._getTileShaderData(filepath))
 
 				elif filepath.endswith(Tiled.map_ext):
@@ -517,10 +573,11 @@ class Tiled:
 			with open(dataPacket[0], "w") as outfile:
 				json.dump(dataPacket[1], outfile, indent="\t")
 
-	def _getOccluderData(self, tilesetName: str) -> dict:
-		getFileName: str = lambda filePath: os.path.splitext(os.path.basename(filePath))[0]
+	def _getOccluderData(self, tilesetPath: str) -> dict:
+		getFileName = lambda filePath: os.path.splitext(os.path.basename(filePath))[0]
 
-		root = ET.parse(os.path.join(self.tiled["tileset_dir"], tilesetName + Tiled.tileset_ext)).getroot()
+		root = ET.parse(tilesetPath).getroot()
+		tilesetName: str = getFileName(tilesetPath)
 
 		master: dict = dict()
 		hierarch: dict = self._getHierarchData()
@@ -591,6 +648,36 @@ class Tiled:
 
 		return master
 
+	def _getQuestItemData(self, mapFilepath: str) -> Dict[Optional[str], list]:
+		master: Dict[Optional[str], list] = dict()
+		template: str = "properties/property[@name='%s']"
+
+		for group in ET.parse(mapFilepath).getroot().findall(".//objectgroup[@name='quest']"):
+			for item in group.findall("object"):
+
+				value = item.find(template % "value")
+				questId = item.find(template % "questId")
+				interactType = item.find(template % "type")
+
+				if value is None or questId is None or interactType is None:
+					print(f"Error: {item.get('id')} in quests doesn't have all attributes")
+				else:
+
+					payload: dict = {
+						"name": "%s-questLoot" % item.get("id"),
+						"type": interactType.get("value"),
+						"value": value.get("value")
+					}
+
+					quest: Optional[str] = questId.get("value")
+
+					if quest in master:
+						master[quest].append(payload)
+					else:
+						master[quest] = [payload]
+
+		return master
+
 	def exportUsedTileGid(self) -> None:
 		"""Exports all used tile GID's; optimizes tileset to way smaller file"""
 		horizontalBit: int = 0x80000000
@@ -648,7 +735,8 @@ class Tiled:
 		characterAtlas: dict = {
 			"enemy": {"type": "bool", "value":"false"},
 			"level": {"type": "int", "value": "1"},
-			"name": {"value": ""}
+			"dropRate": {"type": "float", "value": "0.5"},
+			"name": {"value": ""},
 		}
 		characterAttributes: set = set(characterAtlas.keys())
 
@@ -678,3 +766,41 @@ class Tiled:
 
 				Tiled._writeXml(tree, filepath)
 
+	def _exportCharacterQuestDropData(self, mapPath) -> None:
+
+		root = ET.parse(mapPath).getroot()
+
+		unitData: dict = self._getCharacterAttributes(root)
+		editorNames: dict = self._getCharacterNames(True, root)
+		exportData: dict = dict()
+
+		for unitId, properties in unitData.items():
+			for prop, questDrop in properties.items():
+
+				if re.match("q\d+\.\d+\.\d+-d\d+", prop, re.IGNORECASE): # ex matches q1.1175.0-d0
+					questId: str = prop.split("-")[0]
+
+					if questId not in exportData.keys():
+						exportData[questId] = {
+							"drops": set(),
+						}
+
+					exportData[questId][editorNames[unitId]] = questDrop
+					exportData[questId]["drops"].add(questDrop)
+
+		masterDict: dict = {}
+		for questId in exportData.keys():
+
+			masterDict[questId] = {}
+			for drop in exportData[questId]["drops"]:
+
+				masterDict[questId][drop] = []
+				for unitEditorName, unitDrop in exportData[questId].items():
+					if unitDrop == drop:
+						masterDict[questId][drop].append(unitEditorName)
+
+
+		zoneName: str = os.path.splitext(os.path.basename(mapPath))[0]
+		dest: str = os.path.join(self.game["meta_dir"], zoneName, "%s_questUnitDrop.json" % zoneName)
+		with open(dest, "w") as outfile:
+			json.dump(masterDict, outfile, indent="\t")

@@ -30,7 +30,7 @@ class GameDialogue:
 		timeLineNames: List[str] = self.getDialogueNames()
 		mapDataFilePaths: set = set()
 
-		# mapDataFilePaths
+		# mapDataFilePaths (json files in data dir)
 		for mapDir in os.listdir(self.gameDataDir):
 			mapDirPath: str = os.path.join(self.gameDataDir, mapDir)
 			if re.match("zone_\d+", mapDir, re.IGNORECASE) and os.path.isdir(mapDirPath):
@@ -67,4 +67,3 @@ class GameDialogue:
 				if edited and len(mapData) > 0:
 					with open(mapDataFilePath, "w") as f:
 						json.dump(mapData, f, indent="\t")
-

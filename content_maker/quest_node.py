@@ -29,6 +29,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 		self.reward_list.contextMenuEvent = MethodType(self.onListContextMenu, self.reward_list)
 		self.reward_list.itemChanged.connect(self.onRewardListItemChanged)
 		self.next_quest_list.contextMenuEvent = MethodType(self.onListContextMenu, self.next_quest_list)
+
 		for list_widget in [self.giver_list]: #, self.completer_list]:
 			self.dropEventMap[list_widget] = list_widget.dropEvent
 			list_widget.dropEvent = MethodType(self.onCharacterDropEvent, list_widget)
@@ -44,14 +45,30 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 
 		# route dialogue drop event
 		self.dropEventMap[self.dialogue_file_list] = self.dialogue_file_list.dropEvent
+		self.dialogue_file_list.contextMenuEvent = MethodType(self.onListContextMenu, self.dialogue_file_list)
 		self.dialogue_file_list.dropEvent = MethodType(
 			self.onDialogueDropEvent, self.dialogue_file_list)
 
 		# route nextQuest drop event
 		self.dropEventMap[self.next_quest_list] = self.next_quest_list.dropEvent
+		self.next_quest_list.contextMenuEvent = MethodType(self.onListContextMenu, self.next_quest_list)
 		self.next_quest_list.dropEvent = MethodType(
-			self.onNextQuestDropEvent, self.next_quest_list
-		)
+			self.onNextQuestDropEvent, self.next_quest_list)
+
+		# route start quest drop events
+		self.dropEventMap[self.start_quest_list] = self.start_quest_list.dropEvent
+		self.start_quest_list.contextMenuEvent = MethodType(self.onListContextMenu, self.start_quest_list)
+		self.start_quest_list.dropEvent = MethodType(
+			self.onStrartQuestDropEvent, self.start_quest_list)
+
+	def onStrartQuestDropEvent(self, list_widget: QListWidget, event: QDropEvent) -> None:
+		self.dropEventMap[list_widget](event)
+
+		row: int = list_widget.count() - 1
+		dialogueEntry: QListWidgetItem = list_widget.item(row)
+
+		if not self.db_list.isQuest(dialogueEntry.text()):
+			list_widget.takeItem(row)
 
 	def onNextQuestDropEvent(self, list_widget: QListWidget, event: QDropEvent) -> None:
 		self.dropEventMap[list_widget](event)
@@ -225,6 +242,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 		self.reward_keep.stateChanged.connect(parent.setDirty)
 		self.gold_reward_amount.valueChanged.connect(parent.setDirty)
 		self.giver_list.itemChanged.connect(parent.setDirty)
+		self.start_quest_list.itemChanged.connect(parent.setDirty)
 		# self.completer_list.itemChanged.connect(parent.setDirty)
 
 		dialogue_entries = [
@@ -243,8 +261,7 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 			itemData = []
 			for i in range(list_widget.count()):
 				entry_text = list_widget.item(i).text()
-				itemData.append([entry_text, \
-					self.db_list.getEntryIconSource(entry_text)])
+				itemData.append([entry_text, self.db_list.getEntryIconSource(entry_text)])
 			if singular and len(itemData) > 0:
 				return itemData[0]
 			return itemData
@@ -252,12 +269,13 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 
 		payload = OrderedDict([
 			("questName", self.name_entry.text()),
-			("nextQuest", getItemData(self.next_quest_list)),
+			("nextQuest", getItemData(self.next_quest_list, True)),
 			("reward", getItemData(self.reward_list)),
 			("keepRewardItems", self.reward_keep.isChecked()),
 			("goldReward", self.gold_reward_amount.value()),
 			("questGiver", getItemData(self.giver_list, True)),
-			("dialogue", getItemData(self.dialogue_file_list, True))
+			("dialogue", getItemData(self.dialogue_file_list, True)),
+			("startQuests", getItemData(self.start_quest_list))
 			# ("questCompleter", getItemData(self.completer_list, True)),
 			# ("available", self.start_entry.toPlainText()),
 			# ("active", self.active_entry.toPlainText()),
@@ -281,11 +299,14 @@ class QuestNode(Ui_quest_node_view, QWidget, ISerializable, Dirty):
 
 		self.name_entry.setText(data["questName"])
 
-		for quest in data["nextQuest"]:
-			unpackItemData(self.next_quest_list, quest)
+		if len(data["nextQuest"]) > 0:
+			unpackItemData(self.next_quest_list, data["nextQuest"])
 
 		for reward in data["reward"]:
 			unpackItemData(self.reward_list, reward)
+
+		for questStart in data["startQuests"]:
+			unpackItemData(self.start_quest_list, questStart)
 
 		self.reward_keep.setChecked(bool(data["keepRewardItems"]))
 		self.gold_reward_amount.setValue(int(data["goldReward"]))

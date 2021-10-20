@@ -182,11 +182,12 @@ class MainWindow(Ui_content_maker_main, QMainWindow, ISerializable, Dirty):
 					f"SELECT name FROM {db_filter};")))
 
 			elif db_filter == self.list_view.character_tag:
-				# all character filter tag; doing the complement to find them
-				allItemsTemp: set = set(self.list_view.all_items.keys()) - set(self.list_view.allDialogues)
-				all_items = set(map(name2Tuple, allItemsTemp))
-				all_items.difference_update(set(self.db.execute_query("SELECT name FROM worldobject;")))
-				founded_items.intersection_update(all_items)
+				allCharacters: set = set()
+				for entryName in self.list_view.all_items:
+					if self.list_view.isCharacter(entryName):
+						allCharacters.add(entryName)
+
+				founded_items.intersection_update(set(map(name2Tuple, allCharacters)))
 
 			elif db_filter == self.list_view.dialogue_tag:
 				founded_items.intersection_update(set(map(name2Tuple, self.list_view.allDialogues)))

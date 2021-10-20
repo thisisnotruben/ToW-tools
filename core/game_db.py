@@ -299,6 +299,7 @@ class GameDB:
 
 					nodeDict["nextQuest"] = GameDB.getWorldName(nodeDict["nextQuest"], False)
 					nodeDict["reward"] = list(map(GameDB.getWorldName, nodeDict["reward"]))
+					nodeDict["startQuests"] = list(map(GameDB.getWorldName, nodeDict["startQuests"]))
 
 					# parse objective
 					objectives: dict = {}
