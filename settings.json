@@ -1,6 +1,6 @@
 {
 	"tiled": {
-		"root": "/home/rubsz/tiled/Tides_of_War",
+		"root": "~/projects/godot/tides_of_war/dev",
 		"map_dir": "map",
 		"tileset_dir": "map/tilesets",
 		"debug_dir": "map/debug",
@@ -9,7 +9,7 @@
 		"light_dir": "light/tiledLight"
 	},
 	"game": {
-		"root": "/home/rubsz/godot/my_games/Tides_of_War",
+		"root": "~/projects/godot/tides_of_war/tides_of_war",
 		"map_dir": "asset/img/map",
 		"tileset_dir": "asset/img/map/tilesets",
 		"character_dir": "asset/img/character",
@@ -34,21 +34,21 @@
 		"tiles.png"
 	],
 	"archive": [
-		"/home/rubsz/godot/my_games/Tides_of_War",
-		"/home/rubsz/tiled/Tides_of_War"
+		"~/projects/godot/tides_of_war/tides_of_war",
+		"~/projects/godot/tides_of_war/dev"
 	],
-	"archive_backup_dir": "/home/rubsz/ToW_backups",
-	"db_dir": "/home/rubsz/tiled/Tides_of_War/dev/database",
-	"database": "/home/rubsz/tiled/Tides_of_War/dev/database/tides_of_war.db",
-	"db_export_path": "/home/rubsz/godot/my_games/Tides_of_War/data",
-	"content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content",
-	"character_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/character",
-	"quest_content_dir": "/home/rubsz/tiled/Tides_of_War/dev/content/quest",
-	"nameDB": "/home/rubsz/godot/my_games/Tides_of_War/src/database/NameDB.cs",
-	"dev_character_dir": "/home/rubsz/tiled/Tides_of_War/dev/asset/dev_character",
+	"archive_backup_dir": "~/projects/godot/tides_of_war/backups",
+	"db_dir": "~/projects/godot/tides_of_war/dev/dev/database",
+	"database": "~/projects/godot/tides_of_war/dev/dev/database/tides_of_war.db",
+	"db_export_path": "~/projects/godot/tides_of_war/tides_of_war/data",
+	"content_dir": "~/projects/godot/tides_of_war/dev/dev/content",
+	"character_content_dir": "~/projects/godot/tides_of_war/dev/dev/content/character",
+	"quest_content_dir": "~/projects/godot/tides_of_war/dev/dev/content/quest",
+	"nameDB": "~/projects/godot/tides_of_war/tides_of_war/src/database/NameDB.cs",
+	"dev_character_dir": "~/projects/godot/tides_of_war/dev/character",
 	"rawSndAssetDir": "/media/rubsz/Second_Drive/assets/snd",
 	"icon_atlas_data": {
-		"path": "/home/rubsz/tiled/Tides_of_War/dev/asset/dev_icon/icons.png",
+		"path": "~/projects/godot/tides_of_war/dev/dev/asset/dev_icon/icons.png",
 		"atlas_name": "icon_atlas.png",
 		"size": [
 			512,
@@ -69,7 +69,8 @@
 			"kill"
 		],
 		"item": [
-			"collect"
+			"collect",
+			"scout"
 		],
 		"spell": [
 			"learn"

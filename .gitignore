@@ -1,5 +1,7 @@
+__pycache__/
+.mypy_cache/
+.vscode/
+
 *.pyc
 *.ods
-__pycache__/
-.vscode/
 env

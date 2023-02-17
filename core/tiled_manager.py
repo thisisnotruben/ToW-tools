@@ -277,6 +277,7 @@ class Tiled:
 				"name": gameNames[unitID].strip(),
 				"img": os.path.splitext(unitMeta[unitID]["img"])[0],
 				"dialogue": "",
+				"event": unitMeta[unitID]["event"] if "event" in unitMeta[unitID] else "",
 				"enemy": bool(strtobool(unitMeta[unitID]["enemy"])),
 				"level": int(unitMeta[unitID]["level"]),
 				"dropRate": unitMeta[unitID]["dropRate"],
@@ -340,7 +341,8 @@ class Tiled:
 			item.set("name", "%s-%s" % (name, item.get("width")))
 
 		for item in root.findall(".//objectgroup[@name='quest']/object"):
-			item.set("name", "%s-questLoot" % item.get("id"))
+			item.set("name", "%s-quest%s"
+				% (item.get("id"), item.find("properties/property[@name='type']").get("value")))
 
 		self._standardizeTilesetGroups(root)
 		self._standardizeTilesets(root)
@@ -407,6 +409,10 @@ class Tiled:
 
 		for objectPath in objectPaths:
 			for objects in root.findall(objectPath):
+
+				if "gid" not in objects.keys():
+				# the case for non-tile objects like area-objects
+					continue
 
 				for gid in tilesets.keys():
 					tilesetName: str = os.path.splitext(os.path.basename(tilesets[gid]["source"]))[0]
@@ -664,7 +670,7 @@ class Tiled:
 				else:
 
 					payload: dict = {
-						"name": "%s-questLoot" % item.get("id"),
+						"name": "%s-quest%s" % (item.get("id"), interactType.get("value").capitalize()),
 						"type": interactType.get("value"),
 						"value": value.get("value")
 					}
