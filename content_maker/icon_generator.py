@@ -19,9 +19,10 @@ class IconGenerator:
 	def getIcon(self, icon_data):
 		icon = QIcon()
 		if type(icon_data) == int and icon_data != -1:
-			rect = QRect(icon_data % self.atlas_cell_width * IconGenerator.icon_size[0], # x
-				icon_data // self.atlas_cell_width * IconGenerator.icon_size[1],         # y
-				*IconGenerator.icon_size)                                                # w, h
+			rect = QRect(
+				int(icon_data % self.atlas_cell_width * IconGenerator.icon_size[0]),
+				int(icon_data // self.atlas_cell_width * IconGenerator.icon_size[1]),
+				*IconGenerator.icon_size)
 			icon = QIcon(self.icon_atlas.copy(rect))
 		elif isfile(icon_data):
 			icon = QIcon(icon_data)

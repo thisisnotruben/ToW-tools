@@ -1,6 +1,6 @@
 {
 	"tiled": {
-		"root": "~/projects/godot/tides_of_war/dev",
+		"root": "/home/rubsz/projects/godot/tides_of_war/dev",
 		"map_dir": "map",
 		"tileset_dir": "map/tilesets",
 		"debug_dir": "map/debug",
@@ -9,7 +9,7 @@
 		"light_dir": "light/tiledLight"
 	},
 	"game": {
-		"root": "~/projects/godot/tides_of_war/tides_of_war",
+		"root": "/home/rubsz/projects/godot/tides_of_war/tides_of_war",
 		"map_dir": "asset/img/map",
 		"tileset_dir": "asset/img/map/tilesets",
 		"character_dir": "asset/img/character",
@@ -34,21 +34,21 @@
 		"tiles.png"
 	],
 	"archive": [
-		"~/projects/godot/tides_of_war/tides_of_war",
-		"~/projects/godot/tides_of_war/dev"
+		"/home/rubsz/projects/godot/tides_of_war/tides_of_war",
+		"/home/rubsz/projects/godot/tides_of_war/dev"
 	],
-	"archive_backup_dir": "~/projects/godot/tides_of_war/backups",
-	"db_dir": "~/projects/godot/tides_of_war/dev/dev/database",
-	"database": "~/projects/godot/tides_of_war/dev/dev/database/tides_of_war.db",
-	"db_export_path": "~/projects/godot/tides_of_war/tides_of_war/data",
-	"content_dir": "~/projects/godot/tides_of_war/dev/dev/content",
-	"character_content_dir": "~/projects/godot/tides_of_war/dev/dev/content/character",
-	"quest_content_dir": "~/projects/godot/tides_of_war/dev/dev/content/quest",
-	"nameDB": "~/projects/godot/tides_of_war/tides_of_war/src/database/NameDB.cs",
-	"dev_character_dir": "~/projects/godot/tides_of_war/dev/character",
+	"archive_backup_dir": "/home/rubsz/projects/godot/tides_of_war/backups",
+	"db_dir": "/home/rubsz/projects/godot/tides_of_war/dev/dev/database",
+	"database": "/home/rubsz/projects/godot/tides_of_war/dev/dev/database/tides_of_war.db",
+	"db_export_path": "/home/rubsz/projects/godot/tides_of_war/tides_of_war/data",
+	"content_dir": "/home/rubsz/projects/godot/tides_of_war/dev/dev/content",
+	"character_content_dir": "/home/rubsz/projects/godot/tides_of_war/dev/dev/content/character",
+	"quest_content_dir": "/home/rubsz/projects/godot/tides_of_war/dev/dev/content/quest",
+	"nameDB": "/home/rubsz/projects/godot/tides_of_war/tides_of_war/src/database/NameDB.cs",
+	"dev_character_dir": "/home/rubsz/projects/godot/tides_of_war/dev/character",
 	"rawSndAssetDir": "/media/rubsz/Second_Drive/assets/snd",
 	"icon_atlas_data": {
-		"path": "~/projects/godot/tides_of_war/dev/dev/asset/dev_icon/icons.png",
+		"path": "/home/rubsz/projects/godot/tides_of_war/dev/dev/asset/dev_icon/icons.png",
 		"atlas_name": "icon_atlas.png",
 		"size": [
 			512,
